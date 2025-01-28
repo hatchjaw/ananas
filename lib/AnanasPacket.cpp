@@ -1,6 +1,6 @@
 #include <fcntl.h>
 
-#define CLOCK_INVALID -1
+#define CLOCK_INVALID (-1)
 #define CLOCKFD 3
 #define FD_TO_CLOCKID(fd)	((clockid_t) ((((unsigned int) ~fd) << 3) | CLOCKFD))
 #define CLOCKID_TO_FD(clk)	((unsigned int) ~((clk) >> 3))

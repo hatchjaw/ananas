@@ -26,7 +26,7 @@ void AnanasFifo::read(uint8_t *dest, const int numSamples)
 {
     juce::ignoreUnused(readyForRead.wait());
 
-    // const juce::ScopedLock lock{mutex};
+    const juce::ScopedLock lock{mutex};
 
     const auto readHandle{fifo.read(numSamples)};
     const auto blockTwoOffset{readHandle.blockSize1 * 2 * sizeof(int16_t)}; // 2 is numChannels...

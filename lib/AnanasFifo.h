@@ -4,7 +4,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_events/juce_events.h>
 
-using Converter = juce::AudioData::ConverterInstance<
+using FormatConverter = juce::AudioData::ConverterInstance<
     juce::AudioData::Pointer<
         juce::AudioData::Float32,
         juce::AudioData::NativeEndian,
@@ -34,7 +34,7 @@ private:
     static constexpr int capacity{(1 << 10)};
     juce::AbstractFifo fifo{capacity};
     juce::AudioBuffer<float> buffer{2, capacity};
-    Converter converter{2, 2};
+    FormatConverter converter{2, 2};
     juce::CriticalSection mutex;
     juce::WaitableEvent readyForRead;
 };
