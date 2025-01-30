@@ -5,7 +5,7 @@
 ## Why?
 
 Because existing systems, such as _JackTrip_ and _Audio Over OSC_, either do not
-support multicast transmission, and were not designed with time-sensitive (i.e. 
+support multicast transmission, or were not designed with time-sensitive (i.e. 
 sub-microsecond) applications in mind, nor those that entail distributed signal
 processing.
 

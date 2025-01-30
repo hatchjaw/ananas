@@ -24,6 +24,8 @@ class AnanasFifo final : juce::Timer
 public:
     AnanasFifo();
 
+    bool isReady(int framesRequested) const;
+
     void write(const juce::AudioBuffer<float> *src);
 
     void read(uint8_t *dest, int numSamples);
@@ -35,8 +37,8 @@ private:
     juce::AbstractFifo fifo{capacity};
     juce::AudioBuffer<float> buffer{2, capacity};
     FormatConverter converter{2, 2};
-    juce::CriticalSection mutex;
-    juce::WaitableEvent readyForRead;
+    std::mutex mutex;
+    std::condition_variable condition;
 };
 
 

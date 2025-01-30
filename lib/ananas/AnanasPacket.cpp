@@ -120,7 +120,7 @@ void AnanasPacket::writeHeader()
 
     if (++count % 1000 == 1) {
         auto avgInterval{static_cast<double>(totalTime) / count};
-        DBG("prev: " << prevTime << " current: " << ts << " diff: " << diff);
+        DBG("\nprev: " << prevTime << " current: " << ts << " diff: " << diff);
         DBG("Packets sent: " << count << " Average transmission interval: " << avgInterval);
     }
     prevTime = ts;

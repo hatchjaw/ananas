@@ -5,6 +5,11 @@ AnanasFifo::AnanasFifo()
     startTimerHz(2);
 }
 
+bool AnanasFifo::isReady(const int framesRequested) const
+{
+    return fifo.getNumReady() >= framesRequested;
+}
+
 static int nWrites{0}, nReads{0};
 
 void AnanasFifo::write(const juce::AudioBuffer<float> *src)
@@ -19,21 +24,23 @@ void AnanasFifo::write(const juce::AudioBuffer<float> *src)
 
     ++nWrites;
 
-    readyForRead.signal();
+    const std::unique_lock lock{mutex};
+    condition.notify_one();
 }
 
 void AnanasFifo::read(uint8_t *dest, const int numSamples)
 {
-    juce::ignoreUnused(readyForRead.wait());
+    std::unique_lock lock{mutex};
 
-    const juce::ScopedLock lock{mutex};
+    condition.wait(lock, [this, numSamples] { return isReady(numSamples); });
 
     const auto readHandle{fifo.read(numSamples)};
-    const auto blockTwoOffset{readHandle.blockSize1 * 2 * sizeof(int16_t)}; // 2 is numChannels...
 
-    if (readHandle.blockSize1 + readHandle.blockSize2 != 128) {
-        DBG("Read num samples: " << readHandle.blockSize1 + readHandle.blockSize2);
-    }
+    // if (readHandle.blockSize1 + readHandle.blockSize2 != 128) {
+    //     // DBG("Read num samples: " << readHandle.blockSize1 + readHandle.blockSize2);
+    // }
+
+    const auto blockTwoOffset{readHandle.blockSize1 * 2 * sizeof(int16_t)}; // 2 is numChannels...
 
     for (auto ch{0}; ch < buffer.getNumChannels(); ++ch) {
         converter.convertSamples(dest, ch, buffer.getReadPointer(ch, readHandle.startIndex1), 0, readHandle.blockSize1);
