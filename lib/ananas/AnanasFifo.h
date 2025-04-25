@@ -24,10 +24,24 @@ class AnanasFifo final : juce::Timer
 public:
     AnanasFifo();
 
+    /**
+     * Used as a condition_variable predicate.
+     * @param framesRequested
+     * @return
+     */
     bool isReady(int framesRequested) const;
 
+    /**
+     * Write some samples to the FIFO. Called by the audio thread.
+     * @param src
+     */
     void write(const juce::AudioBuffer<float> *src);
 
+    /**
+     * Read some samples from the FIFO. Called by the network send thread.
+     * @param dest
+     * @param numSamples
+     */
     void read(uint8_t *dest, int numSamples);
 
     void timerCallback() override;

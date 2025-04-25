@@ -1,10 +1,5 @@
 #include "AnanasServer.h"
 
-// #include <linux/net_tstamp.h>
-// #include <net/if.h>
-// #include <sys/ioctl.h>
-// #include <linux/sockios.h>
-
 AnanasServer::AnanasServer() : sender(fifo)
 {
 }
@@ -17,7 +12,7 @@ void AnanasServer::prepareToPlay(const int samplesPerBlockExpected, const double
 void AnanasServer::releaseResources()
 {
     if (sender.isThreadRunning()) {
-        sender.stopThread(1000);
+        sender.stopThread(1000);:
     }
 }
 
@@ -92,24 +87,12 @@ void AnanasServer::Sender::prepare(const int samplesPerBlockExpected, const doub
 void AnanasServer::Sender::run()
 {
     while (!threadShouldExit()) {
-        // Check whether a packet's worth of frames are available.
-        // if (fifo.isReady(audioBlockSamples)) {
-
-        // Use a std::condition_variable instead.
-
         // Read from the fifo into the packet.
         fifo.read(packet.getAudioData(), audioBlockSamples);
         // Write the header to the packet.
         packet.writeHeader();
         // Write the packet to the socket.
         socket.write("224.4.224.4", 49152, packet.getData(), static_cast<int>(packet.getSize()));
-        // Maybe clear the packet
-        // packet.fillWith(0);
-
-        // } else {
-        //     timespec time{0, 20'000}; // sleep ~1 sample
-        //     nanosleep(&time, nullptr);
-        // }
     }
 
     DBG("Stopping send thread");

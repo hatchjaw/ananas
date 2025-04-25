@@ -108,24 +108,55 @@ static int64_t totalTime{0};
 
 void AnanasPacket::writeHeader()
 {
-    timespec now{};
-    clock_gettime(clkid, &now);
-    // DBG("Clock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+    // timespec now{};
+    // clock_gettime(clkid, &now);
+    // // DBG("Clock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+    //
+    // // Include a reproduction offset (1/20 s) in the header timestamp.
+    // const int64_t ts{now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 20}; // .05 s
+    // const int64_t diff{ts - prevTime};
+    // if (prevTime != 0) {
+    //     totalTime += diff;
+    // }
+    //
+    // if (++count % 1000 == 1) {
+    //     DBG("\nClock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+    //     auto avgInterval{static_cast<double>(totalTime) / count};
+    //     DBG("\nprev: " << prevTime << " current: " << ts << " diff: " << diff);
+    //     DBG("Packets sent: " << count << " Average transmission interval: " << avgInterval);
+    // }
+    // prevTime = ts;
+    //
+    // header.timestamp = ts;//now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 10;
+    // copyFrom(&header, 0, sizeof(Header));
 
-    const int64_t ts{now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 20}; // .05 s
-    const int64_t diff{ts - prevTime};
-    if (prevTime != 0) {
-        totalTime += diff;
+    if (firstPacket) {
+        firstPacket = false;
+        timespec now{};
+        clock_gettime(clkid, &now);
+        DBG("Clock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+
+        // Include a reproduction offset (1/10 s) in the header timestamp.
+        const int64_t ts{now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 10}; // .1 s
+        const int64_t diff{ts - prevTime};
+        if (prevTime != 0) {
+            totalTime += diff;
+        }
+
+        if (++count % 1000 == 1) {
+            DBG("\nClock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+            auto avgInterval{static_cast<double>(totalTime) / count};
+            DBG("\nprev: " << prevTime << " current: " << ts << " diff: " << diff);
+            DBG("Packets sent: " << count << " Average transmission interval: " << avgInterval);
+        }
+        prevTime = ts;
+
+        header.timestamp = ts;
+        copyFrom(&header, 0, sizeof(Header));
+    } else {
+        // Hm, just bump the timestamp by the expected amount each packet?..
+        prevTime += 2666666; // 1e9 * 128/48000
+        header.timestamp = prevTime;
+        copyFrom(&header, 0, sizeof(Header));
     }
-
-    if (++count % 1000 == 1) {
-        auto avgInterval{static_cast<double>(totalTime) / count};
-        DBG("\nprev: " << prevTime << " current: " << ts << " diff: " << diff);
-        DBG("Packets sent: " << count << " Average transmission interval: " << avgInterval);
-    }
-    prevTime = ts;
-
-    // Include a reproduction offset (1/10 s) in the header timestamp.
-    header.timestamp = ts;//now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 10;
-    copyFrom(&header, 0, sizeof(Header));
 }

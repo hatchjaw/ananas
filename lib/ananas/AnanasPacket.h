@@ -20,6 +20,7 @@ public:
 private:
     static constexpr int64_t nanoSecondsPerSecond{1'000'000'000};
     Header header{};
+    bool firstPacket{true};
 };
 
 
