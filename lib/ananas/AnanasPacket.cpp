@@ -24,12 +24,12 @@ struct sk_ts_info
 
 int sk_get_ts_info(const char *name, struct sk_ts_info *sk_info)
 {
-    struct ethtool_ts_info info;
-    struct ifreq ifr;
+    struct ethtool_ts_info info{};
+    struct ifreq ifr{};
     int fd, err;
 
-    memset(&ifr, 0, sizeof(ifr));
-    memset(&info, 0, sizeof(info));
+    // memset(&ifr, 0, sizeof(ifr));
+    // memset(&info, 0, sizeof(info));
     info.cmd = ETHTOOL_GET_TS_INFO;
     strncpy(ifr.ifr_name, name, IFNAMSIZ - 1);
     ifr.ifr_data = (char *) &info;
@@ -134,10 +134,10 @@ void AnanasPacket::writeHeader()
         firstPacket = false;
         timespec now{};
         clock_gettime(clkid, &now);
-        DBG("Clock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
+        // DBG("Clock " << clkid << " time is " << now.tv_sec << "." << now.tv_nsec << " or " << ctime(&now.tv_sec));
 
         // Include a reproduction offset (1/10 s) in the header timestamp.
-        const int64_t ts{now.tv_sec * nanoSecondsPerSecond + now.tv_nsec + nanoSecondsPerSecond / 10}; // .1 s
+        const int64_t ts{now.tv_sec * kNanoSecondsPerSecond + now.tv_nsec + kNanoSecondsPerSecond / 10}; // .1 s
         const int64_t diff{ts - prevTime};
         if (prevTime != 0) {
             totalTime += diff;
@@ -154,9 +154,12 @@ void AnanasPacket::writeHeader()
         header.timestamp = ts;
         copyFrom(&header, 0, sizeof(Header));
     } else {
-        // Hm, just bump the timestamp by the expected amount each packet?..
-        prevTime += 2666666; // 1e9 * 128/48000
-        header.timestamp = prevTime;
+        header.timestamp += kNanoSecondsPerPacket;
+        timestampRemainder += kNanoSecondsPerPacketRemainder;
+        if (timestampRemainder > 1) {
+            header.timestamp += 1;
+            timestampRemainder -= 1;
+        }
         copyFrom(&header, 0, sizeof(Header));
     }
 }

@@ -12,7 +12,7 @@ void AnanasServer::prepareToPlay(const int samplesPerBlockExpected, const double
 void AnanasServer::releaseResources()
 {
     if (sender.isThreadRunning()) {
-        sender.stopThread(1000);:
+        sender.stopThread(1000);
     }
 }
 

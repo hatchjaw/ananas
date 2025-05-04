@@ -2,7 +2,7 @@
 
 AnanasFifo::AnanasFifo()
 {
-    startTimerHz(5);
+    startTimer(2000);
 }
 
 bool AnanasFifo::isReady(const int framesRequested) const
@@ -60,7 +60,7 @@ void AnanasFifo::read(uint8_t *dest, const int numSamples)
     //     // DBG("Read num samples: " << readHandle.blockSize1 + readHandle.blockSize2);
     // }
 
-    const auto blockTwoOffset{readHandle.blockSize1 * 2 * sizeof(int16_t)}; // 2 is numChannels...
+    const auto blockTwoOffset{readHandle.blockSize1 * buffer.getNumChannels() * sizeof(int16_t)}; // 2 is numChannels...
 
     for (auto ch{0}; ch < buffer.getNumChannels(); ++ch) {
         converter.convertSamples(dest, ch, buffer.getReadPointer(ch, readHandle.startIndex1), 0, readHandle.blockSize1);

@@ -49,6 +49,7 @@ public:
 private:
     static constexpr int capacity{(1 << 10)};
     juce::AbstractFifo fifo{capacity};
+    // TODO: these channel counts shouldn't be hard-coded.
     juce::AudioBuffer<float> buffer{2, capacity};
     FormatConverter converter{2, 2};
     std::mutex mutex;

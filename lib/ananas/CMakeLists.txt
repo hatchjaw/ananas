@@ -14,3 +14,8 @@ target_link_libraries(ananas_server
         PRIVATE
         juce::juce_audio_basics
 )
+
+target_compile_definitions(ananas_server
+        PRIVATE
+        AUDIO_SAMPLE_RATE=${audioSampleRate}
+)

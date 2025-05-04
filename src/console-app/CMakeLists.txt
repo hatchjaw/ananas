@@ -20,7 +20,8 @@ target_compile_definitions(ananas_console
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:ananas_console,JUCE_PRODUCT_NAME>"
-        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:ananas_console,JUCE_VERSION>")
+        JUCE_APPLICATION_VERSION_STRING="$<TARGET_PROPERTY:ananas_console,JUCE_VERSION>"
+        AUDIO_SAMPLE_RATE=${audioSampleRate})
 
 target_link_libraries(ananas_console
         PRIVATE

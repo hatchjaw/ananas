@@ -18,7 +18,7 @@ public:
 
 private:
     static constexpr int kNumFrames{128};
-    static constexpr double kSampleRate{48000.0};
+    static constexpr double kSampleRate{AUDIO_SAMPLE_RATE};
 
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;

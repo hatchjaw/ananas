@@ -9,12 +9,15 @@ MainComponent::MainComponent(const juce::File &file)
     auto setup{deviceManager.getAudioDeviceSetup()};
     setup.sampleRate = kSampleRate;
     setup.bufferSize = kNumFrames;
-    deviceManager.setAudioDeviceSetup(setup, true);
+
+    setup.outputDeviceName = "Teensy Ananas, USB Audio; Front output / input";
+
+    std::cerr << deviceManager.setAudioDeviceSetup(setup, true) << std::endl;
 
     // Load the provided audio file.
     formatManager.registerBasicFormats();
     if (auto *reader = formatManager.createReaderFor(file)) {
-        DBG("Loading file " << file.getFullPathName());
+        std::cout << "Loading file " << file.getFullPathName();
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         readerSource->setLooping(true);
         transport.setSource(readerSource.get());
@@ -31,10 +34,12 @@ MainComponent::~MainComponent()
 
 void MainComponent::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
 {
-    DBG("Device: [" << deviceManager.getCurrentAudioDeviceType() << "]" <<
-        deviceManager.getCurrentAudioDevice()->getName() <<
-        ", Sample rate: " << sampleRate <<
-        ", Buffer size: " << samplesPerBlockExpected);
+    std::cout << "\033[0;36m" <<
+            "Device: [" << deviceManager.getCurrentAudioDeviceType() << "] " <<
+            deviceManager.getCurrentAudioDevice()->getName() <<
+            ", Sample rate: " << sampleRate <<
+            ", Buffer size: " << samplesPerBlockExpected <<
+            "\033[0m" << std::endl;
 
     // Don't prepare to play until audio device setup has been updated.
     if (samplesPerBlockExpected == kNumFrames) {
