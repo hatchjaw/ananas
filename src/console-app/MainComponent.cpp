@@ -1,7 +1,5 @@
 #include "MainComponent.h"
 
-#include <utility>
-
 MainComponent::MainComponent(const juce::File &file)
 {
     // Apply desired audio settings.
@@ -17,7 +15,7 @@ MainComponent::MainComponent(const juce::File &file)
     // Load the provided audio file.
     formatManager.registerBasicFormats();
     if (auto *reader = formatManager.createReaderFor(file)) {
-        std::cout << "Loading file " << file.getFullPathName();
+        std::cout << "Loading file " << file.getFullPathName() << std::endl;
         readerSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
         readerSource->setLooping(true);
         transport.setSource(readerSource.get());

@@ -17,6 +17,8 @@ public:
 
     void writeHeader();
 
+    void setTime(timespec ts);
+
 private:
     static constexpr int64_t kNanoSecondsPerSecond{1'000'000'000};
     static constexpr int64_t kNanoSecondsPerPacket{kNanoSecondsPerSecond * 128 / AUDIO_SAMPLE_RATE};
