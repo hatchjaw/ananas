@@ -1,18 +1,18 @@
-#include "AnanasFifo.h"
+#include "Fifo.h"
 
-AnanasFifo::AnanasFifo()
+ananas::Fifo::Fifo()
 {
     startTimer(2000);
 }
 
-bool AnanasFifo::isReady(const int framesRequested) const
+bool ananas::Fifo::isReady(const int framesRequested) const
 {
     return fifo.getNumReady() >= framesRequested;
 }
 
 static int nWrites{0}, nReads{0};
 
-void AnanasFifo::write(const juce::AudioBuffer<float> *src)
+void ananas::Fifo::write(const juce::AudioBuffer<float> *src)
 {
     // Try to acquire the lock. If the send thread is reading from the FIFO and
     // converting samples, the audio thread will wait here until the send thread
@@ -39,7 +39,7 @@ void AnanasFifo::write(const juce::AudioBuffer<float> *src)
     condition.notify_one();
 }
 
-void AnanasFifo::read(uint8_t *dest, const int numSamples)
+void ananas::Fifo::read(uint8_t *dest, const int numSamples)
 {
     // Try to acquire the lock (std::unique_lock because that's what
     // condition_variable::wait() demands). If the audio thread is writing to
@@ -70,7 +70,7 @@ void AnanasFifo::read(uint8_t *dest, const int numSamples)
     ++nReads;
 }
 
-void AnanasFifo::timerCallback()
+void ananas::Fifo::timerCallback()
 {
 #if JUCE_DEBUG
     std::cout << '\r' << "FIFO size:" << std::setw(6) << fifo.getTotalSize() <<

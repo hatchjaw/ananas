@@ -1,22 +1,23 @@
-#include "AnanasServer.h"
+#include "Server.h"
 
 #include <arpa/inet.h>
 
-AnanasServer::AnanasServer() : sender(fifo)
+ananas::Server::Server() : sender(fifo)
 {
 }
 
-void AnanasServer::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
+void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
 {
     sender.prepare(samplesPerBlockExpected, sampleRate);
     timestampListener.prepare();
     timestampListener.onTimestamp = [this](const timespec &ts)
     {
+        // DBG("Timestamp diff: " << ts.tv_sec * 1'000'000'000 + ts.tv_nsec - (sender.getPacketTime() - 100'000'000) << " ns");
         sender.setPacketTime(ts);
     };
 }
 
-void AnanasServer::releaseResources()
+void ananas::Server::releaseResources()
 {
     if (sender.isThreadRunning()) {
         sender.stopThread(1000);
@@ -26,19 +27,19 @@ void AnanasServer::releaseResources()
     }
 }
 
-void AnanasServer::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
+void ananas::Server::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
 {
     fifo.write(bufferToFill.buffer);
 }
 
 //==============================================================================
 
-AnanasServer::Sender::Sender(AnanasFifo &fifo) : Thread("Ananas Sender"),
+ananas::Server::Sender::Sender(Fifo &fifo) : Thread("Ananas Sender"),
                                                  fifo(fifo)
 {
 }
 
-void AnanasServer::Sender::prepare(const int samplesPerBlockExpected, const double sampleRate)
+void ananas::Server::Sender::prepare(const int samplesPerBlockExpected, const double sampleRate)
 {
     juce::ignoreUnused(sampleRate);
     audioBlockSamples = samplesPerBlockExpected;
@@ -57,7 +58,7 @@ void AnanasServer::Sender::prepare(const int samplesPerBlockExpected, const doub
     startThread();
 }
 
-void AnanasServer::Sender::run()
+void ananas::Server::Sender::run()
 {
     while (!threadShouldExit()) {
         // Read from the fifo into the packet.
@@ -71,19 +72,24 @@ void AnanasServer::Sender::run()
     DBG("Stopping send thread");
 }
 
-void AnanasServer::Sender::setPacketTime(timespec ts)
+void ananas::Server::Sender::setPacketTime(timespec ts)
 {
     packet.setTime(ts);
 }
 
+int64_t ananas::Server::Sender::getPacketTime()
+{
+    return packet.getTime();
+}
+
 //==============================================================================
 
-AnanasServer::TimestampListener::TimestampListener()
+ananas::Server::TimestampListener::TimestampListener()
     : Thread("Ananas Timestamp Listener")
 {
 }
 
-void AnanasServer::TimestampListener::prepare()
+void ananas::Server::TimestampListener::prepare()
 {
     if (-1 == socket.getBoundPort()) {
         // JUCE doesn't handle multicast in a manner that's compatible with
@@ -125,7 +131,7 @@ void AnanasServer::TimestampListener::prepare()
     startThread();
 }
 
-void AnanasServer::TimestampListener::run()
+void ananas::Server::TimestampListener::run()
 {
     while (!threadShouldExit()) {
         if (socket.waitUntilReady(true, 500)) {
@@ -160,6 +166,7 @@ void AnanasServer::TimestampListener::run()
                         onTimestamp(ts);
                     }
 
+                    // The outgoing packet stream has a reference time now, so GTFO.
                     break;
                 }
             } else if (bytesRead < 0) {

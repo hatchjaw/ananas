@@ -2,7 +2,7 @@
 #define MAINCOMPONENT_H
 
 #include <juce_audio_utils/juce_audio_utils.h>
-#include <AnanasServer.h>
+#include <Server.h>
 
 class MainComponent final : public juce::AudioAppComponent {
 public:
@@ -23,7 +23,7 @@ private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transport;
-    AnanasServer server;
+    ananas::Server server;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

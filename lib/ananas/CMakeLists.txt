@@ -1,8 +1,7 @@
 add_library(ananas_server
-        AnanasServer.cpp
-        AnanasFifo.cpp
-        AnanasPacket.cpp
-        AnanasPacket.h
+        Server.cpp
+        Fifo.cpp
+        Packet.cpp
 )
 
 target_include_directories(ananas_server
@@ -19,3 +18,5 @@ target_compile_definitions(ananas_server
         PRIVATE
         AUDIO_SAMPLE_RATE=${audioSampleRate}
 )
+
+set_target_properties(ananas_server PROPERTIES POSITION_INDEPENDENT_CODE ON)
