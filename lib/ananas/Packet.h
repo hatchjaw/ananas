@@ -1,5 +1,6 @@
 #ifndef ANANASPACKET_H
 #define ANANASPACKET_H
+
 #include <juce_core/juce_core.h>
 
 namespace ananas
@@ -23,12 +24,13 @@ namespace ananas
         uint64_t getTime() const;
 
     private:
-        static constexpr int64_t kNanoSecondsPerSecond{1'000'000'000};
-        static constexpr int64_t kNanoSecondsPerPacket{kNanoSecondsPerSecond * 128 / AUDIO_SAMPLE_RATE};
-        static constexpr double kNanoSecondsPerPacketRemainder{static_cast<double>(kNanoSecondsPerSecond) * 128 / AUDIO_SAMPLE_RATE - kNanoSecondsPerPacket};
+        static constexpr int64_t kNSPS{1'000'000'000};
 
         Header header{};
+        int64_t nsPerPacket{};
+        double nsPerPacketRemainder{};
         double timestampRemainder{0};
+        double halfClientBufferDuration{};
     };
 }
 

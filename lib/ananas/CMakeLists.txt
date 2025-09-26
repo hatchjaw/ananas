@@ -4,6 +4,12 @@ add_library(ananas_server
         Packet.cpp
 )
 
+set_target_properties(ananas_server PROPERTIES
+        POSITION_INDEPENDENT_CODE ON
+        VERSION 0.1.0
+        SOVERSION 1
+)
+
 target_include_directories(ananas_server
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
@@ -18,5 +24,3 @@ target_compile_definitions(ananas_server
         PRIVATE
         AUDIO_SAMPLE_RATE=${audioSampleRate}
 )
-
-set_target_properties(ananas_server PROPERTIES POSITION_INDEPENDENT_CODE ON)

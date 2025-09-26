@@ -30,7 +30,7 @@ namespace ananas
 
             void setPacketTime(timespec ts);
 
-            int64_t getPacketTime();
+            int64_t getPacketTime() const;
 
         private:
             juce::DatagramSocket socket;
@@ -42,8 +42,7 @@ namespace ananas
         };
 
         /**
-         * A thread to listen out for a PTP timestamp; the first timestamp found
-         * will dictate the timing reference for the Sender thread.
+         * A thread to listen out for PTP timestamps.
          */
         class TimestampListener final : public juce::Thread
         {

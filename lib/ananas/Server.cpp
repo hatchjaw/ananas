@@ -77,7 +77,7 @@ void ananas::Server::Sender::setPacketTime(timespec ts)
     packet.setTime(ts);
 }
 
-int64_t ananas::Server::Sender::getPacketTime()
+int64_t ananas::Server::Sender::getPacketTime() const
 {
     return packet.getTime();
 }
@@ -133,6 +133,8 @@ void ananas::Server::TimestampListener::prepare()
 
 void ananas::Server::TimestampListener::run()
 {
+    DBG("Listening for PTP timestamps...");
+
     while (!threadShouldExit()) {
         if (socket.waitUntilReady(true, 500)) {
             uint8_t buffer[1500];
@@ -146,7 +148,7 @@ void ananas::Server::TimestampListener::run()
 
                 // Check for Follow_Up message (0x08)
                 if ((buffer[0] & 0x0f) == 0x08) {
-                    DBG("Follow-up message found");
+                    // DBG("PTP follow-up message received from " << senderIP << ":" << senderPort);
 
                     timespec ts{};
 
@@ -160,14 +162,14 @@ void ananas::Server::TimestampListener::run()
                         ts.tv_nsec = ts.tv_nsec << 8 | buffer[40 + i];
                     }
 
-                    DBG("Timestamp: " << ts.tv_sec << "." << ts.tv_nsec << " --- " << ctime(&ts.tv_sec));
+                    // DBG("Timestamp: " << ts.tv_sec << "." << ts.tv_nsec << " --- " << ctime(&ts.tv_sec));
 
                     if (onTimestamp != nullptr) {
                         onTimestamp(ts);
                     }
 
                     // The outgoing packet stream has a reference time now, so GTFO.
-                    break;
+                    // break;
                 }
             } else if (bytesRead < 0) {
                 DBG("Error receiving data: " << strerror(errno));

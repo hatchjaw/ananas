@@ -2,6 +2,12 @@
 
 MainComponent::MainComponent(const juce::File &file)
 {
+    // for (auto type: deviceManager.getAvailableDeviceTypes()) {
+    //     for (auto name: type->getDeviceNames()) {
+    //         DBG(name);
+    //     }
+    // }
+
     // Apply desired audio settings.
     setAudioChannels(0, 2);
     auto setup{deviceManager.getAudioDeviceSetup()};

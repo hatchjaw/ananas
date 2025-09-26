@@ -1,27 +1,26 @@
 #include "PluginProcessor.h"
-
 #include "PluginEditor.h"
 #include "Utils.h"
 
 PluginProcessor::PluginProcessor()
-    : apvts(*this, nullptr, "WFS Parameters", createParameterLayout()),
+    : server(std::make_unique<ananas::Server>()),
+      apvts(*this, nullptr, "WFS Parameters", createParameterLayout()),
       dynamicTree("Module Parameters")
 {
 }
 
 PluginProcessor::~PluginProcessor()
 {
-    server.releaseResources(); // Why the bloody hell doesn't this work?
 }
 
 void PluginProcessor::prepareToPlay(const double sampleRate, const int samplesPerBlock)
 {
-    server.prepareToPlay(samplesPerBlock, sampleRate);
+    server->prepareToPlay(samplesPerBlock, sampleRate);
 }
 
 void PluginProcessor::releaseResources()
 {
-    server.releaseResources();
+    server->releaseResources();
 }
 
 void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages)
@@ -30,9 +29,18 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 
     juce::ScopedNoDenormals noDenormals;
 
-    juce::AudioSourceChannelInfo block{buffer};
+    const juce::AudioSourceChannelInfo block{buffer};
 
-    server.getNextAudioBlock(block);
+    server->getNextAudioBlock(block);
+}
+
+void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &midiMessages)
+{
+    juce::AudioBuffer<float> floatBuffer;
+
+    floatBuffer.makeCopyOf(buffer);
+
+    processBlock(floatBuffer, midiMessages);
 }
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor()
@@ -123,10 +131,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
     juce::AudioProcessorValueTreeState::ParameterLayout params{};
 
     params.add(std::make_unique<juce::AudioParameterFloat>(
-            ananas::WFS::Utils::speakerSpacingParamID,
-            "Speaker Spacing (m)",
-            juce::NormalisableRange{.05f, .4f, .001f},
-            .2f
+        ananas::WFS::Utils::speakerSpacingParamID,
+        "Speaker Spacing (m)",
+        juce::NormalisableRange{.05f, .4f, .001f},
+        .2f
     ));
 
     return params;
@@ -134,6 +142,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
 
 //==============================================================================
 // This creates new instances of the plugin.
-juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter() {
+juce::AudioProcessor *JUCE_CALLTYPE createPluginFilter()
+{
     return new PluginProcessor();
 }

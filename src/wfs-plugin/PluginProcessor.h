@@ -18,6 +18,8 @@ public:
 
     void processBlock(juce::AudioBuffer<float> &buffer, juce::MidiBuffer &midiMessages) override;
 
+    void processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &midiMessages) override;
+
     juce::AudioProcessorEditor *createEditor() override;
 
     bool hasEditor() const override;
@@ -51,7 +53,7 @@ private:
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    ananas::Server server;
+    std::unique_ptr<ananas::Server> server;
 
     // For handling parameters that are known at compile time.
     juce::AudioProcessorValueTreeState apvts;
