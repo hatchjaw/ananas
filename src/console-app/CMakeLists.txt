@@ -1,3 +1,5 @@
+set(audioSampleRate 48000)
+
 juce_add_console_app(ananas_console
         PRODUCT_NAME "Ananas Console")
 

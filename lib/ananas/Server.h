@@ -10,7 +10,9 @@ namespace ananas
     class Server final : public juce::AudioSource
     {
     public:
-        Server();
+        explicit Server(uint8_t numChannelsToSend);
+
+        ~Server() override;
 
         void prepareToPlay(int samplesPerBlockExpected, double sampleRate) override;
 
@@ -22,9 +24,9 @@ namespace ananas
         class Sender final : public juce::Thread
         {
         public:
-            explicit Sender(ananas::Fifo &fifo);
+            explicit Sender(Fifo &fifo);
 
-            void prepare(int samplesPerBlockExpected, double sampleRate);
+            void prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
             void run() override;
 
@@ -32,9 +34,11 @@ namespace ananas
 
             int64_t getPacketTime() const;
 
+            bool stopThread(int timeOutMilliseconds);
+
         private:
             juce::DatagramSocket socket;
-            ananas::Fifo &fifo;
+            Fifo &fifo;
             Packet packet{};
             int audioBlockSamples{0};
 
@@ -61,9 +65,10 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
         };
 
-        ananas::Fifo fifo;
+        Fifo fifo;
         Sender sender;
         TimestampListener timestampListener;
+        uint8_t numChannels;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
     };

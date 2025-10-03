@@ -1,15 +1,18 @@
 #include "Packet.h"
+#include "Utils.h"
 
-void ananas::Packet::prepare(const int samplesPerBlockExpected, const double sampleRate)
+void ananas::Packet::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
 {
-    setSize(sizeof(Header) + 2 * samplesPerBlockExpected * sizeof(int16_t));
+    setSize(sizeof(Header) + numChannels * samplesPerBlockExpected * sizeof(int16_t));
     fillWith(0);
+    header.numChannels = numChannels;
+    header.numFrames = samplesPerBlockExpected;
 
     // Compute the nanosecond packet timestamp interval. This may not be an
     // integer, so calculate the remainder too, so this can be accumulated
     // (somewhat) accurately.
-    nsPerPacket = kNSPS * samplesPerBlockExpected / static_cast<int>(sampleRate);
-    nsPerPacketRemainder = static_cast<double>(kNSPS) * samplesPerBlockExpected / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
+    nsPerPacket = Constants::NSPS * samplesPerBlockExpected / static_cast<int>(sampleRate);
+    nsPerPacketRemainder = static_cast<double>(Constants::NSPS) * samplesPerBlockExpected / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
 
     halfClientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * 25;
 
@@ -38,7 +41,7 @@ void ananas::Packet::setTime(timespec ts)
     // Set the time a little ahead; a reproduction offset, and something to
     // compensate for the fact that it took a little while for the follow-up
     // message to arrive.
-    const auto newTime{ts.tv_sec * kNSPS + ts.tv_nsec + kNSPS / 10};
+    const auto newTime{ts.tv_sec * Constants::NSPS + ts.tv_nsec + Constants::PacketOffsetNs};
 
     // If the difference between the new time and the current packet timestamp
     // exceeds what can possibly be available at the client, update the header
@@ -51,7 +54,7 @@ void ananas::Packet::setTime(timespec ts)
     }
 }
 
-uint64_t ananas::Packet::getTime() const
+int64_t ananas::Packet::getTime() const
 {
     return header.timestamp;
 }

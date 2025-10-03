@@ -1,6 +1,7 @@
 #ifndef ANANASFIFO_H
 #define ANANASFIFO_H
 
+#include <Utils.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_events/juce_events.h>
 
@@ -24,7 +25,7 @@ namespace ananas
     class Fifo final : juce::Timer
     {
     public:
-        Fifo();
+        Fifo(uint8_t numChannels);
 
         /**
          * Used as a condition_variable predicate.
@@ -48,14 +49,15 @@ namespace ananas
 
         void timerCallback() override;
 
+        void abortRead();
+
     private:
-        static constexpr int capacity{(1 << 10)};
-        juce::AbstractFifo fifo{capacity};
-        // TODO: these channel counts shouldn't be hard-coded.
-        juce::AudioBuffer<float> buffer{2, capacity};
-        FormatConverter converter{2, 2};
+        juce::AbstractFifo fifo{Constants::FifoCapacityFrames};
+        std::unique_ptr<juce::AudioBuffer<float>> buffer;
+        std::unique_ptr<FormatConverter> converter;
         std::mutex mutex;
         std::condition_variable condition;
+        std::atomic<bool> shouldStop{false};
     };
 }
 

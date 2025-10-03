@@ -8,12 +8,14 @@ namespace ananas
     class Packet : public juce::MemoryBlock
     {
     public:
-        struct Header
+        struct alignas(16) Header
         {
             int64_t timestamp;
+            uint8_t numChannels;
+            uint16_t numFrames;
         };
 
-        void prepare(int samplesPerBlockExpected, double sampleRate);
+        void prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
         uint8_t *getAudioData();
 
@@ -21,11 +23,9 @@ namespace ananas
 
         void setTime(timespec ts);
 
-        uint64_t getTime() const;
+        int64_t getTime() const;
 
     private:
-        static constexpr int64_t kNSPS{1'000'000'000};
-
         Header header{};
         int64_t nsPerPacket{};
         double nsPerPacketRemainder{};

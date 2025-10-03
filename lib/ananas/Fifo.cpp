@@ -1,16 +1,15 @@
 #include "Fifo.h"
 
-ananas::Fifo::Fifo()
+ananas::Fifo::Fifo(uint8_t numChannels) : buffer(std::make_unique<juce::AudioBuffer<float> >(numChannels, Constants::FifoCapacityFrames)),
+                                          converter(std::make_unique<FormatConverter>(numChannels, numChannels))
 {
-    startTimer(2000);
+    startTimer(Constants::FifoReportIntervalMs);
 }
 
 bool ananas::Fifo::isReady(const int framesRequested) const
 {
     return fifo.getNumReady() >= framesRequested;
 }
-
-static int nWrites{0}, nReads{0};
 
 void ananas::Fifo::write(const juce::AudioBuffer<float> *src)
 {
@@ -25,13 +24,11 @@ void ananas::Fifo::write(const juce::AudioBuffer<float> *src)
     {
         const auto writeHandle{fifo.write(src->getNumSamples())};
 
-        for (auto ch{0}; ch < src->getNumChannels(); ++ch) {
+        for (auto ch{0}; ch < std::min(buffer->getNumChannels(), src->getNumChannels()); ++ch) {
             const auto readPointer{src->getReadPointer(ch)};
-            buffer.copyFrom(ch, writeHandle.startIndex1, readPointer, writeHandle.blockSize1);
-            buffer.copyFrom(ch, writeHandle.startIndex2, readPointer + writeHandle.blockSize1, writeHandle.blockSize2);
+            buffer->copyFrom(ch, writeHandle.startIndex1, readPointer, writeHandle.blockSize1);
+            buffer->copyFrom(ch, writeHandle.startIndex2, readPointer + writeHandle.blockSize1, writeHandle.blockSize2);
         }
-
-        ++nWrites;
     }
 
     // Tell the send thread to check the wait predicate, i.e. see if there are
@@ -42,14 +39,23 @@ void ananas::Fifo::write(const juce::AudioBuffer<float> *src)
 void ananas::Fifo::read(uint8_t *dest, const int numSamples)
 {
     // Try to acquire the lock (std::unique_lock because that's what
-    // condition_variable::wait() demands). If the audio thread is writing to
-    // the FIFO, execution will pause here.
+    // condition_variable::wait() demands). If the audio thread is writing
+    // to the FIFO, execution will pause here.
     std::unique_lock lock{mutex};
 
     // Wait until isReady() returns true. If it returns false, the send thread
     // will relinquish the lock until it is notified, at which point it will
     // try to reacquire the lock and check again.
-    condition.wait(lock, [this, numSamples] { return isReady(numSamples); });
+    // If shouldStop evaluates to true, the plugin is probably being destroyed.
+    condition.wait(lock, [this, numSamples]
+    {
+        return isReady(numSamples) || shouldStop.load();
+    });
+
+    // If by this point there aren't actually the requested number of samples
+    // available, or, more likely, shouldStop is true, the plugin is probably
+    // being destroyed so GTFO.
+    if (!isReady(numSamples) || shouldStop.load()) return;
 
     // The wait predicate passed; read from the FIFO into the destination
     // buffer. NB, the send thread holds the lock until the end of this method;
@@ -60,14 +66,12 @@ void ananas::Fifo::read(uint8_t *dest, const int numSamples)
     //     // DBG("Read num samples: " << readHandle.blockSize1 + readHandle.blockSize2);
     // }
 
-    const auto blockTwoOffset{readHandle.blockSize1 * buffer.getNumChannels() * sizeof(int16_t)}; // 2 is numChannels...
+    const auto blockTwoOffset{readHandle.blockSize1 * buffer->getNumChannels() * sizeof(int16_t)}; // 2 is numChannels...
 
-    for (auto ch{0}; ch < buffer.getNumChannels(); ++ch) {
-        converter.convertSamples(dest, ch, buffer.getReadPointer(ch, readHandle.startIndex1), 0, readHandle.blockSize1);
-        converter.convertSamples(&dest[blockTwoOffset], ch, buffer.getReadPointer(ch, readHandle.startIndex2), 0, readHandle.blockSize2);
+    for (auto ch{0}; ch < buffer->getNumChannels(); ++ch) {
+        converter->convertSamples(dest, ch, buffer->getReadPointer(ch, readHandle.startIndex1), 0, readHandle.blockSize1);
+        converter->convertSamples(&dest[blockTwoOffset], ch, buffer->getReadPointer(ch, readHandle.startIndex2), 0, readHandle.blockSize2);
     }
-
-    ++nReads;
 }
 
 void ananas::Fifo::timerCallback()
@@ -78,4 +82,12 @@ void ananas::Fifo::timerCallback()
             " | free space:" << std::setw(6) << fifo.getFreeSpace() <<
             std::flush;
 #endif
+}
+
+void ananas::Fifo::abortRead()
+{
+    // Update shouldStop and notify the waiting condition variable. This will
+    // terminate a read operation.
+    shouldStop = true;
+    condition.notify_all();
 }

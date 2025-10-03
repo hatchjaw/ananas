@@ -1,6 +1,6 @@
 #include "MainComponent.h"
 
-MainComponent::MainComponent(const juce::File &file)
+MainComponent::MainComponent(const juce::File &file) : server(2)
 {
     // for (auto type: deviceManager.getAvailableDeviceTypes()) {
     //     for (auto name: type->getDeviceNames()) {

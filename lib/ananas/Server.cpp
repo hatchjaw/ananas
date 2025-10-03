@@ -1,14 +1,21 @@
 #include "Server.h"
-
+#include <Utils.h>
 #include <arpa/inet.h>
 
-ananas::Server::Server() : sender(fifo)
+ananas::Server::Server(const uint8_t numChannelsToSend) : fifo(numChannelsToSend),
+                                                          sender(fifo),
+                                                          numChannels(numChannelsToSend)
 {
+}
+
+ananas::Server::~Server()
+{
+    releaseResources();
 }
 
 void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
 {
-    sender.prepare(samplesPerBlockExpected, sampleRate);
+    sender.prepare(numChannels, samplesPerBlockExpected, sampleRate);
     timestampListener.prepare();
     timestampListener.onTimestamp = [this](const timespec &ts)
     {
@@ -34,26 +41,27 @@ void ananas::Server::getNextAudioBlock(const juce::AudioSourceChannelInfo &buffe
 
 //==============================================================================
 
-ananas::Server::Sender::Sender(Fifo &fifo) : Thread("Ananas Sender"),
-                                                 fifo(fifo)
+ananas::Server::Sender::Sender(Fifo &fifo) : Thread(Constants::SenderThreadName),
+                                             fifo(fifo)
 {
 }
 
-void ananas::Server::Sender::prepare(const int samplesPerBlockExpected, const double sampleRate)
+void ananas::Server::Sender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
 {
     juce::ignoreUnused(sampleRate);
     audioBlockSamples = samplesPerBlockExpected;
 
     if (-1 == socket.getBoundPort()) {
-        const auto bound{socket.bindToPort(14841, "192.168.10.10")};
-        if (const auto joined{bound && socket.joinMulticast("224.4.224.4")}; !bound || !joined) {
+        const auto bound{socket.bindToPort(Constants::SenderSocketLocalPort, Constants::LocalInterfaceIP)};
+        if (const auto joined{bound && socket.joinMulticast(Constants::SenderSocketMulticastIP)}; !bound || !joined) {
             DBG(strerror(errno));
+            // TODO: return false, surely...
         }
         socket.setMulticastLoopbackEnabled(false);
         socket.waitUntilReady(false, 1000);
     }
 
-    packet.prepare(samplesPerBlockExpected, sampleRate);
+    packet.prepare(numChannels, samplesPerBlockExpected, sampleRate);
 
     startThread();
 }
@@ -63,16 +71,22 @@ void ananas::Server::Sender::run()
     while (!threadShouldExit()) {
         // Read from the fifo into the packet.
         fifo.read(packet.getAudioData(), audioBlockSamples);
+        if (threadShouldExit()) break;
         // Write the header to the packet.
         packet.writeHeader();
         // Write the packet to the socket.
-        socket.write("224.4.224.4", 49152, packet.getData(), static_cast<int>(packet.getSize()));
+        socket.write(
+            Constants::SenderSocketMulticastIP,
+            Constants::SenderSocketRemotePort,
+            packet.getData(),
+            static_cast<int>(packet.getSize())
+        );
     }
 
     DBG("Stopping send thread");
 }
 
-void ananas::Server::Sender::setPacketTime(timespec ts)
+void ananas::Server::Sender::setPacketTime(const timespec ts)
 {
     packet.setTime(ts);
 }
@@ -82,10 +96,16 @@ int64_t ananas::Server::Sender::getPacketTime() const
     return packet.getTime();
 }
 
+bool ananas::Server::Sender::stopThread(const int timeOutMilliseconds)
+{
+    fifo.abortRead();
+    return Thread::stopThread(timeOutMilliseconds);
+}
+
 //==============================================================================
 
 ananas::Server::TimestampListener::TimestampListener()
-    : Thread("Ananas Timestamp Listener")
+    : Thread(Constants::TimestampListenerThreadName)
 {
 }
 
@@ -99,13 +119,13 @@ void ananas::Server::TimestampListener::prepare()
         // what the hell)...
         if (!socket.setEnablePortReuse(true)) {
             DBG("Failed to set socket port reuse: " << strerror(errno));
-            socket.shutdown(); // TODO: abstract away the socket...
+            socket.shutdown();
             return;
         }
 
         // ... anyway, so bind the relevant port to ALL interfaces
         // (INADDR_ANY)...
-        if (!socket.bindToPort(320)) {
+        if (!socket.bindToPort(Constants::TimestapListenerLocalPort)) {
             DBG("Failed to bind socket to port: " << strerror(errno));
             socket.shutdown();
             return;
@@ -113,15 +133,15 @@ void ananas::Server::TimestampListener::prepare()
 
         // ...then join the appropriate multicast group on the relevant
         // interface (i.e. a manually-configured ethernet connection).
-        struct ip_mreq mreq{};
-        mreq.imr_multiaddr.s_addr = inet_addr(juce::String("224.0.1.129").toRawUTF8());
-        mreq.imr_interface.s_addr = inet_addr(juce::String("192.168.10.10").toRawUTF8());
+        ip_mreq mreq{};
+        mreq.imr_multiaddr.s_addr = inet_addr(Constants::PTPMulticastIP.text);
+        mreq.imr_interface.s_addr = inet_addr(Constants::LocalInterfaceIP.text);
 
         if (setsockopt(
                 socket.getRawSocketHandle(),
                 IPPROTO_IP,
                 IP_ADD_MEMBERSHIP,
-                (const char *) &mreq, sizeof (mreq)) < 0) {
+                &mreq, sizeof (mreq)) < 0) {
             DBG("Failed to add multicast membership: " << strerror(errno));
             socket.shutdown();
             return;
@@ -136,18 +156,22 @@ void ananas::Server::TimestampListener::run()
     DBG("Listening for PTP timestamps...");
 
     while (!threadShouldExit()) {
-        if (socket.waitUntilReady(true, 500)) {
-            uint8_t buffer[1500];
+        if (socket.waitUntilReady(true, Constants::TimestampListenerSocketTimeoutMs)) {
+            if (threadShouldExit()) break;
+
+            uint8_t buffer[Constants::TimestampListenerBufferSize];
             juce::String senderIP;
             int senderPort;
 
-            const auto bytesRead{socket.read(buffer, 1500, false, senderIP, senderPort)};
-
-            if (bytesRead > 0) {
+            if (const auto bytesRead{
+                    socket.read(buffer, Constants::TimestampListenerBufferSize, false, senderIP, senderPort)
+                };
+                bytesRead > 0
+            ) {
                 // DBG("Received " << bytesRead << " bytes from " << senderIP << ":" << senderPort);
 
                 // Check for Follow_Up message (0x08)
-                if ((buffer[0] & 0x0f) == 0x08) {
+                if ((buffer[0] & 0x0f) == Constants::FollowUpMessageType) {
                     // DBG("PTP follow-up message received from " << senderIP << ":" << senderPort);
 
                     timespec ts{};
@@ -167,9 +191,6 @@ void ananas::Server::TimestampListener::run()
                     if (onTimestamp != nullptr) {
                         onTimestamp(ts);
                     }
-
-                    // The outgoing packet stream has a reference time now, so GTFO.
-                    // break;
                 }
             } else if (bytesRead < 0) {
                 DBG("Error receiving data: " << strerror(errno));

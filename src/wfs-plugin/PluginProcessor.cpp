@@ -3,14 +3,16 @@
 #include "Utils.h"
 
 PluginProcessor::PluginProcessor()
-    : server(std::make_unique<ananas::Server>()),
-      apvts(*this, nullptr, "WFS Parameters", createParameterLayout()),
-      dynamicTree("Module Parameters")
+    : AudioProcessor(getBusesProperties()),
+      server(std::make_unique<ananas::Server>(ananas::WFS::Constants::MaxChannelsToSend)),
+      apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
+      dynamicTree(ananas::WFS::Identifiers::DynamicTreeType)
 {
 }
 
 PluginProcessor::~PluginProcessor()
 {
+    // dynamicTree.removeListener(wfsMessenger.get());
 }
 
 void PluginProcessor::prepareToPlay(const double sampleRate, const int samplesPerBlock)
@@ -126,13 +128,25 @@ void PluginProcessor::setStateInformation(const void *data, int size)
     juce::ignoreUnused(data, size);
 }
 
+juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
+{
+    BusesProperties buses;
+
+    for (int i{0}; i < ananas::WFS::Constants::MaxChannelsToSend; ++i) {
+        buses.addBus(true, ananas::WFS::Strings::InputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
+        buses.addBus(false, ananas::WFS::Strings::OutputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
+    }
+
+    return buses;
+}
+
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params{};
 
     params.add(std::make_unique<juce::AudioParameterFloat>(
-        ananas::WFS::Utils::speakerSpacingParamID,
-        "Speaker Spacing (m)",
+        ananas::WFS::Params::SpeakerSpacing.id,
+        ananas::WFS::Params::SpeakerSpacing.name,
         juce::NormalisableRange{.05f, .4f, .001f},
         .2f
     ));
