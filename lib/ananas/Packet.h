@@ -15,7 +15,7 @@ namespace ananas
             uint16_t numFrames;
         };
 
-        void prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
+        void prepare(int numChannels, int framesPerPacket, double sampleRate);
 
         uint8_t *getAudioData();
 
@@ -25,12 +25,15 @@ namespace ananas
 
         int64_t getTime() const;
 
+        __syscall_slong_t getSleepInterval() const;
+
     private:
         Header header{};
         int64_t nsPerPacket{};
+        __syscall_slong_t nsSleepInterval{};
         double nsPerPacketRemainder{};
         double timestampRemainder{0};
-        double halfClientBufferDuration{};
+        double clientBufferDuration{};
     };
 }
 

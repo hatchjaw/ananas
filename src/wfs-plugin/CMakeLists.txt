@@ -6,7 +6,7 @@ set(bundleID "org.emeraude.ananas-wfs")
 
 set(juceFormats AU VST3 Standalone)
 
-set(maxChannels 4)
+set(maxChannels 22)
 
 juce_add_plugin(ananasWFS
         COMPANY_NAME "${companyName}"

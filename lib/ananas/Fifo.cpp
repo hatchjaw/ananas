@@ -36,7 +36,7 @@ void ananas::Fifo::write(const juce::AudioBuffer<float> *src)
     condition.notify_one();
 }
 
-void ananas::Fifo::read(uint8_t *dest, const int numSamples)
+void ananas::Fifo::read(uint8_t *dest, const int numFrames)
 {
     // Try to acquire the lock (std::unique_lock because that's what
     // condition_variable::wait() demands). If the audio thread is writing
@@ -47,20 +47,20 @@ void ananas::Fifo::read(uint8_t *dest, const int numSamples)
     // will relinquish the lock until it is notified, at which point it will
     // try to reacquire the lock and check again.
     // If shouldStop evaluates to true, the plugin is probably being destroyed.
-    condition.wait(lock, [this, numSamples]
+    condition.wait(lock, [this, numFrames]
     {
-        return isReady(numSamples) || shouldStop.load();
+        return isReady(numFrames) || shouldStop.load();
     });
 
     // If by this point there aren't actually the requested number of samples
     // available, or, more likely, shouldStop is true, the plugin is probably
     // being destroyed so GTFO.
-    if (!isReady(numSamples) || shouldStop.load()) return;
+    if (!isReady(numFrames) || shouldStop.load()) return;
 
     // The wait predicate passed; read from the FIFO into the destination
     // buffer. NB, the send thread holds the lock until the end of this method;
     // probably fine, but in theory this could block the audio thread.
-    const auto readHandle{fifo.read(numSamples)};
+    const auto readHandle{fifo.read(numFrames)};
 
     // if (readHandle.blockSize1 + readHandle.blockSize2 != 128) {
     //     // DBG("Read num samples: " << readHandle.blockSize1 + readHandle.blockSize2);

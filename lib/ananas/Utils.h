@@ -9,7 +9,15 @@ namespace ananas
     {
     public:
         constexpr static int64_t NSPS{1'000'000'000};
-        constexpr static int64_t PacketOffsetNs{NSPS / 10};
+        constexpr static size_t FramesPerPacket{32};
+        /**
+         * NSPS/8 for packets of 128 frames.
+         * NSPS/16 for packets of 64 frames.
+         * NSPS/32 for packets of 32 frames.
+         * NSPS/64 for packets of 16 frames.
+         */
+        constexpr static int64_t PacketOffsetNs{NSPS / 32};
+        constexpr static size_t ClientPacketBufferSize{50};
 
         constexpr static uint16_t FifoCapacityFrames{(1 << 10)};
         constexpr static int FifoReportIntervalMs{2000};

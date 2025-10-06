@@ -26,7 +26,7 @@ namespace ananas
         public:
             explicit Sender(Fifo &fifo);
 
-            void prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
+            bool prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
             void run() override;
 
@@ -41,6 +41,7 @@ namespace ananas
             Fifo &fifo;
             Packet packet{};
             int audioBlockSamples{0};
+            bool isReady{false};
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Sender);
         };
@@ -53,7 +54,7 @@ namespace ananas
         public:
             TimestampListener();
 
-            void prepare();
+            bool prepare();
 
             void run() override;
 
@@ -61,6 +62,7 @@ namespace ananas
 
         private:
             juce::DatagramSocket socket;
+            bool isReady{false};
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
         };

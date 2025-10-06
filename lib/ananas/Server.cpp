@@ -15,8 +15,11 @@ ananas::Server::~Server()
 
 void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
 {
-    sender.prepare(numChannels, samplesPerBlockExpected, sampleRate);
-    timestampListener.prepare();
+    while (!sender.prepare(numChannels, samplesPerBlockExpected, sampleRate) ||
+           !timestampListener.prepare()) {
+        sleep(1);
+    }
+
     timestampListener.onTimestamp = [this](const timespec &ts)
     {
         // DBG("Timestamp diff: " << ts.tv_sec * 1'000'000'000 + ts.tv_nsec - (sender.getPacketTime() - 100'000'000) << " ns");
@@ -46,8 +49,10 @@ ananas::Server::Sender::Sender(Fifo &fifo) : Thread(Constants::SenderThreadName)
 {
 }
 
-void ananas::Server::Sender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
+bool ananas::Server::Sender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
 {
+    if (isReady) return true;
+
     juce::ignoreUnused(sampleRate);
     audioBlockSamples = samplesPerBlockExpected;
 
@@ -55,22 +60,24 @@ void ananas::Server::Sender::prepare(const int numChannels, const int samplesPer
         const auto bound{socket.bindToPort(Constants::SenderSocketLocalPort, Constants::LocalInterfaceIP)};
         if (const auto joined{bound && socket.joinMulticast(Constants::SenderSocketMulticastIP)}; !bound || !joined) {
             DBG(strerror(errno));
-            // TODO: return false, surely...
+            return false;
         }
         socket.setMulticastLoopbackEnabled(false);
         socket.waitUntilReady(false, 1000);
     }
 
-    packet.prepare(numChannels, samplesPerBlockExpected, sampleRate);
+    // packet.prepare(numChannels, samplesPerBlockExpected, sampleRate);
+    packet.prepare(numChannels, Constants::FramesPerPacket, sampleRate);
 
-    startThread();
+    isReady = startThread();
+    return isReady;
 }
 
 void ananas::Server::Sender::run()
 {
     while (!threadShouldExit()) {
         // Read from the fifo into the packet.
-        fifo.read(packet.getAudioData(), audioBlockSamples);
+        fifo.read(packet.getAudioData(), Constants::FramesPerPacket);
         if (threadShouldExit()) break;
         // Write the header to the packet.
         packet.writeHeader();
@@ -81,6 +88,9 @@ void ananas::Server::Sender::run()
             packet.getData(),
             static_cast<int>(packet.getSize())
         );
+
+        const timespec t{0, packet.getSleepInterval()};
+        nanosleep(&t, nullptr);
     }
 
     DBG("Stopping send thread");
@@ -109,8 +119,10 @@ ananas::Server::TimestampListener::TimestampListener()
 {
 }
 
-void ananas::Server::TimestampListener::prepare()
+bool ananas::Server::TimestampListener::prepare()
 {
+    if (isReady) return true;
+
     if (-1 == socket.getBoundPort()) {
         // JUCE doesn't handle multicast in a manner that's compatible with
         // reading PTP packets on a specific interface...
@@ -120,7 +132,7 @@ void ananas::Server::TimestampListener::prepare()
         if (!socket.setEnablePortReuse(true)) {
             DBG("Failed to set socket port reuse: " << strerror(errno));
             socket.shutdown();
-            return;
+            return false;
         }
 
         // ... anyway, so bind the relevant port to ALL interfaces
@@ -128,7 +140,7 @@ void ananas::Server::TimestampListener::prepare()
         if (!socket.bindToPort(Constants::TimestapListenerLocalPort)) {
             DBG("Failed to bind socket to port: " << strerror(errno));
             socket.shutdown();
-            return;
+            return false;
         }
 
         // ...then join the appropriate multicast group on the relevant
@@ -144,11 +156,12 @@ void ananas::Server::TimestampListener::prepare()
                 &mreq, sizeof (mreq)) < 0) {
             DBG("Failed to add multicast membership: " << strerror(errno));
             socket.shutdown();
-            return;
+            return false;
         }
     }
 
-    startThread();
+    isReady = startThread();
+    return isReady;
 }
 
 void ananas::Server::TimestampListener::run()

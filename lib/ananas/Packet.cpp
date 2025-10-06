@@ -1,22 +1,23 @@
 #include "Packet.h"
 #include "Utils.h"
 
-void ananas::Packet::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
+void ananas::Packet::prepare(const int numChannels, const int framesPerPacket, const double sampleRate)
 {
-    setSize(sizeof(Header) + numChannels * samplesPerBlockExpected * sizeof(int16_t));
+    setSize(sizeof(Header) + numChannels * framesPerPacket * sizeof(int16_t));
     fillWith(0);
     header.numChannels = numChannels;
-    header.numFrames = samplesPerBlockExpected;
+    header.numFrames = framesPerPacket;
 
     // Compute the nanosecond packet timestamp interval. This may not be an
     // integer, so calculate the remainder too, so this can be accumulated
     // (somewhat) accurately.
-    nsPerPacket = Constants::NSPS * samplesPerBlockExpected / static_cast<int>(sampleRate);
-    nsPerPacketRemainder = static_cast<double>(Constants::NSPS) * samplesPerBlockExpected / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
+    nsPerPacket = Constants::NSPS * framesPerPacket / static_cast<int>(sampleRate);
+    nsPerPacketRemainder = static_cast<double>(Constants::NSPS) * framesPerPacket / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
+    nsSleepInterval = nsPerPacket * 1 / 2;
 
-    halfClientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * 25;
+    clientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * Constants::ClientPacketBufferSize;
 
-    DBG(samplesPerBlockExpected << "/" << sampleRate << " = " <<
+    DBG(framesPerPacket << "/" << sampleRate << " = " <<
         nsPerPacket << " + " << nsPerPacketRemainder << " ns per block.");
 }
 
@@ -48,8 +49,9 @@ void ananas::Packet::setTime(timespec ts)
     // timestamp.
     const auto timestampDiff{static_cast<double>(newTime - header.timestamp)};
 
-    if (timestampDiff > halfClientBufferDuration || timestampDiff < -halfClientBufferDuration) {
-        DBG("Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime);
+    if (timestampDiff > clientBufferDuration / 2 || timestampDiff < -clientBufferDuration / 2) {
+        // DBG("Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime);
+        std::cerr << "Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime << std::endl;
         header.timestamp = newTime;
     }
 }
@@ -57,4 +59,9 @@ void ananas::Packet::setTime(timespec ts)
 int64_t ananas::Packet::getTime() const
 {
     return header.timestamp;
+}
+
+__syscall_slong_t ananas::Packet::getSleepInterval() const
+{
+    return nsSleepInterval;
 }

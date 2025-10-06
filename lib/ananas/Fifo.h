@@ -43,9 +43,9 @@ namespace ananas
         /**
          * Read some samples from the FIFO. Called by the network send thread.
          * @param dest
-         * @param numSamples
+         * @param numFrames
          */
-        void read(uint8_t *dest, int numSamples);
+        void read(uint8_t *dest, int numFrames);
 
         void timerCallback() override;
 
