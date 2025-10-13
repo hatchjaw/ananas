@@ -5,7 +5,8 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 
-class PluginProcessor final : public juce::AudioProcessor
+class PluginProcessor final : public juce::AudioProcessor,
+                              public juce::ChangeListener
 {
 public:
     PluginProcessor();
@@ -47,6 +48,12 @@ public:
     void getStateInformation(juce::MemoryBlock &destData) override;
 
     void setStateInformation(const void *data, int size) override;
+
+    void changeListenerCallback(juce::ChangeBroadcaster *source) override;
+
+    juce::ValueTree &getDynamicTree();
+
+    const juce::ValueTree &getDynamicTree() const;
 
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)

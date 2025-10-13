@@ -4,6 +4,7 @@
 #include <juce_core/juce_core.h>
 #include "Fifo.h"
 #include "Packet.h"
+#include "ClientInfo.h"
 
 namespace ananas
 {
@@ -19,6 +20,8 @@ namespace ananas
         void releaseResources() override;
 
         void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
+
+        ClientList *getClientList();
 
     private:
         class Sender final : public juce::Thread
@@ -39,7 +42,7 @@ namespace ananas
         private:
             juce::DatagramSocket socket;
             Fifo &fifo;
-            Packet packet{};
+            AudioPacket packet{};
             int audioBlockSamples{0};
             bool isReady{false};
 
@@ -67,10 +70,29 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
         };
 
+        class ClientListener final : public juce::Thread
+        {
+        public:
+            explicit ClientListener(ClientList &clients);
+
+            bool prepare();
+
+            void run() override;
+
+        private:
+            juce::DatagramSocket socket;
+            bool isReady{false};
+            ClientList &clients;
+
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ClientListener);
+        };
+
+        uint8_t numChannels;
         Fifo fifo;
         Sender sender;
         TimestampListener timestampListener;
-        uint8_t numChannels;
+        ClientListener clientListener;
+        ClientList clients;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
     };

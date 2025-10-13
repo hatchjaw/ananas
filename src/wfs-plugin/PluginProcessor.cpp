@@ -8,10 +8,12 @@ PluginProcessor::PluginProcessor()
       apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
       dynamicTree(ananas::WFS::Identifiers::DynamicTreeType)
 {
+    server->getClientList()->addChangeListener(this);
 }
 
 PluginProcessor::~PluginProcessor()
 {
+    server->getClientList()->removeChangeListener(this);
     // dynamicTree.removeListener(wfsMessenger.get());
 }
 
@@ -47,7 +49,7 @@ void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::Midi
 
 juce::AudioProcessorEditor *PluginProcessor::createEditor()
 {
-    return new PluginEditor(*this, apvts, dynamicTree);
+    return new PluginEditor(*this);
 }
 
 bool PluginProcessor::hasEditor() const
@@ -126,6 +128,23 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock &destData)
 void PluginProcessor::setStateInformation(const void *data, int size)
 {
     juce::ignoreUnused(data, size);
+}
+
+void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
+{
+    if (const auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
+        dynamicTree.setProperty(ananas::Constants::ConnectedClientsParamID, clients->toVar(), nullptr);
+    }
+}
+
+juce::ValueTree &PluginProcessor::getDynamicTree()
+{
+    return dynamicTree;
+}
+
+const juce::ValueTree &PluginProcessor::getDynamicTree() const
+{
+    return dynamicTree;
 }
 
 juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()

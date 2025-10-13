@@ -25,14 +25,14 @@ namespace ananas
     class Fifo final : juce::Timer
     {
     public:
-        Fifo(uint8_t numChannels);
+        explicit Fifo(uint8_t numChannels);
 
         /**
          * Used as a condition_variable predicate.
          * @param framesRequested
          * @return
          */
-        bool isReady(int framesRequested) const;
+        [[nodiscard]] bool isReady(int framesRequested) const;
 
         /**
          * Write some samples to the FIFO. Called by the audio thread.

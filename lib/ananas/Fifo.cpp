@@ -77,10 +77,10 @@ void ananas::Fifo::read(uint8_t *dest, const int numFrames)
 void ananas::Fifo::timerCallback()
 {
 #if JUCE_DEBUG
-    std::cout << '\r' << "FIFO size:" << std::setw(6) << fifo.getTotalSize() <<
-            " | frames ready:" << std::setw(6) << fifo.getNumReady() <<
-            " | free space:" << std::setw(6) << fifo.getFreeSpace() <<
-            std::flush;
+    // std::cout << '\r' << "FIFO size:" << std::setw(6) << fifo.getTotalSize() <<
+    //         " | frames ready:" << std::setw(6) << fifo.getNumReady() <<
+    //         " | free space:" << std::setw(6) << fifo.getFreeSpace() <<
+    //         std::flush;
 #endif
 }
 

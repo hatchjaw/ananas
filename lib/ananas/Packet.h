@@ -5,7 +5,7 @@
 
 namespace ananas
 {
-    class Packet : public juce::MemoryBlock
+    class AudioPacket : public juce::MemoryBlock
     {
     public:
         struct alignas(16) Header
@@ -23,9 +23,9 @@ namespace ananas
 
         void setTime(timespec ts);
 
-        int64_t getTime() const;
+        [[nodiscard]] int64_t getTime() const;
 
-        __syscall_slong_t getSleepInterval() const;
+        [[nodiscard]] __syscall_slong_t getSleepInterval() const;
 
     private:
         Header header{};
@@ -34,6 +34,16 @@ namespace ananas
         double nsPerPacketRemainder{};
         double timestampRemainder{0};
         double clientBufferDuration{};
+    };
+
+    struct AnnouncementPacket
+    {
+        juce::uint32 serial;
+        float samplingRate;
+        float percentCPU;
+        juce::int32 offsetFrame;
+        juce::int64 offsetTime;
+        juce::uint8 bufferFillPercent;
     };
 }
 

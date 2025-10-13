@@ -39,8 +39,8 @@ namespace ananas
         class Identifiers
         {
         public:
-            inline static const juce::Identifier StaticTreeType{"WFS Parameters"};
-            inline static const juce::Identifier DynamicTreeType{"Module Parameters"};
+            inline static const juce::Identifier StaticTreeType{"WfsParameters"};
+            inline static const juce::Identifier DynamicTreeType{"ModuleParameters"};
         };
     }
 }

@@ -2,9 +2,10 @@
 #include <Utils.h>
 #include <arpa/inet.h>
 
-ananas::Server::Server(const uint8_t numChannelsToSend) : fifo(numChannelsToSend),
+ananas::Server::Server(const uint8_t numChannelsToSend) : numChannels(numChannelsToSend),
+                                                          fifo(numChannelsToSend),
                                                           sender(fifo),
-                                                          numChannels(numChannelsToSend)
+                                                          clientListener(clients)
 {
 }
 
@@ -16,7 +17,8 @@ ananas::Server::~Server()
 void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
 {
     while (!sender.prepare(numChannels, samplesPerBlockExpected, sampleRate) ||
-           !timestampListener.prepare()) {
+           !timestampListener.prepare() ||
+           !clientListener.prepare()) {
         sleep(1);
     }
 
@@ -35,11 +37,19 @@ void ananas::Server::releaseResources()
     if (timestampListener.isThreadRunning()) {
         timestampListener.stopThread(1000);
     }
+    if (clientListener.isThreadRunning()) {
+        clientListener.stopThread(1000);
+    }
 }
 
 void ananas::Server::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
 {
     fifo.write(bufferToFill.buffer);
+}
+
+ananas::ClientList *ananas::Server::getClientList()
+{
+    return &clients;
 }
 
 //==============================================================================
@@ -66,7 +76,6 @@ bool ananas::Server::Sender::prepare(const int numChannels, const int samplesPer
         socket.waitUntilReady(false, 1000);
     }
 
-    // packet.prepare(numChannels, samplesPerBlockExpected, sampleRate);
     packet.prepare(numChannels, Constants::FramesPerPacket, sampleRate);
 
     isReady = startThread();
@@ -137,7 +146,7 @@ bool ananas::Server::TimestampListener::prepare()
 
         // ... anyway, so bind the relevant port to ALL interfaces
         // (INADDR_ANY)...
-        if (!socket.bindToPort(Constants::TimestapListenerLocalPort)) {
+        if (!socket.bindToPort(Constants::TimestampListenerLocalPort)) {
             DBG("Failed to bind socket to port: " << strerror(errno));
             socket.shutdown();
             return false;
@@ -212,4 +221,69 @@ void ananas::Server::TimestampListener::run()
     }
 
     DBG("Stopping timestamp listener thread");
+}
+
+//==============================================================================
+
+ananas::Server::ClientListener::ClientListener(ClientList &clients)
+    : Thread(Constants::ClientListenerThreadName),
+      clients(clients)
+{
+}
+
+bool ananas::Server::ClientListener::prepare()
+{
+    if (isReady) return true;
+
+    if (-1 == socket.getBoundPort()) {
+        if (!socket.setEnablePortReuse(true)) {
+            DBG("Failed to set socket port reuse: " << strerror(errno));
+            socket.shutdown();
+            return false;
+        }
+
+        if (!socket.bindToPort(Constants::ClientListenerLocalPort)) {
+            DBG("Failed to bind socket to port: " << strerror(errno));
+            socket.shutdown();
+            return false;
+        }
+
+        if (!socket.joinMulticast(Constants::PTPMulticastIP)) {
+            DBG("Failed to join multicast group: " << strerror(errno));
+            socket.shutdown();
+            return false;
+        }
+
+        socket.setMulticastLoopbackEnabled(false);
+    }
+
+    isReady = startThread();
+    return isReady;
+}
+
+void ananas::Server::ClientListener::run()
+{
+    DBG("Listening for clients...");
+
+    while (!threadShouldExit()) {
+        if (socket.waitUntilReady(true, Constants::ClientListenerSocketTimeoutMs)) {
+            if (threadShouldExit()) break;
+
+            uint8_t buffer[Constants::ClientListenerBufferSize];
+            juce::String senderIP;
+            int senderPort;
+
+            if (const auto bytesRead{
+                    socket.read(buffer, Constants::ClientListenerBufferSize, false, senderIP, senderPort)
+                };
+                bytesRead > 0
+            ) {
+                clients.handlePacket(senderIP, reinterpret_cast<const AnnouncementPacket *>(buffer));
+            } else if (bytesRead < 0) {
+                DBG("Error receiving data: " << strerror(errno));
+            }
+        }
+    }
+
+    DBG("Stopping client listener thread");
 }

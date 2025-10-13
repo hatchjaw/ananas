@@ -2,6 +2,7 @@ add_library(ananas_server
         Server.cpp
         Fifo.cpp
         Packet.cpp
+        ClientInfo.cpp
 )
 
 set_target_properties(ananas_server PROPERTIES

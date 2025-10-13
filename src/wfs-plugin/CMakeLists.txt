@@ -6,7 +6,9 @@ set(bundleID "org.emeraude.ananas-wfs")
 
 set(juceFormats AU VST3 Standalone)
 
-set(maxChannels 22)
+# Up to 22 channels @ 32 frames
+# Up to 44 channels @ 16 frames
+set(maxChannels 16)
 
 juce_add_plugin(ananasWFS
         COMPANY_NAME "${companyName}"
