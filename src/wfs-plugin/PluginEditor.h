@@ -2,6 +2,8 @@
 #define PLUGINEDITOR_H
 
 #include "PluginProcessor.h"
+#include "UI/ClientTableComponent.h"
+#include "UI/LookAndFeel.h"
 
 
 class PluginEditor final : public juce::AudioProcessorEditor,
@@ -57,6 +59,9 @@ private:
     PluginProcessor &getProcessor();
 
     const PluginProcessor &getProcessor() const;
+
+    ananas::LookAndFeel lookAndFeel;
+    ananas::ClientTableComponent clientTable;
 };
 
 

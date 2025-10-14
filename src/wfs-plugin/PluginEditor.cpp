@@ -5,9 +5,13 @@
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p)
 {
-    setSize(1200, 900);
+    setLookAndFeel(&lookAndFeel);
+
+    addAndMakeVisible(clientTable);
 
     getProcessor().getDynamicTree().addListener(this);
+
+    setSize(1200, 900);
 }
 
 PluginEditor::~PluginEditor()
@@ -19,32 +23,11 @@ PluginEditor::~PluginEditor()
 void PluginEditor::paint(juce::Graphics &g)
 {
     g.fillAll(getLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId));
-
-    auto y{100};
-    const auto clients{getProcessor().getDynamicTree().getProperty(ananas::Constants::ConnectedClientsParamID).getArray()};
-    if (clients != nullptr) {
-        g.setColour(juce::Colours::white);
-        g.setFont(15.0f);
-        for (auto *it{clients->begin()}; it < clients->end(); ++it, y += 50) {
-            const auto samplingRate{static_cast<float>(it->getProperty("samplingRate", 0))};
-            const auto percentCPU{static_cast<float>(it->getProperty("percentCPU", 0))};
-            g.drawSingleLineText(
-                juce::String{
-                    "IP: " + it->getProperty("ip", "-.-.-.-").toString() +
-                    ", serial: " + it->getProperty("serial", "--------").toString() +
-                    ", offset: " + it->getProperty("offsetTime", "-.-.-.-.").toString() +
-                    " ns (" + it->getProperty("offsetFrame", 0).toString() + " frames)" +
-                    ", packet buffer " + it->getProperty("bufferFillPercent", 0).toString() + " % full" +
-                    ", sampling rate " + juce::String(samplingRate, 6) + " Hz" +
-                    ", " + juce::String(percentCPU, 3) + " % CPU"
-                }, 100, y
-            );
-        }
-    }
 }
 
 void PluginEditor::resized()
 {
+    clientTable.setBounds(getLocalBounds().reduced(10));
 }
 
 void PluginEditor::parameterChanged(const juce::String &parameterID, float newValue)
@@ -54,9 +37,8 @@ void PluginEditor::parameterChanged(const juce::String &parameterID, float newVa
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
 {
-    ignoreUnused(tree);
-
     if (property == ananas::Constants::ConnectedClientsParamID) {
+        clientTable.update(tree[property]);
         triggerAsyncUpdate();
     }
 }

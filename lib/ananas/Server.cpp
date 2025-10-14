@@ -32,13 +32,13 @@ void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const doub
 void ananas::Server::releaseResources()
 {
     if (sender.isThreadRunning()) {
-        sender.stopThread(1000);
+        sender.stopThread(Constants::SenderSocketTimeoutMs);
     }
     if (timestampListener.isThreadRunning()) {
-        timestampListener.stopThread(1000);
+        timestampListener.stopThread(Constants::TimestampListenerSocketTimeoutMs);
     }
     if (clientListener.isThreadRunning()) {
-        clientListener.stopThread(1000);
+        clientListener.stopThread(Constants::ClientListenerSocketTimeoutMs);
     }
 }
 

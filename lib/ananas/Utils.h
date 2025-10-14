@@ -28,21 +28,33 @@ namespace ananas
         constexpr static int SenderSocketLocalPort{14841};
         constexpr static int SenderSocketRemotePort{49152};
         inline const static juce::StringRef SenderSocketMulticastIP{"224.4.224.4"};
+        constexpr static int SenderSocketTimeoutMs{500};
 
         inline const static juce::StringRef TimestampListenerThreadName{"Ananas Timestamp Listener"};
         constexpr static int TimestampListenerLocalPort{320};
         inline const static juce::StringRef PTPMulticastIP{"224.0.1.129"};
-        constexpr static int TimestampListenerSocketTimeoutMs{5000};
+        constexpr static int TimestampListenerSocketTimeoutMs{1500};
         constexpr static int TimestampListenerBufferSize{1500};
         constexpr static int FollowUpMessageType{0x08};
 
         inline const static juce::StringRef ClientListenerThreadName{"Ananas Client Listener"};
         constexpr static int ClientListenerLocalPort{49153};
-        constexpr static int ClientListenerSocketTimeoutMs{5000};
+        constexpr static int ClientListenerSocketTimeoutMs{500};
         constexpr static int ClientListenerBufferSize{1500};
         constexpr static int ClientConnectednessCheckIntervalMs{1000};
         constexpr static uint32_t ClientDisconnectedThresholdMs{1000};
         inline static const juce::Identifier ConnectedClientsParamID{"ConnectedClients"};
+    };
+
+    class Identifiers
+    {
+    public:
+        inline const static juce::Identifier ClientSerialNumberPropertyID{"serialNumber"};
+        inline const static juce::Identifier ClientPtpOffsetNsPropertyID{"offsetTime"};
+        inline const static juce::Identifier ClientPtpOffsetFramePropertyID{"offsetFrame"};
+        inline const static juce::Identifier ClientBufferFillPercentPropertyID{"bufferFillPercent"};
+        inline const static juce::Identifier ClientSamplingRatePropertyID{"samplingRate"};
+        inline const static juce::Identifier ClientPercentCPUPropertyID{"percentCPU"};
     };
 }
 

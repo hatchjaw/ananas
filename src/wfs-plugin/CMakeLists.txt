@@ -43,6 +43,8 @@ target_sources(ananasWFS
         PRIVATE
         PluginEditor.cpp
         PluginProcessor.cpp
+        UI/LookAndFeel.cpp
+        UI/ClientTableComponent.cpp
 )
 
 target_link_libraries(ananasWFS

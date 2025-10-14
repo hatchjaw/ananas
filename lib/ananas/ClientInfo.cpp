@@ -72,19 +72,18 @@ void ananas::ClientList::timerCallback()
 
 juce::var ananas::ClientList::toVar() const
 {
-    auto object{juce::var()};
+    const auto object{new juce::DynamicObject()};
 
-    for (const auto& [ip, clientInfo] : clients) {
-        auto* client{new juce::DynamicObject()};
-        const auto& info{clientInfo.getInfo()};
-        client->setProperty("ip", ip);
-        client->setProperty("serial", static_cast<int>(info.serial));
+    for (const auto &[ip, clientInfo]: clients) {
+        auto *client{new juce::DynamicObject()};
+        const auto &info{clientInfo.getInfo()};
+        client->setProperty(Identifiers::ClientSerialNumberPropertyID, static_cast<int>(info.serial));
         client->setProperty("offsetTime", info.offsetTime);
         client->setProperty("offsetFrame", info.offsetFrame);
         client->setProperty("bufferFillPercent", info.bufferFillPercent);
         client->setProperty("samplingRate", info.samplingRate);
         client->setProperty("percentCPU", info.percentCPU);
-        object.append(client);
+        object->setProperty(ip, client);
     }
 
     return object;
