@@ -7,7 +7,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 {
     setLookAndFeel(&lookAndFeel);
 
-    addAndMakeVisible(clientTable);
+    addAndMakeVisible(tabbedComponent);
+    tabbedComponent.addTab(ananas::WFS::Strings::ClientsTabName, juce::Colours::lightgrey, &clientTable, false);
 
     getProcessor().getDynamicTree().addListener(this);
 
@@ -27,7 +28,7 @@ void PluginEditor::paint(juce::Graphics &g)
 
 void PluginEditor::resized()
 {
-    clientTable.setBounds(getLocalBounds().reduced(10));
+    tabbedComponent.setBounds(getLocalBounds());
 }
 
 void PluginEditor::parameterChanged(const juce::String &parameterID, float newValue)

@@ -13,6 +13,8 @@ namespace ananas
     public:
         ClientTableComponent();
 
+        ~ClientTableComponent() override;
+
         void update(const juce::var &clientInfo);
 
         int getNumRows() override;
@@ -26,7 +28,14 @@ namespace ananas
         void resized() override;
 
     private:
-        void addColumn(const WFS::Tables::ColumnHeader &h) const;
+        class LookAndFeel final : public juce::LookAndFeel_V4
+        {
+        public:
+            void drawTableHeaderColumn(juce::Graphics &, juce::TableHeaderComponent &,
+                                       const juce::String &columnName, int columnId, int width, int height,
+                                       bool isMouseOver, bool isMouseDown, int columnFlags) override;
+        };
+
         struct Row
         {
             juce::String ip;
@@ -37,8 +46,12 @@ namespace ananas
             float samplingRate;
             float percentCPU;
         };
+
+        void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
+
         juce::TableListBox table{{}, this};
         juce::Array<Row> rows;
+        LookAndFeel lookAndFeel;
     };
 } // ananas
 

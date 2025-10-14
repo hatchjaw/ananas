@@ -61,6 +61,8 @@ private:
     const PluginProcessor &getProcessor() const;
 
     ananas::LookAndFeel lookAndFeel;
+
+    juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
     ananas::ClientTableComponent clientTable;
 };
 
