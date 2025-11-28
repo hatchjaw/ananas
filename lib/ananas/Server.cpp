@@ -1,11 +1,15 @@
-#include "Server.h"
-#include <Utils.h>
 #include <arpa/inet.h>
+#include "Server.h"
+
+#include <AuthorityInfo.h>
+
+#include "AnanasUtils.h"
 
 ananas::Server::Server(const uint8_t numChannelsToSend) : numChannels(numChannelsToSend),
                                                           fifo(numChannelsToSend),
                                                           sender(fifo),
-                                                          clientListener(clients)
+                                                          clientListener(clients),
+                                                          authorityListener(authority)
 {
 }
 
@@ -18,7 +22,8 @@ void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const doub
 {
     while (!sender.prepare(numChannels, samplesPerBlockExpected, sampleRate) ||
            !timestampListener.prepare() ||
-           !clientListener.prepare()) {
+           !clientListener.prepare() ||
+           !authorityListener.prepare()) {
         sleep(1);
     }
 
@@ -40,6 +45,9 @@ void ananas::Server::releaseResources()
     if (clientListener.isThreadRunning()) {
         clientListener.stopThread(Constants::ClientListenerSocketTimeoutMs);
     }
+    if (authorityListener.isThreadRunning()) {
+        authorityListener.stopThread(Constants::AuthorityListenerSocketTimeoutMs);
+    }
 }
 
 void ananas::Server::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
@@ -51,6 +59,16 @@ ananas::ClientList *ananas::Server::getClientList()
 {
     return &clients;
 }
+
+ananas::AuthorityInfo *ananas::Server::getAuthority()
+{
+    return &authority;
+}
+
+// std::pair<juce::String, ananas::AuthorityAnnouncePacket> ananas::Server::getAuthority()
+// {
+//     return std::make_pair(authorityListener.authorityIP, authorityListener.info);
+// }
 
 //==============================================================================
 
@@ -225,31 +243,32 @@ void ananas::Server::TimestampListener::run()
 
 //==============================================================================
 
-ananas::Server::ClientListener::ClientListener(ClientList &clients)
-    : Thread(Constants::ClientListenerThreadName),
-      clients(clients)
+ananas::Server::AnnouncementListenerThread::AnnouncementListenerThread(
+    const juce::String &threadName,
+    const int portToListenOn
+) : Thread(threadName), port(portToListenOn)
 {
 }
 
-bool ananas::Server::ClientListener::prepare()
+bool ananas::Server::AnnouncementListenerThread::prepare()
 {
     if (isReady) return true;
 
     if (-1 == socket.getBoundPort()) {
         if (!socket.setEnablePortReuse(true)) {
-            DBG("Failed to set socket port reuse: " << strerror(errno));
+            DBG(getThreadName() << "Failed to set socket port reuse: " << strerror(errno));
             socket.shutdown();
             return false;
         }
 
-        if (!socket.bindToPort(Constants::ClientListenerLocalPort)) {
-            DBG("Failed to bind socket to port: " << strerror(errno));
+        if (!socket.bindToPort(port)) {
+            DBG(getThreadName() << "Failed to bind socket to port: " << strerror(errno));
             socket.shutdown();
             return false;
         }
 
         if (!socket.joinMulticast(Constants::PTPMulticastIP)) {
-            DBG("Failed to join multicast group: " << strerror(errno));
+            DBG(getThreadName() << "Failed to join multicast group: " << strerror(errno));
             socket.shutdown();
             return false;
         }
@@ -259,6 +278,14 @@ bool ananas::Server::ClientListener::prepare()
 
     isReady = startThread();
     return isReady;
+}
+
+//==============================================================================
+
+ananas::Server::ClientListener::ClientListener(ClientList &clients)
+    : AnnouncementListenerThread(Constants::ClientListenerThreadName, Constants::ClientListenerLocalPort),
+      clients(clients)
+{
 }
 
 void ananas::Server::ClientListener::run()
@@ -278,7 +305,7 @@ void ananas::Server::ClientListener::run()
                 };
                 bytesRead > 0
             ) {
-                clients.handlePacket(senderIP, reinterpret_cast<const AnnouncementPacket *>(buffer));
+                clients.handlePacket(senderIP, reinterpret_cast<const ClientAnnouncePacket *>(buffer));
             } else if (bytesRead < 0) {
                 DBG("Error receiving data: " << strerror(errno));
             }
@@ -286,4 +313,52 @@ void ananas::Server::ClientListener::run()
     }
 
     DBG("Stopping client listener thread");
+}
+
+//==============================================================================
+
+ananas::Server::AuthorityListener::AuthorityListener(AuthorityInfo &authority)
+    : AnnouncementListenerThread(Constants::AuthorityListenerThreadName,
+                                 Constants::AuthorityListenerLocalPort),
+      authority(authority)
+{
+}
+
+void ananas::Server::AuthorityListener::run()
+{
+    DBG("Listening for timing authority...");
+
+    while (!threadShouldExit()) {
+        if (socket.waitUntilReady(true, Constants::AuthorityListenerSocketTimeoutMs)) {
+            if (threadShouldExit()) break;
+
+            int senderPort;
+
+            if (const auto bytesRead{
+                    socket.read(&authority.getInfo(), sizeof(AuthorityAnnouncePacket), false, authority.getIP(), senderPort)
+                };
+                bytesRead == -1
+            ) {
+                DBG("Error receiving data: " << strerror(errno));
+            }
+
+            const auto feedbackAccumulatorDiff{
+                static_cast<juce::int32>(authority.getInfo().usbFeedbackAccumulator) -
+                Constants::AuthorityInitialUSBFeedbackAccumulator
+            };
+
+            DBG("Authority IP " << authority.getIP() <<
+                ", Num clients " << authority.getInfo().numClients <<
+                ", Avg buffer fill " << authority.getInfo().avgBufferFillPercent <<
+                " %, Feedback accumulator " << juce::String{authority.getInfo().usbFeedbackAccumulator} <<
+                (feedbackAccumulatorDiff >= 0 ? " (+" : " (") << feedbackAccumulatorDiff << ") (" <<
+                juce::String{static_cast<float>(authority.getInfo().usbFeedbackAccumulator) / (1 << 25)} << " kHz)"
+                ", Num underruns " << authority.getInfo().numUnderruns <<
+                ", Num overflows " << authority.getInfo().numOverflows <<
+                ", Audio-PTP offset " << authority.getInfo().audioPTPOffset << " ns" <<
+                ", USB high speed: " << (authority.getInfo().usbHighSpeed ? "Yes" : "No"));
+        }
+    }
+
+    DBG("Stopping timing authority listener thread");
 }

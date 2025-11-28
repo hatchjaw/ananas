@@ -1,9 +1,9 @@
 #ifndef ANANASFIFO_H
 #define ANANASFIFO_H
 
-#include <Utils.h>
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_events/juce_events.h>
+#include "AnanasUtils.h"
 
 using FormatConverter = juce::AudioData::ConverterInstance<
     juce::AudioData::Pointer<

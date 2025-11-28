@@ -51,23 +51,28 @@ namespace ananas::WFS
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
+        inline static const ColumnHeader ClientTablePTPLock{
+            3, "PTP lock", 75, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centred
+        };
         inline static const ColumnHeader ClientTablePresentationTimeOffset{
-            3, "Presentation time offset (ns)", 200, 30, -1,
+            4, "Presentation time offset (ns)", 200, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centredRight
         };
         inline static const ColumnHeader ClientTableBufferFillPercent{
-            4, "Buffer fill level", 200, 30, -1,
+            5, "Buffer fill level", 200, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
         inline static const ColumnHeader ClientTableSamplingRate{
-            5, "Reported sampling rate (Hz)", 200, 30, -1,
+            6, "Reported sampling rate (Hz)", 200, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
         inline static const ColumnHeader ClientTablePercentCPU{
-            6, "CPU %", 75, 30, -1,
+            7, "CPU %", 75, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centredRight
         };
@@ -79,7 +84,11 @@ namespace ananas::WFS
         inline static const juce::StringRef InputLabel{"Input #"};
         inline static const juce::StringRef OutputLabel{"Output #"};
 
-        inline static const juce::StringRef ClientsTabName{"Clients"};
+        inline static const juce::StringRef NetworkTabName{"Network"};
+        inline static const juce::StringRef WfsTabName{"WFS"};
+
+        inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
+        inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
         inline static const juce::StringRef ClientTableColumnNameIpAddress{"IP address"};
         inline static const juce::StringRef ClientTableColumnNameSerialNumber{"Serial number"};
         inline static const juce::StringRef ClientTableColumnNamePresentationTimeOffset{"Presentation time offset (ns)"};

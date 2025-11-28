@@ -69,7 +69,9 @@ void MainComponent::getNextAudioBlock(const juce::AudioSourceChannelInfo &buffer
         bufferToFill.clearActiveBufferRegion();
     }
 
-    bufferToFill.buffer->applyGain(.6f);
+    // Reduce the gain so output isn't deafeningly loud.
+    // Comment this line out if testing with the logic analyser!
+    // bufferToFill.buffer->applyGain(.6f);
 
     // Not strictly a buffer to fill, as far as the server is concerned;
     // nonetheless, pass it to the server to be written to the outgoing queue.

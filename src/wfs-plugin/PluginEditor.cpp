@@ -8,7 +8,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     setLookAndFeel(&lookAndFeel);
 
     addAndMakeVisible(tabbedComponent);
-    tabbedComponent.addTab(ananas::WFS::Strings::ClientsTabName, juce::Colours::lightgrey, &clientTable, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, nullptr, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
 
     getProcessor().getDynamicTree().addListener(this);
 
@@ -38,10 +39,10 @@ void PluginEditor::parameterChanged(const juce::String &parameterID, float newVa
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
 {
-    if (property == ananas::Constants::ConnectedClientsParamID) {
-        clientTable.update(tree[property]);
+    // if (property == ananas::Constants::ConnectedClientsParamID) {
+        networkOverview.update(tree, property);
         triggerAsyncUpdate();
-    }
+    // }
 }
 
 void PluginEditor::handleAsyncUpdate()

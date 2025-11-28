@@ -1,6 +1,6 @@
 #include "ClientTableComponent.h"
 
-#include <Utils.h>
+#include <AnanasUtils.h>
 #include "../Utils.h"
 
 namespace ananas
@@ -11,6 +11,7 @@ namespace ananas
 
         addColumn(WFS::TableColumns::ClientTableIpAddress);
         addColumn(WFS::TableColumns::ClientTableSerialNumber);
+        addColumn(WFS::TableColumns::ClientTablePTPLock);
         addColumn(WFS::TableColumns::ClientTablePresentationTimeOffset);
         addColumn(WFS::TableColumns::ClientTableBufferFillPercent);
         addColumn(WFS::TableColumns::ClientTableSamplingRate);
@@ -20,6 +21,7 @@ namespace ananas
 
         table.setModel(this);
         table.setColour(juce::ListBox::outlineColourId, juce::Colours::black);
+        table.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentWhite);
         table.setOutlineThickness(1);
     }
 
@@ -30,6 +32,8 @@ namespace ananas
 
     void ClientTableComponent::update(const juce::var &clientInfo)
     {
+        if (!isVisible()) return;
+
         rows.clear();
 
         if (auto *obj = clientInfo.getDynamicObject()) {
@@ -39,8 +43,10 @@ namespace ananas
 
                 if (const auto *client = prop.value.getDynamicObject()) {
                     row.serialNumber = client->getProperty(Identifiers::ClientSerialNumberPropertyID).toString();
-                    row.offsetTime = client->getProperty(Identifiers::ClientPtpOffsetNsPropertyID);
-                    row.offsetFrame = client->getProperty(Identifiers::ClientPtpOffsetFramePropertyID);
+                    row.ptpLock = client->getProperty(Identifiers::ClientPTPLockPropertyID);
+                    row.presentationTimeOffsetNs = client->getProperty(Identifiers::ClientPresentationTimeOffsetNsPropertyID);
+                    row.presentationTimeOffsetFrame = client->getProperty(Identifiers::ClientPresentationTimeOffsetFramePropertyID);
+                    row.audioPTPOffsetNs = client->getProperty(Identifiers::ClientAudioPTPOffsetPropertyID);
                     row.bufferFillPercent = client->getProperty(Identifiers::ClientBufferFillPercentPropertyID);
                     row.samplingRate = client->getProperty(Identifiers::ClientSamplingRatePropertyID);
                     row.percentCPU = client->getProperty(Identifiers::ClientPercentCPUPropertyID);
@@ -76,7 +82,7 @@ namespace ananas
         juce::ignoreUnused(rowIsSelected);
 
         if (rowNumber < rows.size()) {
-            const auto &[ip, serialNumber, offsetTime, offsetFrame, bufferFillPercent, samplingRate, percentCPU] = rows[rowNumber];
+            const auto &[ip, serialNumber, ptpLock, offsetTime, offsetFrame, audioPTPOffset, bufferFillPercent, samplingRate, percentCPU] = rows[rowNumber];
             juce::String text;
             juce::Justification justification{juce::Justification::centredLeft};
 
@@ -87,18 +93,25 @@ namespace ananas
                 case 2: text = serialNumber;
                     justification = WFS::TableColumns::ClientTableSerialNumber.justification;
                     break;
-                case 3: text = WFS::Utils::formatWithThousandsSeparator(offsetTime) + "  (" + juce::String(offsetFrame) + " frames)";
+                case 3: text = ptpLock ? "Yes" : "No";
+                    justification = WFS::TableColumns::ClientTablePTPLock.justification;
+                    g.setColour(ptpLock ? juce::Colours::lightseagreen : juce::Colours::palevioletred);
+                    g.fillRect(2, 2, width - 4, height - 4);
+                    break;
+                case 4: text = WFS::Utils::formatWithThousandsSeparator(offsetTime + audioPTPOffset) +
+                               " (" + juce::String(offsetFrame) +
+                               (offsetFrame == 1 ? " frame)" : " frames)");
                     justification = WFS::TableColumns::ClientTablePresentationTimeOffset.justification;
                     break;
-                case 4: text = juce::String(bufferFillPercent) + " %";
+                case 5: text = juce::String(bufferFillPercent) + " %";
                     justification = WFS::TableColumns::ClientTableBufferFillPercent.justification;
                     g.setColour(bufferFillPercent > 80 || bufferFillPercent < 20 ? juce::Colours::palevioletred : juce::Colours::lightseagreen);
                     g.fillRect(2, 2, static_cast<int>((width - 4) * (bufferFillPercent / 100.f)), height - 4);
                     break;
-                case 5: text = WFS::Utils::formatWithThousandsSeparator(samplingRate, 6);
+                case 6: text = WFS::Utils::formatWithThousandsSeparator(samplingRate, 6);
                     justification = WFS::TableColumns::ClientTableSamplingRate.justification;
                     break;
-                case 6: text = juce::String(percentCPU, 3);
+                case 7: text = juce::String(percentCPU, 3);
                     justification = WFS::TableColumns::ClientTablePercentCPU.justification;
                     break;
                 default: break;
@@ -154,13 +167,15 @@ namespace ananas
                 break;
             case 2: justification = WFS::TableColumns::ClientTableSerialNumber.justification;
                 break;
-            case 3: justification = WFS::TableColumns::ClientTablePresentationTimeOffset.justification;
+            case 3: justification = WFS::TableColumns::ClientTablePTPLock.justification;
                 break;
-            case 4: justification = WFS::TableColumns::ClientTableBufferFillPercent.justification;
+            case 4: justification = WFS::TableColumns::ClientTablePresentationTimeOffset.justification;
                 break;
-            case 5: justification = WFS::TableColumns::ClientTableSamplingRate.justification;
+            case 5: justification = WFS::TableColumns::ClientTableBufferFillPercent.justification;
                 break;
-            case 6: justification = WFS::TableColumns::ClientTablePercentCPU.justification;
+            case 6: justification = WFS::TableColumns::ClientTableSamplingRate.justification;
+                break;
+            case 7: justification = WFS::TableColumns::ClientTablePercentCPU.justification;
                 break;
             default:
                 break;

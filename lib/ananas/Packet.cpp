@@ -1,5 +1,5 @@
 #include "Packet.h"
-#include "Utils.h"
+#include "AnanasUtils.h"
 
 void ananas::AudioPacket::prepare(const int numChannels, const int framesPerPacket, const double sampleRate)
 {
@@ -49,9 +49,15 @@ void ananas::AudioPacket::setTime(timespec ts)
     // timestamp.
     const auto timestampDiff{static_cast<double>(newTime - header.timestamp)};
 
+    std::stringstream ss;
+    ss.imbue(std::locale("en_GB.UTF-8")); // Use system locale
+    ss << std::fixed << std::setprecision(0) << timestampDiff;
+
+    std::cout << "Timestamp diff " << ss.str() << " ns" << std::endl;
+
     if (timestampDiff > clientBufferDuration / 2 || timestampDiff < -clientBufferDuration / 2) {
         // DBG("Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime);
-        std::cerr << "Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime << std::endl;
+        std::cerr << "Timestamp diff is " << std::fixed << timestampDiff << "... Setting packet timestamp to " << newTime << std::endl;
         header.timestamp = newTime;
     }
 }

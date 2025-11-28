@@ -1,5 +1,5 @@
-#ifndef UTILS_H
-#define UTILS_H
+#ifndef ANANASUTILS_H
+#define ANANASUTILS_H
 
 #include <juce_core/juce_core.h>
 
@@ -44,18 +44,33 @@ namespace ananas
         constexpr static int ClientConnectednessCheckIntervalMs{1000};
         constexpr static uint32_t ClientDisconnectedThresholdMs{1000};
         inline static const juce::Identifier ConnectedClientsParamID{"ConnectedClients"};
+
+        inline const static juce::StringRef AuthorityListenerThreadName{"Ananas Authority Listener"};
+        constexpr static int AuthorityListenerLocalPort{49154};
+        constexpr static int AuthorityListenerSocketTimeoutMs{500};
+        constexpr static int AuthorityListenerBufferSize{1500};
+        constexpr static int AuthorityConnectednessCheckIntervalMs{1000};
+        constexpr static uint32_t AuthorityDisconnectedThresholdMs{1000};
+        constexpr static juce::int32 AuthorityInitialUSBFeedbackAccumulator{48 << 25};
+        inline static const juce::Identifier TimeAuthorityParamID{"TimeAuthority"};
     };
 
     class Identifiers
     {
     public:
         inline const static juce::Identifier ClientSerialNumberPropertyID{"serialNumber"};
-        inline const static juce::Identifier ClientPtpOffsetNsPropertyID{"offsetTime"};
-        inline const static juce::Identifier ClientPtpOffsetFramePropertyID{"offsetFrame"};
+        inline const static juce::Identifier ClientPTPLockPropertyID{"ptpLock"};
+        inline const static juce::Identifier ClientPresentationTimeOffsetNsPropertyID{"presentationTimeOffsetNs"};
+        inline const static juce::Identifier ClientPresentationTimeOffsetFramePropertyID{"presentationTimeOffsetFrame"};
+        inline const static juce::Identifier ClientAudioPTPOffsetPropertyID{"AudioPTPOffsetNs"};
         inline const static juce::Identifier ClientBufferFillPercentPropertyID{"bufferFillPercent"};
         inline const static juce::Identifier ClientSamplingRatePropertyID{"samplingRate"};
         inline const static juce::Identifier ClientPercentCPUPropertyID{"percentCPU"};
+
+        inline const static juce::Identifier AuthorityIpPropertyID{"ipAddress"};
+        inline const static juce::Identifier AuthoritySerialNumberPropertyID{"serialNumber"};
+        inline const static juce::Identifier AuthorityFeedbackAccumulatorPropertyID{"feedbackAccumulator"};
     };
 }
 
-#endif //UTILS_H
+#endif //ANANASUTILS_H

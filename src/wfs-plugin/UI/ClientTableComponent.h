@@ -40,8 +40,10 @@ namespace ananas
         {
             juce::String ip;
             juce::String serialNumber;
-            juce::int32 offsetTime;
-            juce::int32 offsetFrame;
+            bool ptpLock;
+            juce::int32 presentationTimeOffsetNs;
+            juce::int32 presentationTimeOffsetFrame;
+            juce::int32 audioPTPOffsetNs;
             juce::int32 bufferFillPercent;
             float samplingRate;
             float percentCPU;

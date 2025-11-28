@@ -1,6 +1,7 @@
 #ifndef ANANASSERVER_H
 #define ANANASSERVER_H
 
+#include <AuthorityInfo.h>
 #include <juce_core/juce_core.h>
 #include "Fifo.h"
 #include "Packet.h"
@@ -22,6 +23,10 @@ namespace ananas
         void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
 
         ClientList *getClientList();
+
+        AuthorityInfo *getAuthority();
+
+        // std::pair<juce::String, AuthorityAnnouncePacket> getAuthority();
 
     private:
         class Sender final : public juce::Thread
@@ -70,21 +75,47 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
         };
 
-        class ClientListener final : public juce::Thread
+        class AnnouncementListenerThread : public juce::Thread
+        {
+        public:
+            AnnouncementListenerThread(const juce::String &threadName, int portToListenOn);
+
+            bool prepare();
+
+            void run() override = 0;
+
+        protected:
+            juce::DatagramSocket socket;
+            bool isReady{false};
+            int port;
+        };
+
+        class ClientListener final : public AnnouncementListenerThread
         {
         public:
             explicit ClientListener(ClientList &clients);
 
-            bool prepare();
-
             void run() override;
 
         private:
-            juce::DatagramSocket socket;
-            bool isReady{false};
             ClientList &clients;
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ClientListener);
+        };
+
+        class AuthorityListener final : public AnnouncementListenerThread
+        {
+        public:
+            explicit AuthorityListener(AuthorityInfo &authority);
+
+            void run() override;
+
+            // juce::String authorityIP;
+            // AuthorityAnnouncePacket info{};
+            AuthorityInfo &authority;
+
+        private:
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AuthorityListener);
         };
 
         uint8_t numChannels;
@@ -93,6 +124,8 @@ namespace ananas
         TimestampListener timestampListener;
         ClientListener clientListener;
         ClientList clients;
+        AuthorityListener authorityListener;
+        AuthorityInfo authority;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
     };

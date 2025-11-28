@@ -1,7 +1,7 @@
 #include "ClientInfo.h"
-#include "Utils.h"
+#include "AnanasUtils.h"
 
-void ananas::ClientInfo::update(const AnnouncementPacket *packet)
+void ananas::ClientInfo::update(const ClientAnnouncePacket *packet)
 {
     lastReceiveTime = juce::Time::getMillisecondCounter();
     info = *packet;
@@ -12,7 +12,7 @@ bool ananas::ClientInfo::isConnected() const
     return juce::Time::getMillisecondCounter() - lastReceiveTime < Constants::ClientDisconnectedThresholdMs;
 }
 
-ananas::AnnouncementPacket ananas::ClientInfo::getInfo() const
+ananas::ClientAnnouncePacket ananas::ClientInfo::getInfo() const
 {
     return info;
 }
@@ -30,7 +30,7 @@ juce::var ananas::ClientList::toJSON() const
     return juce::JSON::toString(result);
 }
 
-void ananas::ClientList::handlePacket(const juce::String &clientIP, const AnnouncementPacket *packet)
+void ananas::ClientList::handlePacket(const juce::String &clientIP, const ClientAnnouncePacket *packet)
 {
     if (clients.empty()) {
         startTimer(Constants::ClientConnectednessCheckIntervalMs);
@@ -49,25 +49,7 @@ void ananas::ClientList::handlePacket(const juce::String &clientIP, const Announ
 
 void ananas::ClientList::timerCallback()
 {
-    for (auto it{clients.begin()}, next{it}; it != clients.end(); it = next) {
-        ++next;
-        if (!it->second.isConnected()) {
-            std::cout << "Client " << it->first << " disconnected." << std::endl;
-            clients.erase(it);
-            sendChangeMessage();
-        } //else {
-        //     auto info{it->second.getInfo()};
-        //     std::cout <<
-        //             "Client " << it->first <<
-        //             ", serial " << info.serial <<
-        //             ", offset " << info.offsetTime <<
-        //             " ns (" << info.offsetFrame << " frames)" <<
-        //             ", packet buffer " << static_cast<int>(info.bufferFillPercent) << " % full" <<
-        //             ", sampling rate " << std::fixed << std::setprecision(6) << info.samplingRate <<
-        //             std::defaultfloat << ", " << info.percentCPU << " % CPU" <<
-        //             std::endl;
-        // }
-    }
+    checkConnectivity();
 }
 
 juce::var ananas::ClientList::toVar() const
@@ -78,13 +60,27 @@ juce::var ananas::ClientList::toVar() const
         auto *client{new juce::DynamicObject()};
         const auto &info{clientInfo.getInfo()};
         client->setProperty(Identifiers::ClientSerialNumberPropertyID, static_cast<int>(info.serial));
-        client->setProperty("offsetTime", info.offsetTime);
-        client->setProperty("offsetFrame", info.offsetFrame);
-        client->setProperty("bufferFillPercent", info.bufferFillPercent);
-        client->setProperty("samplingRate", info.samplingRate);
-        client->setProperty("percentCPU", info.percentCPU);
+        client->setProperty(Identifiers::ClientPTPLockPropertyID, info.ptpLock);
+        client->setProperty(Identifiers::ClientPresentationTimeOffsetNsPropertyID, info.presentationOffsetNs);
+        client->setProperty(Identifiers::ClientPresentationTimeOffsetFramePropertyID, info.presentationOffsetFrame);
+        client->setProperty(Identifiers::ClientAudioPTPOffsetPropertyID, info.audioPTPOffsetNs);
+        client->setProperty(Identifiers::ClientBufferFillPercentPropertyID, info.bufferFillPercent);
+        client->setProperty(Identifiers::ClientSamplingRatePropertyID, info.samplingRate);
+        client->setProperty(Identifiers::ClientPercentCPUPropertyID, info.percentCPU);
         object->setProperty(ip, client);
     }
 
     return object;
+}
+
+void ananas::ClientList::checkConnectivity()
+{
+    for (auto it{clients.begin()}, next{it}; it != clients.end(); it = next) {
+        ++next;
+        if (!it->second.isConnected()) {
+            std::cout << "Client " << it->first << " disconnected." << std::endl;
+            clients.erase(it);
+            sendChangeMessage();
+        }
+    }
 }

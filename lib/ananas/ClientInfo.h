@@ -10,14 +10,14 @@ namespace ananas
     class ClientInfo
     {
     public:
-        void update(const AnnouncementPacket *packet);
+        void update(const ClientAnnouncePacket *packet);
 
         [[nodiscard]] bool isConnected() const;
 
-        [[nodiscard]] AnnouncementPacket getInfo() const;
+        [[nodiscard]] ClientAnnouncePacket getInfo() const;
 
     private:
-        AnnouncementPacket info{};
+        ClientAnnouncePacket info{};
         uint32_t lastReceiveTime{0};
     };
 
@@ -27,13 +27,15 @@ namespace ananas
     public:
         [[nodiscard]] juce::var toJSON() const;
 
-        void handlePacket(const juce::String &clientIP, const AnnouncementPacket *packet);
+        void handlePacket(const juce::String &clientIP, const ClientAnnouncePacket *packet);
 
         void timerCallback() override;
 
         juce::var toVar() const;
 
     private:
+        void checkConnectivity();
+
         std::map<juce::String, ClientInfo> clients;
     };
 }

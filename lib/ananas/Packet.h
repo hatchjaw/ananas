@@ -36,14 +36,29 @@ namespace ananas
         double clientBufferDuration{};
     };
 
-    struct AnnouncementPacket
+    struct ClientAnnouncePacket
     {
         juce::uint32 serial;
         float samplingRate;
         float percentCPU;
-        juce::int32 offsetFrame;
-        juce::int64 offsetTime;
+        juce::int32 presentationOffsetFrame;
+        juce::int64 presentationOffsetNs;
+        juce::int32 audioPTPOffsetNs;
         juce::uint8 bufferFillPercent;
+        bool ptpLock;
+    };
+
+    struct AuthorityAnnouncePacket
+    {
+        juce::uint32 serial;
+        juce::uint32 usbFeedbackAccumulator;
+        juce::int64 ptpTime;
+        int numClients;
+        int avgBufferFillPercent;
+        int numUnderruns;
+        int numOverflows;
+        juce::int64 audioPTPOffset;
+        bool usbHighSpeed;
     };
 }
 

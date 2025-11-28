@@ -2,9 +2,9 @@
 #define PLUGINEDITOR_H
 
 #include "PluginProcessor.h"
-#include "UI/ClientTableComponent.h"
+#include "UI/ClientsOverviewComponent.h"
 #include "UI/LookAndFeel.h"
-
+#include "UI/NetworkOverviewComponent.h"
 
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::AudioProcessorValueTreeState::Listener,
@@ -24,32 +24,32 @@ public:
 
     void valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property) override;
 
-    void valueTreeChildAdded(juce::ValueTree &parent,
-                             juce::ValueTree &child) override
-    {
-        ignoreUnused(parent, child);
-        DBG("valueTreeChildAdded");
-    }
-
-    void valueTreeChildRemoved(juce::ValueTree &parent,
-                               juce::ValueTree &child, int) override
-    {
-        ignoreUnused(parent, child);
-        DBG("valueTreeChildRemoved");
-    }
-
-    void valueTreeChildOrderChanged(juce::ValueTree &parent,
-                                    int oldIndex, int newIndex) override
-    {
-        ignoreUnused(parent, oldIndex, newIndex);
-        DBG("valueTreeChildOrderChanged");
-    }
-
-    void valueTreeParentChanged(juce::ValueTree &tree) override
-    {
-        ignoreUnused(tree);
-        DBG("valueTreeParentChanged");
-    }
+    // void valueTreeChildAdded(juce::ValueTree &parent,
+    //                          juce::ValueTree &child) override
+    // {
+    //     ignoreUnused(parent, child);
+    //     DBG("valueTreeChildAdded");
+    // }
+    //
+    // void valueTreeChildRemoved(juce::ValueTree &parent,
+    //                            juce::ValueTree &child, int) override
+    // {
+    //     ignoreUnused(parent, child);
+    //     DBG("valueTreeChildRemoved");
+    // }
+    //
+    // void valueTreeChildOrderChanged(juce::ValueTree &parent,
+    //                                 int oldIndex, int newIndex) override
+    // {
+    //     ignoreUnused(parent, oldIndex, newIndex);
+    //     DBG("valueTreeChildOrderChanged");
+    // }
+    //
+    // void valueTreeParentChanged(juce::ValueTree &tree) override
+    // {
+    //     ignoreUnused(tree);
+    //     DBG("valueTreeParentChanged");
+    // }
 
     void handleAsyncUpdate() override;
 
@@ -61,9 +61,8 @@ private:
     const PluginProcessor &getProcessor() const;
 
     ananas::LookAndFeel lookAndFeel;
-
     juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
-    ananas::ClientTableComponent clientTable;
+    ananas::NetworkOverviewComponent networkOverview;
 };
 
 

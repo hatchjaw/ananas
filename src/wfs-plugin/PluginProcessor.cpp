@@ -9,11 +9,13 @@ PluginProcessor::PluginProcessor()
       dynamicTree(ananas::WFS::Identifiers::DynamicTreeType)
 {
     server->getClientList()->addChangeListener(this);
+    server->getAuthority()->addChangeListener(this);
 }
 
 PluginProcessor::~PluginProcessor()
 {
     server->getClientList()->removeChangeListener(this);
+    server->getAuthority()->removeChangeListener(this);
     // dynamicTree.removeListener(wfsMessenger.get());
 }
 
@@ -134,6 +136,8 @@ void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (const auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
         dynamicTree.setProperty(ananas::Constants::ConnectedClientsParamID, clients->toVar(), nullptr);
+    } else if (const auto *authority = dynamic_cast<ananas::AuthorityInfo *>(source)) {
+        dynamicTree.setProperty(ananas::Constants::TimeAuthorityParamID, authority->toVar(), nullptr);
     }
 }
 
