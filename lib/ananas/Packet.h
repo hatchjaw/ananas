@@ -52,13 +52,10 @@ namespace ananas
     {
         juce::uint32 serial;
         juce::uint32 usbFeedbackAccumulator;
-        juce::int64 ptpTime;
         int numClients;
         int avgBufferFillPercent;
         int numUnderruns;
         int numOverflows;
-        juce::int64 audioPTPOffset;
-        bool usbHighSpeed;
     };
 }
 

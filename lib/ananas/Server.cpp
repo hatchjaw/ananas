@@ -29,7 +29,6 @@ void ananas::Server::prepareToPlay(const int samplesPerBlockExpected, const doub
 
     timestampListener.onTimestamp = [this](const timespec &ts)
     {
-        // DBG("Timestamp diff: " << ts.tv_sec * 1'000'000'000 + ts.tv_nsec - (sender.getPacketTime() - 100'000'000) << " ns");
         sender.setPacketTime(ts);
     };
 }
@@ -340,23 +339,9 @@ void ananas::Server::AuthorityListener::run()
                 bytesRead == -1
             ) {
                 DBG("Error receiving data: " << strerror(errno));
+            } else {
+                authority.update();
             }
-
-            const auto feedbackAccumulatorDiff{
-                static_cast<juce::int32>(authority.getInfo().usbFeedbackAccumulator) -
-                Constants::AuthorityInitialUSBFeedbackAccumulator
-            };
-
-            DBG("Authority IP " << authority.getIP() <<
-                ", Num clients " << authority.getInfo().numClients <<
-                ", Avg buffer fill " << authority.getInfo().avgBufferFillPercent <<
-                " %, Feedback accumulator " << juce::String{authority.getInfo().usbFeedbackAccumulator} <<
-                (feedbackAccumulatorDiff >= 0 ? " (+" : " (") << feedbackAccumulatorDiff << ") (" <<
-                juce::String{static_cast<float>(authority.getInfo().usbFeedbackAccumulator) / (1 << 25)} << " kHz)"
-                ", Num underruns " << authority.getInfo().numUnderruns <<
-                ", Num overflows " << authority.getInfo().numOverflows <<
-                ", Audio-PTP offset " << authority.getInfo().audioPTPOffset << " ns" <<
-                ", USB high speed: " << (authority.getInfo().usbHighSpeed ? "Yes" : "No"));
         }
     }
 

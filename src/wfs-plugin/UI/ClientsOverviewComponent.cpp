@@ -6,8 +6,14 @@ namespace ananas
 {
     ClientsOverviewComponent::ClientsOverviewComponent()
     {
+        addAndMakeVisible(title);
         addAndMakeVisible(overviewPanel);
         addAndMakeVisible(clientTable);
+
+        title.setColour(juce::Label::textColourId, juce::Colours::black);
+        title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
+        title.setJustificationType(juce::Justification::bottomLeft);
+        title.setText(WFS::Strings::ClientsSectionTitle, juce::dontSendNotification);
     }
 
     void ClientsOverviewComponent::update(const juce::var &var)
@@ -26,7 +32,8 @@ namespace ananas
     void ClientsOverviewComponent::resized()
     {
         auto bounds{getLocalBounds()};
-        overviewPanel.setBounds(bounds.removeFromTop(50));
+        title.setBounds(bounds.removeFromTop(48).reduced(5));
+        overviewPanel.setBounds(bounds.removeFromTop(35));
         // Client table gets remaining bounds.
         clientTable.setBounds(bounds);
     }

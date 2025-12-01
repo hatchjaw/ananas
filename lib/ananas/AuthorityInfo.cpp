@@ -1,10 +1,10 @@
 #include "AuthorityInfo.h"
 #include "AnanasUtils.h"
 
-void ananas::AuthorityInfo::update(const juce::String &authorityIP, const AuthorityAnnouncePacket *packet)
+void ananas::AuthorityInfo::update() //juce::String &authorityIP, const AuthorityAnnouncePacket *packet)
 {
-    ip = authorityIP;
-    info = *packet;
+    // ip = authorityIP;
+    // info = *packet;
     sendChangeMessage();
 }
 

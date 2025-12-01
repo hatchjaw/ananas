@@ -27,7 +27,7 @@ void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)
 void ananas::NetworkOverviewComponent::resized()
 {
     auto bounds{getLocalBounds()};
-    timeAuthority.setBounds(bounds.removeFromTop(100));
+    timeAuthority.setBounds(bounds.removeFromTop(120));
     // Client overview gets remaining bounds.
     clientOverview.setBounds(bounds);
 }

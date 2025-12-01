@@ -49,14 +49,14 @@ void ananas::AudioPacket::setTime(timespec ts)
     // timestamp.
     const auto timestampDiff{static_cast<double>(newTime - header.timestamp)};
 
+    // TODO: make the diff available at server level so it can be displayed in UI
     std::stringstream ss;
     ss.imbue(std::locale("en_GB.UTF-8")); // Use system locale
     ss << std::fixed << std::setprecision(0) << timestampDiff;
 
-    std::cout << "Timestamp diff " << ss.str() << " ns" << std::endl;
+    std::cout << "Audio/PTP timestamp diff " << ss.str() << " ns" << std::endl;
 
     if (timestampDiff > clientBufferDuration / 2 || timestampDiff < -clientBufferDuration / 2) {
-        // DBG("Timestamp diff is " << timestampDiff << "... Setting packet timestamp to " << newTime);
         std::cerr << "Timestamp diff is " << std::fixed << timestampDiff << "... Setting packet timestamp to " << newTime << std::endl;
         header.timestamp = newTime;
     }

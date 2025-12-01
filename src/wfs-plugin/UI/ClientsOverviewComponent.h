@@ -18,6 +18,7 @@ namespace ananas
         void resized() override;
 
     private:
+        juce::Label title;
         ClientsOverviewPanelComponent overviewPanel;
         ClientTableComponent clientTable;
     };

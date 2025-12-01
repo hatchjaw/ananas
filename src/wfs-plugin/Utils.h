@@ -76,6 +76,27 @@ namespace ananas::WFS
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centredRight
         };
+
+        inline static const ColumnHeader AuthorityTableIpAddress{
+            1, "IP address", 150, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centredLeft
+        };
+        inline static const ColumnHeader AuthorityTableSerialNumber{
+            2, "Serial number", 100, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centred
+        };
+        inline static const ColumnHeader AuthorityTableFeedbackAccumulator{
+            3, "USB feedback accumulator", 200, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centredRight
+        };
+        inline static const ColumnHeader AuthorityTableSamplingRate{
+            4, "USB audio sampling rate (Hz)", 200, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centred
+        };
     };
 
     class Strings
@@ -87,14 +108,11 @@ namespace ananas::WFS
         inline static const juce::StringRef NetworkTabName{"Network"};
         inline static const juce::StringRef WfsTabName{"WFS"};
 
+        inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
+
+        inline static const juce::StringRef ClientsSectionTitle{"CLIENTS"};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
-        inline static const juce::StringRef ClientTableColumnNameIpAddress{"IP address"};
-        inline static const juce::StringRef ClientTableColumnNameSerialNumber{"Serial number"};
-        inline static const juce::StringRef ClientTableColumnNamePresentationTimeOffset{"Presentation time offset (ns)"};
-        inline static const juce::StringRef ClientTableColumnNameBufferFillPercent{"Buffer fill level %"};
-        inline static const juce::StringRef ClientTableColumnNameSamplingRate{"Reported sampling rate (Hz)"};
-        inline static const juce::StringRef ClientTableColumnNamePercentCPU{"CPU %"};
     };
 
     class Identifiers

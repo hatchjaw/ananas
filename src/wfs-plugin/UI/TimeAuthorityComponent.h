@@ -2,6 +2,7 @@
 #define TIMEAUTHORITYCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "../Utils.h"
 
 namespace ananas
 {
@@ -21,6 +22,8 @@ namespace ananas
                                          public juce::TableListBoxModel
         {
         public:
+            TimeAuthorityTable();
+
             void update(const juce::var &var);
 
             int getNumRows() override;
@@ -29,19 +32,25 @@ namespace ananas
 
             void paintCell(juce::Graphics &, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
 
+            void resized() override;
+
         private:
             struct Row
             {
                 juce::String ip;
                 juce::String serialNumber;
-                int feedbackAccumulator;
+                juce::String feedbackAccumulator;
+                juce::String samplingRate;
             };
 
+            void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
+
             Row row{};
+            juce::TableListBox table{{}, this};
         };
 
         juce::Label title;
-        TimeAuthorityTable table;
+        TimeAuthorityTable authorityTable;
     };
 }
 
