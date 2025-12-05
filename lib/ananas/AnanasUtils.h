@@ -24,11 +24,14 @@ namespace ananas
 
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
 
+
         inline const static juce::StringRef SenderThreadName{"Ananas Sender"};
         constexpr static int SenderSocketLocalPort{14841};
         constexpr static int SenderSocketRemotePort{49152};
-        inline const static juce::StringRef SenderSocketMulticastIP{"224.4.224.4"};
+        inline const static juce::StringRef AudioMulticastIP{"224.4.224.4"};
         constexpr static int SenderSocketTimeoutMs{500};
+
+        inline const static juce::StringRef ControlMulticastIP{"224.4.224.5"};
 
         inline const static juce::StringRef TimestampListenerThreadName{"Ananas Timestamp Listener"};
         constexpr static int TimestampListenerLocalPort{320};
@@ -39,6 +42,7 @@ namespace ananas
 
         inline const static juce::StringRef ClientListenerThreadName{"Ananas Client Listener"};
         constexpr static int ClientListenerLocalPort{49153};
+        inline const static juce::StringRef ClientAnnounceMulticastIP{"224.4.224.6"};
         constexpr static int ClientListenerSocketTimeoutMs{500};
         constexpr static int ClientListenerBufferSize{1500};
         constexpr static int ClientConnectednessCheckIntervalMs{1000};
@@ -47,6 +51,7 @@ namespace ananas
 
         inline const static juce::StringRef AuthorityListenerThreadName{"Ananas Authority Listener"};
         constexpr static int AuthorityListenerLocalPort{49154};
+        inline const static juce::StringRef AuthorityAnnounceMulticastIP{"224.4.224.7"};
         constexpr static int AuthorityListenerSocketTimeoutMs{500};
         constexpr static int AuthorityListenerBufferSize{1500};
         constexpr static int AuthorityConnectednessCheckIntervalMs{1000};

@@ -17,8 +17,8 @@ void ananas::AudioPacket::prepare(const int numChannels, const int framesPerPack
 
     clientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * Constants::ClientPacketBufferSize;
 
-    DBG(framesPerPacket << "/" << sampleRate << " = " <<
-        nsPerPacket << " + " << nsPerPacketRemainder << " ns per block.");
+    std::cout << framesPerPacket << "/" << sampleRate << " = " <<
+        nsPerPacket << " + " << nsPerPacketRemainder << " ns per block." << std::endl;
 }
 
 uint8_t *ananas::AudioPacket::getAudioData()
@@ -54,11 +54,18 @@ void ananas::AudioPacket::setTime(timespec ts)
     ss.imbue(std::locale("en_GB.UTF-8")); // Use system locale
     ss << std::fixed << std::setprecision(0) << timestampDiff;
 
-    std::cout << "Audio/PTP timestamp diff " << ss.str() << " ns" << std::endl;
+    // std::cout << "Audio/PTP timestamp diff " << ss.str() << " ns" << std::endl;
 
     if (timestampDiff > clientBufferDuration / 2 || timestampDiff < -clientBufferDuration / 2) {
-        std::cerr << "Timestamp diff is " << std::fixed << timestampDiff << "... Setting packet timestamp to " << newTime << std::endl;
-        header.timestamp = newTime;
+        std::cerr << "Timestamp diff is " << std::fixed << timestampDiff << std::endl;
+
+        // Sometimes bad timestamps come in pairs and things subsequently settle
+        // down. Allow a couple of bad timestamps before updating the header.
+        if (++consecutiveBadTimestampCount >= 3) {
+            std::cerr << "... Setting packet timestamp to " << newTime << std::endl;
+            header.timestamp = newTime;
+            consecutiveBadTimestampCount = 0;
+        }
     }
 }
 

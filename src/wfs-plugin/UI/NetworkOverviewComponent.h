@@ -1,8 +1,9 @@
 #ifndef NETWORKOVERVIEWCOMPONENT_H
 #define NETWORKOVERVIEWCOMPONENT_H
 
-#include "ClientsOverviewComponent.h"
+#include "SwitchesComponent.h"
 #include "TimeAuthorityComponent.h"
+#include "ClientsOverviewComponent.h"
 
 namespace ananas
 {
@@ -20,7 +21,7 @@ namespace ananas
     private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NetworkOverviewComponent)
 
-        // SwitchesComponent switches;
+        SwitchesComponent switches;
         TimeAuthorityComponent timeAuthority;
         ClientsOverviewComponent clientOverview;
     };

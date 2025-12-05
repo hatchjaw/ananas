@@ -45,10 +45,9 @@ target_sources(ananasWFS
         PluginProcessor.cpp
         UI/LookAndFeel.cpp
         UI/NetworkOverviewComponent.cpp
-        UI/ClientsOverviewPanelComponent.cpp
-        UI/ClientTableComponent.cpp
-        UI/ClientsOverviewComponent.cpp
+        UI/SwitchesComponent.cpp
         UI/TimeAuthorityComponent.cpp
+        UI/ClientsOverviewComponent.cpp
 )
 
 target_link_libraries(ananasWFS

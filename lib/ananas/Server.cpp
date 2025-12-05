@@ -64,11 +64,6 @@ ananas::AuthorityInfo *ananas::Server::getAuthority()
     return &authority;
 }
 
-// std::pair<juce::String, ananas::AuthorityAnnouncePacket> ananas::Server::getAuthority()
-// {
-//     return std::make_pair(authorityListener.authorityIP, authorityListener.info);
-// }
-
 //==============================================================================
 
 ananas::Server::Sender::Sender(Fifo &fifo) : Thread(Constants::SenderThreadName),
@@ -76,19 +71,39 @@ ananas::Server::Sender::Sender(Fifo &fifo) : Thread(Constants::SenderThreadName)
 {
 }
 
+ananas::Server::Sender::~Sender()
+{
+    socket.leaveMulticast(Constants::AudioMulticastIP);
+    socket.shutdown();
+}
+
 bool ananas::Server::Sender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
 {
+    juce::ignoreUnused(sampleRate);
+
     if (isReady) return true;
 
-    juce::ignoreUnused(sampleRate);
     audioBlockSamples = samplesPerBlockExpected;
 
     if (-1 == socket.getBoundPort()) {
-        const auto bound{socket.bindToPort(Constants::SenderSocketLocalPort, Constants::LocalInterfaceIP)};
-        if (const auto joined{bound && socket.joinMulticast(Constants::SenderSocketMulticastIP)}; !bound || !joined) {
-            DBG(strerror(errno));
+        if (!socket.setEnablePortReuse(true)) {
+            std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
+            socket.shutdown();
             return false;
         }
+
+        if (!socket.bindToPort(Constants::SenderSocketLocalPort, Constants::LocalInterfaceIP)) {
+            std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
+            socket.shutdown();
+            return false;
+        }
+
+        if (!socket.joinMulticast(Constants::AudioMulticastIP)) {
+            std::cerr << getThreadName() << " Failed to join multicast group: " << strerror(errno) << std::endl;
+            socket.shutdown();
+            return false;
+        }
+
         socket.setMulticastLoopbackEnabled(false);
         socket.waitUntilReady(false, 1000);
     }
@@ -109,7 +124,7 @@ void ananas::Server::Sender::run()
         packet.writeHeader();
         // Write the packet to the socket.
         socket.write(
-            Constants::SenderSocketMulticastIP,
+            Constants::AudioMulticastIP,
             Constants::SenderSocketRemotePort,
             packet.getData(),
             static_cast<int>(packet.getSize())
@@ -140,31 +155,40 @@ bool ananas::Server::Sender::stopThread(const int timeOutMilliseconds)
 
 //==============================================================================
 
-ananas::Server::TimestampListener::TimestampListener()
-    : Thread(Constants::TimestampListenerThreadName)
+ananas::Server::AnnouncementListenerThread::AnnouncementListenerThread(
+    const juce::String &threadName,
+    const juce::String &multicastIP,
+    const int portToListenOn
+) : Thread(threadName), ip(multicastIP), port(portToListenOn)
 {
 }
 
-bool ananas::Server::TimestampListener::prepare()
+ananas::Server::AnnouncementListenerThread::~AnnouncementListenerThread()
+{
+    socket.leaveMulticast(ip);
+    socket.shutdown();
+}
+
+bool ananas::Server::AnnouncementListenerThread::prepare()
 {
     if (isReady) return true;
 
     if (-1 == socket.getBoundPort()) {
         // JUCE doesn't handle multicast in a manner that's compatible with
-        // reading PTP packets on a specific interface...
+        // reading multicast packets on a specific interface...
 
-        // ...(it's probably not necessary to allow port-reuse in this case, but
-        // what the hell)...
+        // ...(it's probably not necessary to allow port-reuse, but what the
+        // hell)...
         if (!socket.setEnablePortReuse(true)) {
-            DBG("Failed to set socket port reuse: " << strerror(errno));
+            std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
             socket.shutdown();
             return false;
         }
 
-        // ... anyway, so bind the relevant port to ALL interfaces
-        // (INADDR_ANY)...
-        if (!socket.bindToPort(Constants::TimestampListenerLocalPort)) {
-            DBG("Failed to bind socket to port: " << strerror(errno));
+        // ...bind the relevant port to ALL interfaces (INADDR_ANY) by not
+        // specifying a local interface here...
+        if (!socket.bindToPort(port)) {
+            std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
             socket.shutdown();
             return false;
         }
@@ -172,7 +196,7 @@ bool ananas::Server::TimestampListener::prepare()
         // ...then join the appropriate multicast group on the relevant
         // interface (i.e. a manually-configured ethernet connection).
         ip_mreq mreq{};
-        mreq.imr_multiaddr.s_addr = inet_addr(Constants::PTPMulticastIP.text);
+        mreq.imr_multiaddr.s_addr = inet_addr(ip.toRawUTF8());
         mreq.imr_interface.s_addr = inet_addr(Constants::LocalInterfaceIP.text);
 
         if (setsockopt(
@@ -180,14 +204,25 @@ bool ananas::Server::TimestampListener::prepare()
                 IPPROTO_IP,
                 IP_ADD_MEMBERSHIP,
                 &mreq, sizeof (mreq)) < 0) {
-            DBG("Failed to add multicast membership: " << strerror(errno));
+            std::cerr << getThreadName() << " Failed to add multicast membership: " << strerror(errno) << std::endl;
             socket.shutdown();
             return false;
         }
+
+        socket.setMulticastLoopbackEnabled(false);
     }
 
     isReady = startThread();
     return isReady;
+}
+
+//==============================================================================
+
+ananas::Server::TimestampListener::TimestampListener()
+    : AnnouncementListenerThread(Constants::TimestampListenerThreadName,
+                                 Constants::PTPMulticastIP,
+                                 Constants::TimestampListenerLocalPort)
+{
 }
 
 void ananas::Server::TimestampListener::run()
@@ -242,47 +277,10 @@ void ananas::Server::TimestampListener::run()
 
 //==============================================================================
 
-ananas::Server::AnnouncementListenerThread::AnnouncementListenerThread(
-    const juce::String &threadName,
-    const int portToListenOn
-) : Thread(threadName), port(portToListenOn)
-{
-}
-
-bool ananas::Server::AnnouncementListenerThread::prepare()
-{
-    if (isReady) return true;
-
-    if (-1 == socket.getBoundPort()) {
-        if (!socket.setEnablePortReuse(true)) {
-            DBG(getThreadName() << "Failed to set socket port reuse: " << strerror(errno));
-            socket.shutdown();
-            return false;
-        }
-
-        if (!socket.bindToPort(port)) {
-            DBG(getThreadName() << "Failed to bind socket to port: " << strerror(errno));
-            socket.shutdown();
-            return false;
-        }
-
-        if (!socket.joinMulticast(Constants::PTPMulticastIP)) {
-            DBG(getThreadName() << "Failed to join multicast group: " << strerror(errno));
-            socket.shutdown();
-            return false;
-        }
-
-        socket.setMulticastLoopbackEnabled(false);
-    }
-
-    isReady = startThread();
-    return isReady;
-}
-
-//==============================================================================
-
 ananas::Server::ClientListener::ClientListener(ClientList &clients)
-    : AnnouncementListenerThread(Constants::ClientListenerThreadName, Constants::ClientListenerLocalPort),
+    : AnnouncementListenerThread(Constants::ClientListenerThreadName,
+                                 Constants::ClientAnnounceMulticastIP,
+                                 Constants::ClientListenerLocalPort),
       clients(clients)
 {
 }
@@ -318,6 +316,7 @@ void ananas::Server::ClientListener::run()
 
 ananas::Server::AuthorityListener::AuthorityListener(AuthorityInfo &authority)
     : AnnouncementListenerThread(Constants::AuthorityListenerThreadName,
+                                 Constants::AuthorityAnnounceMulticastIP,
                                  Constants::AuthorityListenerLocalPort),
       authority(authority)
 {
@@ -347,3 +346,6 @@ void ananas::Server::AuthorityListener::run()
 
     DBG("Stopping timing authority listener thread");
 }
+
+
+// curl -k -u admin:emeraude http://192.168.10.1/rest/system/ptp/monitor -d \'{"numbers":"0","once":""}\' -H "content-type: application/json"

@@ -26,13 +26,13 @@ namespace ananas
 
         AuthorityInfo *getAuthority();
 
-        // std::pair<juce::String, AuthorityAnnouncePacket> getAuthority();
-
     private:
         class Sender final : public juce::Thread
         {
         public:
             explicit Sender(Fifo &fifo);
+
+            ~Sender() override;
 
             bool prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
@@ -54,31 +54,12 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Sender);
         };
 
-        /**
-         * A thread to listen out for PTP timestamps.
-         */
-        class TimestampListener final : public juce::Thread
-        {
-        public:
-            TimestampListener();
-
-            bool prepare();
-
-            void run() override;
-
-            std::function<void(timespec)> onTimestamp;
-
-        private:
-            juce::DatagramSocket socket;
-            bool isReady{false};
-
-            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
-        };
-
         class AnnouncementListenerThread : public juce::Thread
         {
         public:
-            AnnouncementListenerThread(const juce::String &threadName, int portToListenOn);
+            AnnouncementListenerThread(const juce::String &threadName, const juce::String &multicastIP, int portToListenOn);
+
+            ~AnnouncementListenerThread() override;
 
             bool prepare();
 
@@ -87,7 +68,24 @@ namespace ananas
         protected:
             juce::DatagramSocket socket;
             bool isReady{false};
+            juce::String ip;
             int port;
+        };
+
+        /**
+         * A thread to listen out for PTP timestamps.
+         */
+        class TimestampListener final : public AnnouncementListenerThread
+        {
+        public:
+            TimestampListener();
+
+            void run() override;
+
+            std::function<void(timespec)> onTimestamp;
+
+        private:
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
         };
 
         class ClientListener final : public AnnouncementListenerThread
@@ -110,8 +108,6 @@ namespace ananas
 
             void run() override;
 
-            // juce::String authorityIP;
-            // AuthorityAnnouncePacket info{};
             AuthorityInfo &authority;
 
         private:

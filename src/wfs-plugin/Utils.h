@@ -47,7 +47,7 @@ namespace ananas::WFS
             juce::Justification::centredLeft
         };
         inline static const ColumnHeader ClientTableSerialNumber{
-            2, "Serial number", 100, 30, -1,
+            2, "Serial number", 125, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
@@ -83,7 +83,7 @@ namespace ananas::WFS
             juce::Justification::centredLeft
         };
         inline static const ColumnHeader AuthorityTableSerialNumber{
-            2, "Serial number", 100, 30, -1,
+            2, "Serial number", 125, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
@@ -108,11 +108,15 @@ namespace ananas::WFS
         inline static const juce::StringRef NetworkTabName{"Network"};
         inline static const juce::StringRef WfsTabName{"WFS"};
 
+        inline static const juce::StringRef SwitchesSectionTitle{"SWITCHES"};
+        inline static const juce::StringRef AddSwitchButtonName{"Add switch button"};
+
         inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
 
         inline static const juce::StringRef ClientsSectionTitle{"CLIENTS"};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
+
     };
 
     class Identifiers

@@ -34,6 +34,7 @@ namespace ananas
         double nsPerPacketRemainder{};
         double timestampRemainder{0};
         double clientBufferDuration{};
+        uint consecutiveBadTimestampCount{0};
     };
 
     struct ClientAnnouncePacket

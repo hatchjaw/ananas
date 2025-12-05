@@ -4,6 +4,7 @@
 
 ananas::NetworkOverviewComponent::NetworkOverviewComponent()
 {
+    addAndMakeVisible(switches);
     addAndMakeVisible(timeAuthority);
     addAndMakeVisible(clientOverview);
 }
@@ -27,6 +28,7 @@ void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)
 void ananas::NetworkOverviewComponent::resized()
 {
     auto bounds{getLocalBounds()};
+    switches.setBounds(bounds.removeFromTop(150));
     timeAuthority.setBounds(bounds.removeFromTop(120));
     // Client overview gets remaining bounds.
     clientOverview.setBounds(bounds);
