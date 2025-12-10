@@ -55,6 +55,12 @@ public:
 
     const juce::ValueTree &getDynamicTree() const;
 
+    juce::ValueTree &getPersistentTree();
+
+    const juce::ValueTree &getPersistentTree() const;
+
+    ananas::Server &getServer() const;
+
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 
@@ -64,10 +70,12 @@ private:
 
     std::unique_ptr<ananas::Server> server;
 
-    // For handling parameters that are known at compile time.
+    // For handling (audio) parameters that are known at compile time.
     juce::AudioProcessorValueTreeState apvts;
-    // For handling parameters that are not known until runtime.
+    // For handling data that is not known until runtime.
     juce::ValueTree dynamicTree;
+    // For handling user-entered data that should be storable/retrievable.
+    juce::ValueTree persistentTree;
 };
 
 

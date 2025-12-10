@@ -2,22 +2,14 @@
 
 #include <AnanasUtils.h>
 
-ananas::NetworkOverviewComponent::NetworkOverviewComponent()
+ananas::NetworkOverviewComponent::NetworkOverviewComponent(juce::ValueTree &dynamicTree, juce::ValueTree &persistentTree)
+    : switches(dynamicTree, persistentTree),
+      timeAuthority(dynamicTree),
+      clientOverview(dynamicTree)
 {
     addAndMakeVisible(switches);
     addAndMakeVisible(timeAuthority);
     addAndMakeVisible(clientOverview);
-}
-
-void ananas::NetworkOverviewComponent::update(juce::ValueTree &tree, const juce::Identifier &property)
-{
-    if (!isVisible()) return;
-
-    if (property == Constants::ConnectedClientsParamID) {
-        clientOverview.update(tree[property]);
-    } else if (property == Constants::TimeAuthorityParamID) {
-        timeAuthority.update(tree[property]);
-    }
 }
 
 void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)
@@ -28,8 +20,8 @@ void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)
 void ananas::NetworkOverviewComponent::resized()
 {
     auto bounds{getLocalBounds()};
-    switches.setBounds(bounds.removeFromTop(150));
-    timeAuthority.setBounds(bounds.removeFromTop(120));
+    switches.setBounds(bounds.removeFromTop(WFS::Constants::SwitchesSectionHeight));
+    timeAuthority.setBounds(bounds.removeFromTop(WFS::Constants::TimeAuthoritySectionHeight));
     // Client overview gets remaining bounds.
     clientOverview.setBounds(bounds);
 }

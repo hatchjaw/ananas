@@ -4,6 +4,7 @@ add_library(ananas_server
         Packet.cpp
         ClientInfo.cpp
         AuthorityInfo.cpp
+        SwitchInfo.cpp
 )
 
 set_target_properties(ananas_server PROPERTIES

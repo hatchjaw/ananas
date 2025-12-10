@@ -6,16 +6,24 @@
 
 namespace ananas
 {
-    class ClientsOverviewComponent final : public juce::Component
+    class ClientsOverviewComponent final : public juce::Component,
+                                           public juce::ValueTree::Listener,
+                                           juce::AsyncUpdater
     {
     public:
-        ClientsOverviewComponent();
+        explicit ClientsOverviewComponent(juce::ValueTree &treeToListenTo);
+
+        ~ClientsOverviewComponent() override;
 
         void update(const juce::var &var);
 
         void paint(juce::Graphics &g) override;
 
         void resized() override;
+
+        void valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property) override;
+
+        void handleAsyncUpdate() override;
 
     private:
         class OverviewPanel final : public Component
@@ -88,6 +96,7 @@ namespace ananas
         juce::Label title;
         OverviewPanel overviewPanel;
         ClientTable clientTable;
+        juce::ValueTree &tree;
     };
 }
 

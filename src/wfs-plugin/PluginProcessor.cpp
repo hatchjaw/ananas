@@ -6,16 +6,19 @@ PluginProcessor::PluginProcessor()
     : AudioProcessor(getBusesProperties()),
       server(std::make_unique<ananas::Server>(ananas::WFS::Constants::MaxChannelsToSend)),
       apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
-      dynamicTree(ananas::WFS::Identifiers::DynamicTreeType)
+      dynamicTree(ananas::WFS::Identifiers::DynamicTreeType),
+      persistentTree(ananas::WFS::Identifiers::PersistentTreeType)
 {
     server->getClientList()->addChangeListener(this);
     server->getAuthority()->addChangeListener(this);
+    server->getSwitches()->addChangeListener(this);
 }
 
 PluginProcessor::~PluginProcessor()
 {
     server->getClientList()->removeChangeListener(this);
     server->getAuthority()->removeChangeListener(this);
+    server->getSwitches()->removeChangeListener(this);
     // dynamicTree.removeListener(wfsMessenger.get());
 }
 
@@ -124,20 +127,41 @@ void PluginProcessor::changeProgramName(int index, const juce::String &newName)
 
 void PluginProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
-    ignoreUnused(destData);
+    auto state{apvts.copyState()};
+
+    state.addChild(persistentTree.createCopy(), -1, nullptr);
+
+    const auto xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void PluginProcessor::setStateInformation(const void *data, int size)
 {
-    juce::ignoreUnused(data, size);
+    const auto xmlState{getXmlFromBinary(data, size)};
+
+    if (xmlState != nullptr) {
+        const auto tree{juce::ValueTree::fromXml(*xmlState)};
+
+        if (tree.isValid()) {
+            apvts.replaceState(tree);
+
+            const auto config = tree.getChildWithName(ananas::WFS::Identifiers::PersistentTreeType);
+            if (config.isValid()) {
+                persistentTree = config.createCopy();
+            }
+        }
+    }
 }
 
 void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (const auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
-        dynamicTree.setProperty(ananas::Constants::ConnectedClientsParamID, clients->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Identifiers::ConnectedClientsParamID, clients->toVar(), nullptr);
     } else if (const auto *authority = dynamic_cast<ananas::AuthorityInfo *>(source)) {
-        dynamicTree.setProperty(ananas::Constants::TimeAuthorityParamID, authority->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Identifiers::TimeAuthorityParamID, authority->toVar(), nullptr);
+    } else if (const auto *switches = dynamic_cast<ananas::SwitchList *>(source)) {
+        persistentTree.setProperty(ananas::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
     }
 }
 
@@ -149,6 +173,21 @@ juce::ValueTree &PluginProcessor::getDynamicTree()
 const juce::ValueTree &PluginProcessor::getDynamicTree() const
 {
     return dynamicTree;
+}
+
+juce::ValueTree &PluginProcessor::getPersistentTree()
+{
+    return persistentTree;
+}
+
+const juce::ValueTree &PluginProcessor::getPersistentTree() const
+{
+    return persistentTree;
+}
+
+ananas::Server &PluginProcessor::getServer() const
+{
+    return *server;
 }
 
 juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
@@ -170,8 +209,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
     params.add(std::make_unique<juce::AudioParameterFloat>(
         ananas::WFS::Params::SpeakerSpacing.id,
         ananas::WFS::Params::SpeakerSpacing.name,
-        juce::NormalisableRange{.05f, .4f, .001f},
-        .2f
+        ananas::WFS::Params::SpeakerSpacing.range,
+        ananas::WFS::Params::SpeakerSpacing.defaultValue
     ));
 
     return params;

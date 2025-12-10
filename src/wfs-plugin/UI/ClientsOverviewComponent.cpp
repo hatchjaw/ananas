@@ -4,7 +4,8 @@
 
 namespace ananas
 {
-    ClientsOverviewComponent::ClientsOverviewComponent()
+    ClientsOverviewComponent::ClientsOverviewComponent(juce::ValueTree& treeToListenTo)
+        : tree(treeToListenTo)
     {
         addAndMakeVisible(title);
         addAndMakeVisible(overviewPanel);
@@ -14,6 +15,13 @@ namespace ananas
         title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
         title.setJustificationType(juce::Justification::bottomLeft);
         title.setText(WFS::Strings::ClientsSectionTitle, juce::dontSendNotification);
+
+        treeToListenTo.addListener(this);
+    }
+
+    ClientsOverviewComponent::~ClientsOverviewComponent()
+    {
+        tree.removeListener(this);
     }
 
     void ClientsOverviewComponent::update(const juce::var &var)
@@ -36,6 +44,21 @@ namespace ananas
         overviewPanel.setBounds(bounds.removeFromTop(35));
         // Client table gets remaining bounds.
         clientTable.setBounds(bounds);
+    }
+
+    void ClientsOverviewComponent::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
+    {
+        if (!isVisible()) return;
+
+        if (property == Identifiers::ConnectedClientsParamID) {
+            update(treeWhosePropertyHasChanged[property]);
+            handleAsyncUpdate();
+        }
+    }
+
+    void ClientsOverviewComponent::handleAsyncUpdate()
+    {
+        repaint();
     }
 
     //==========================================================================

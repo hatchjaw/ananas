@@ -25,13 +25,11 @@ namespace ananas
                              public juce::ChangeBroadcaster
     {
     public:
-        [[nodiscard]] juce::var toJSON() const;
-
         void handlePacket(const juce::String &clientIP, const ClientAnnouncePacket *packet);
 
         void timerCallback() override;
 
-        juce::var toVar() const;
+        [[nodiscard]] juce::var toVar() const;
 
     private:
         void checkConnectivity();

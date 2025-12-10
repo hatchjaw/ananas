@@ -13,6 +13,11 @@ namespace ananas::WFS
     {
     public:
         constexpr static uint8_t MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
+
+        constexpr static int UiWidth{1200};
+        constexpr static int UiHeight{900};
+        constexpr static int SwitchesSectionHeight{175};
+        constexpr static int TimeAuthoritySectionHeight{120};
     };
 
     class Params
@@ -22,9 +27,11 @@ namespace ananas::WFS
         {
             juce::StringRef id;
             juce::StringRef name;
+            juce::NormalisableRange<float> range;
+            float defaultValue{0.f};
         };
 
-        inline static const Param SpeakerSpacing{"/spacing", "Speaker Spacing (m)"};
+        inline static const Param SpeakerSpacing{"/spacing", "Speaker Spacing (m)", {.05f, .4f, .001f}, .2f};
     };
 
     class TableColumns
@@ -97,6 +104,37 @@ namespace ananas::WFS
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centred
         };
+
+        inline static const ColumnHeader SwitchesTableIpAddress{
+            1, "IP address", 150, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centredLeft
+        };
+        inline static const ColumnHeader SwitchesTableUsername{
+            2, "Username", 100, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centredLeft
+        };
+        inline static const ColumnHeader SwitchesTablePassword{
+            3, "Password", 100, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centredLeft
+        };
+        inline static const ColumnHeader SwitchesTableDrift{
+            4, "Freq. drift (ppb)", 150, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centredRight
+        };
+        inline static const ColumnHeader SwitchesTableOffset{
+            5, "Offset (ns)", 150, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centredRight
+        };
+        inline static const ColumnHeader SwitchesTableResetPTP{
+            6, "Reset PTP", 100, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centred
+        };
     };
 
     class Strings
@@ -110,20 +148,21 @@ namespace ananas::WFS
 
         inline static const juce::StringRef SwitchesSectionTitle{"SWITCHES"};
         inline static const juce::StringRef AddSwitchButtonName{"Add switch button"};
+        inline static const juce::StringRef AddSwitchButtonText{"+"};
 
         inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
 
         inline static const juce::StringRef ClientsSectionTitle{"CLIENTS"};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
-
     };
 
     class Identifiers
     {
     public:
         inline static const juce::Identifier StaticTreeType{"WfsParameters"};
-        inline static const juce::Identifier DynamicTreeType{"ModuleParameters"};
+        inline static const juce::Identifier DynamicTreeType{"EphemeralData"};
+        inline static const juce::Identifier PersistentTreeType{"PersistentData"};
     };
 
     class Utils
@@ -132,7 +171,7 @@ namespace ananas::WFS
         static juce::String formatWithThousandsSeparator(const int value)
         {
             std::stringstream ss;
-            ss.imbue(std::locale("en_GB.UTF-8")); // Use system locale
+            ss.imbue(std::locale("en_GB.UTF-8"));
             ss << value;
             return ss.str();
         }
@@ -140,7 +179,7 @@ namespace ananas::WFS
         static juce::String formatWithThousandsSeparator(const float value, const int decimals = 3)
         {
             std::stringstream ss;
-            ss.imbue(std::locale("en_GB.UTF-8")); // Use system locale
+            ss.imbue(std::locale("en_GB.UTF-8"));
             ss << std::fixed << std::setprecision(decimals) << value;
             return ss.str();
         }

@@ -10,9 +10,7 @@ namespace ananas
     class NetworkOverviewComponent final : public juce::Component
     {
     public:
-        NetworkOverviewComponent();
-
-        void update(juce::ValueTree &tree, const juce::Identifier &property);
+        NetworkOverviewComponent(juce::ValueTree& dynamicTree, juce::ValueTree& persistentTree);
 
         void paint(juce::Graphics &g) override;
 

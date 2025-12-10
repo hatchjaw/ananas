@@ -2,7 +2,8 @@
 
 #include <AnanasUtils.h>
 
-ananas::TimeAuthorityComponent::TimeAuthorityComponent()
+ananas::TimeAuthorityComponent::TimeAuthorityComponent(juce::ValueTree &treeToListenTo)
+    : tree(treeToListenTo)
 {
     addAndMakeVisible(title);
     addAndMakeVisible(authorityTable);
@@ -11,6 +12,13 @@ ananas::TimeAuthorityComponent::TimeAuthorityComponent()
     title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
     title.setJustificationType(juce::Justification::bottomLeft);
     title.setText(WFS::Strings::TimeAuthoritySectionTitle, juce::dontSendNotification);
+
+    treeToListenTo.addListener(this);
+}
+
+ananas::TimeAuthorityComponent::~TimeAuthorityComponent()
+{
+    tree.removeListener(this);
 }
 
 void ananas::TimeAuthorityComponent::update(juce::var var)
@@ -28,6 +36,21 @@ void ananas::TimeAuthorityComponent::resized()
     auto bounds{getLocalBounds()};
     title.setBounds(bounds.removeFromTop(48).reduced(5));
     authorityTable.setBounds(bounds);
+}
+
+void ananas::TimeAuthorityComponent::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
+{
+    if (!isVisible()) return;
+
+    if (property == Identifiers::TimeAuthorityParamID) {
+        update(treeWhosePropertyHasChanged[property]);
+        handleAsyncUpdate();
+    }
+}
+
+void ananas::TimeAuthorityComponent::handleAsyncUpdate()
+{
+    repaint();
 }
 
 //==============================================================================

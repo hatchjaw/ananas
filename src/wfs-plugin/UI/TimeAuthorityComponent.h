@@ -6,16 +6,25 @@
 
 namespace ananas
 {
-    class TimeAuthorityComponent final : public juce::Component
+    class TimeAuthorityComponent final : public juce::Component,
+                                         public juce::ValueTree::Listener,
+                                         juce::AsyncUpdater
+
     {
     public:
-        TimeAuthorityComponent();
+        explicit TimeAuthorityComponent(juce::ValueTree &treeToListenTo);
+
+        ~TimeAuthorityComponent() override;
 
         void update(juce::var var);
 
         void paint(juce::Graphics &g) override;
 
         void resized() override;
+
+        void valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property) override;
+
+        void handleAsyncUpdate() override;
 
     private:
         class TimeAuthorityTable final : public Component,
@@ -51,6 +60,7 @@ namespace ananas
 
         juce::Label title;
         TimeAuthorityTable authorityTable;
+        juce::ValueTree &tree;
     };
 }
 

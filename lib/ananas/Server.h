@@ -1,11 +1,12 @@
 #ifndef ANANASSERVER_H
 #define ANANASSERVER_H
 
-#include <AuthorityInfo.h>
 #include <juce_core/juce_core.h>
+#include "ClientInfo.h"
+#include "AuthorityInfo.h"
+#include "SwitchInfo.h"
 #include "Fifo.h"
 #include "Packet.h"
-#include "ClientInfo.h"
 
 namespace ananas
 {
@@ -25,6 +26,8 @@ namespace ananas
         ClientList *getClientList();
 
         AuthorityInfo *getAuthority();
+
+        SwitchList *getSwitches();
 
     private:
         class Sender final : public juce::Thread
@@ -114,10 +117,25 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AuthorityListener);
         };
 
+        class SwitchInspector final : public juce::Thread
+        {
+        public:
+            explicit SwitchInspector(SwitchList &switches);
+
+            void run() override;
+
+        private:
+            SwitchList &switches;
+
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SwitchInspector);
+        };
+
         uint8_t numChannels;
         Fifo fifo;
         Sender sender;
         TimestampListener timestampListener;
+        SwitchInspector switchInspector;
+        SwitchList switches;
         ClientListener clientListener;
         ClientList clients;
         AuthorityListener authorityListener;

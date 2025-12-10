@@ -1,9 +1,8 @@
 #include "PluginEditor.h"
 
-#include <X11/X.h>
-
 PluginEditor::PluginEditor(PluginProcessor &p)
-    : AudioProcessorEditor(&p)
+    : AudioProcessorEditor(&p),
+      networkOverview(getProcessor().getDynamicTree(), getProcessor().getPersistentTree())
 {
     setLookAndFeel(&lookAndFeel);
 
@@ -11,14 +10,14 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, nullptr, false);
     tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
 
-    getProcessor().getDynamicTree().addListener(this);
+    setSize(ananas::WFS::Constants::UiWidth, ananas::WFS::Constants::UiHeight);
 
-    setSize(1200, 900);
+    getProcessor().getPersistentTree().addListener(this);
 }
 
 PluginEditor::~PluginEditor()
 {
-    getProcessor().getDynamicTree().removeListener(this);
+    getProcessor().getPersistentTree().removeListener(this);
     setLookAndFeel(nullptr);
 }
 
@@ -32,22 +31,9 @@ void PluginEditor::resized()
     tabbedComponent.setBounds(getLocalBounds());
 }
 
-void PluginEditor::parameterChanged(const juce::String &parameterID, float newValue)
+void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
 {
-    ignoreUnused(parameterID, newValue);
-}
-
-void PluginEditor::valueTreePropertyChanged(juce::ValueTree &tree, const juce::Identifier &property)
-{
-    // if (property == ananas::Constants::ConnectedClientsParamID) {
-        networkOverview.update(tree, property);
-        triggerAsyncUpdate();
-    // }
-}
-
-void PluginEditor::handleAsyncUpdate()
-{
-    repaint();
+    getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
 }
 
 PluginProcessor &PluginEditor::getProcessor()
