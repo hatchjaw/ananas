@@ -129,7 +129,7 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock &destData)
 {
     auto state{apvts.copyState()};
 
-    state.addChild(persistentTree.createCopy(), -1, nullptr);
+    state.addChild(getServer().getSwitches()->toValueTree(), -1, nullptr);
 
     const auto xml(state.createXml());
     copyXmlToBinary(*xml, destData);
@@ -145,9 +145,14 @@ void PluginProcessor::setStateInformation(const void *data, int size)
         if (tree.isValid()) {
             apvts.replaceState(tree);
 
-            const auto config{tree.getChildWithName(ananas::WFS::Identifiers::PersistentTreeType)};
-            if (config.isValid()) {
-                persistentTree = config.createCopy();
+            // const auto config{tree.getChildWithName(ananas::WFS::Identifiers::PersistentTreeType)};
+            // if (config.isValid()) {
+            //     persistentTree = config.createCopy();
+            // }
+
+            const auto switchListTree{tree.getChildWithName(ananas::Identifiers::SwitchesParamID)};
+            if (switchListTree.isValid()) {
+                getServer().getSwitches()->fromValueTree(switchListTree);
             }
         }
     }

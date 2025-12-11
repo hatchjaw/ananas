@@ -85,6 +85,7 @@ namespace ananas
         inline const static juce::Identifier SwitchIpPropertyID{"switchIP"};
         inline const static juce::Identifier SwitchUsernamePropertyID{"switchUsername"};
         inline const static juce::Identifier SwitchPasswordPropertyID{"switchPassword"};
+        inline const static juce::Identifier SwitchShouldResetPtpPropertyID{"shouldResetPtp"};
         inline const static juce::Identifier SwitchShouldRemovePropertyID{"switchShouldRemove"};
 
         inline const static juce::Identifier SwitchClockIdPropertyId{"clock-id"};

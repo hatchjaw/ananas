@@ -13,6 +13,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     setSize(ananas::WFS::Constants::UiWidth, ananas::WFS::Constants::UiHeight);
 
     getProcessor().getPersistentTree().addListener(this);
+    getProcessor().getDynamicTree().addListener(this);
 
     setWantsKeyboardFocus(false);
 }
@@ -20,6 +21,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 PluginEditor::~PluginEditor()
 {
     getProcessor().getPersistentTree().removeListener(this);
+    getProcessor().getDynamicTree().removeListener(this);
     setLookAndFeel(nullptr);
 }
 
@@ -35,7 +37,9 @@ void PluginEditor::resized()
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
 {
-    getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
+    if (property == ananas::Identifiers::SwitchesParamID) {
+        getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
+    }
 }
 
 PluginProcessor &PluginEditor::getProcessor()

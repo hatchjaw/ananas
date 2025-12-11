@@ -27,6 +27,8 @@ namespace ananas
 
         void removeSwitch(int switchID) const;
 
+        void resetPtpForSwitch(int switchID) const;
+
     private:
         class SwitchesTable final : public Component,
                                     public juce::TableListBoxModel
@@ -48,12 +50,13 @@ namespace ananas
 
             void addSwitch() const;
 
-            void handleResetPtpForSwitch(int rowNumber);
+            void handleResetPtpForSwitch(int rowNumber) const;
 
             void handleRemoveSwitch(int rowNumber) const;
 
             std::function<void(int rowNumber, int columnId, juce::String value)> onCellEdited;
             std::function<void(int switchID)> onSwitchRemoved;
+            std::function<void(int switchID)> onResetPtpForSwitch;
             bool isEditing{false};
 
         private:

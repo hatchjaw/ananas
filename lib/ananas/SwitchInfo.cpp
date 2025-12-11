@@ -1,5 +1,4 @@
 #include "SwitchInfo.h"
-
 #include <AnanasUtils.h>
 
 namespace ananas
@@ -28,8 +27,27 @@ namespace ananas
         object->setProperty(Identifiers::SwitchPasswordPropertyID, password);
         object->setProperty(Identifiers::SwitchFreqDriftPropertyId, static_cast<int>(freqDrift));
         object->setProperty(Identifiers::SwitchOffsetPropertyId, static_cast<int>(offset));
+        object->setProperty(Identifiers::SwitchShouldResetPtpPropertyID, shouldResetPtp);
 
         return object;
+    }
+
+    juce::ValueTree SwitchInfo::toValueTree() const
+    {
+        juce::ValueTree tree("Switch");
+        tree.setProperty(Identifiers::SwitchIpPropertyID, ip, nullptr);
+        tree.setProperty(Identifiers::SwitchUsernamePropertyID, username, nullptr);
+        tree.setProperty(Identifiers::SwitchPasswordPropertyID, password, nullptr);
+        return tree;
+    }
+
+    SwitchInfo SwitchInfo::fromValueTree(const juce::ValueTree &tree)
+    {
+        SwitchInfo info;
+        info.ip = tree.getProperty(Identifiers::SwitchIpPropertyID);
+        info.username = tree.getProperty(Identifiers::SwitchUsernamePropertyID);
+        info.password = tree.getProperty(Identifiers::SwitchPasswordPropertyID);
+        return info;
     }
 
     //==========================================================================
@@ -47,6 +65,12 @@ namespace ananas
                     return;
                 }
 
+                if (s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)) {
+                    switches.at(index).shouldResetPtp = true;
+                    sendChangeMessage();
+                    return;
+                }
+
                 auto iter{switches.find(index)};
                 if (iter == switches.end()) {
                     SwitchInfo i{};
@@ -57,7 +81,6 @@ namespace ananas
                 iter->second.ip = s->getProperty(Identifiers::SwitchIpPropertyID).toString();
                 iter->second.username = s->getProperty(Identifiers::SwitchUsernamePropertyID).toString();
                 iter->second.password = s->getProperty(Identifiers::SwitchPasswordPropertyID).toString();
-                // sendChangeMessage();
             }
         }
     }
@@ -65,6 +88,13 @@ namespace ananas
     void SwitchList::handleResponse(const int switchIndex, const juce::var &response)
     {
         if (response.isArray()) {
+            // TODO: don't make this dreadful assumption.
+            if (response.getArray()->isEmpty()) {
+                switches.at(switchIndex).shouldResetPtp = false;
+                sendChangeMessage();
+                return;
+            }
+
             const auto switchInfo = response.getArray()->getFirst();
             auto iter{switches.find(switchIndex)};
             if (iter == switches.end()) {
@@ -88,5 +118,29 @@ namespace ananas
         }
 
         return object;
+    }
+
+    juce::ValueTree SwitchList::toValueTree() const
+    {
+        juce::ValueTree tree(Identifiers::SwitchesParamID);
+
+        for (const auto &[index, switchInfo]: switches) {
+            auto switchTree{switchInfo.toValueTree()};
+            switchTree.setProperty("index", index, nullptr);
+            tree.addChild(switchTree, -1, nullptr);
+        }
+
+        return tree;
+    }
+
+    void SwitchList::fromValueTree(const juce::ValueTree &tree)
+    {
+        switches.clear();
+
+        for (int i{0}; i < tree.getNumChildren(); ++i) {
+            auto switchTree{tree.getChild(i)};
+            int index{switchTree.getProperty("index")};
+            switches[index] = SwitchInfo::fromValueTree(switchTree);
+        }
     }
 }

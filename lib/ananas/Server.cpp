@@ -371,11 +371,6 @@ namespace ananas
 
         // curl -k -u admin:emeraude http://192.168.10.1/rest/system/ptp/monitor -d \'{"numbers":"0","once":""}\' -H "content-type: application/json"
 
-        const juce::var jsonData{new juce::DynamicObject};
-        jsonData.getDynamicObject()->setProperty("numbers", "0");
-        jsonData.getDynamicObject()->setProperty("once", "");
-        const auto postData = juce::JSON::toString(jsonData);
-
         while (!threadShouldExit()) {
             auto switchesVar{switches.toVar()};
 
@@ -385,13 +380,28 @@ namespace ananas
                         auto index{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
 
                         auto ip{s->getProperty(Identifiers::SwitchIpPropertyID)};
-
-                        if (!ip.isString() || ip.toString().isEmpty()) break;
-
                         auto username{s->getProperty(Identifiers::SwitchUsernamePropertyID).toString()};
                         auto password{s->getProperty(Identifiers::SwitchPasswordPropertyID).toString()};
+                        bool shouldResetPtp{s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)};
 
-                        juce::URL url("http://" + ip.toString() + "/rest/system/ptp/monitor");
+                        if (!ip.isString() || ip.toString().isEmpty() || username.isEmpty() || password.isEmpty()) break;
+
+                        juce::String postData, path1, path2;
+                        if (shouldResetPtp) {
+                            const juce::var jsonData{new juce::DynamicObject};
+                            jsonData.getDynamicObject()->setProperty("numbers", "0");
+                            postData = juce::JSON::toString(jsonData);
+                            path1 = "/rest/system/ptp/disable";
+                            path2 = "/rest/system/ptp/enable";
+                        } else {
+                            const juce::var jsonData{new juce::DynamicObject};
+                            jsonData.getDynamicObject()->setProperty("numbers", "0");
+                            jsonData.getDynamicObject()->setProperty("once", "");
+                            postData = juce::JSON::toString(jsonData);
+                            path1 = "/rest/system/ptp/monitor";
+                        }
+
+                        juce::URL url("http://" + ip.toString() + path1);
 
                         juce::ChildProcess curl;
                         juce::StringArray args;
@@ -410,6 +420,26 @@ namespace ananas
                             const auto response{curl.readAllProcessOutput()};
 
                             switches.handleResponse(index, juce::JSON::parse(response));
+                        }
+
+                        if (shouldResetPtp) {
+                            args.clear();
+                            args.add("curl");
+                            args.add("-s"); // Silent, no stats
+                            args.add("-k"); // Insecure (no TLS)
+                            args.add("-u"); // Specify username and password
+                            args.add(username + ":" + password);
+                            args.add(juce::URL{"http://" + ip.toString() + path2}.toString(false));
+                            args.add("-H");
+                            args.add("Content-Type: application/json");
+                            args.add("-d");
+                            args.add(postData);
+
+                            if (curl.start(args)) {
+                                const auto response{curl.readAllProcessOutput()};
+
+                                switches.handleResponse(index, juce::JSON::parse(response));
+                            }
                         }
                     }
                 }

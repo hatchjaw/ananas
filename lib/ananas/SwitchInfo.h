@@ -3,6 +3,7 @@
 
 #include <juce_core/juce_core.h>
 #include <juce_events/juce_events.h>
+#include <juce_data_structures/juce_data_structures.h>
 
 namespace ananas
 {
@@ -11,11 +12,16 @@ namespace ananas
     public:
         void update(const juce::var *response);
 
-        juce::var toVar() const;
+        [[nodiscard]] juce::var toVar() const;
+
+        [[nodiscard]] juce::ValueTree toValueTree() const;
+
+        static SwitchInfo fromValueTree(const juce::ValueTree& tree);
 
         juce::String ip;
         juce::String username;
         juce::String password;
+        bool shouldResetPtp{false};
     private:
         juce::var info;
 
@@ -42,6 +48,10 @@ namespace ananas
         void handleResponse(const int switchIndex, const juce::var &response);
 
         [[nodiscard]] juce::var toVar() const;
+
+        [[nodiscard]] juce::ValueTree toValueTree() const;
+
+        void fromValueTree(const juce::ValueTree& tree);
 
     private:
         // std::map<juce::String, SwitchInfo> switches;

@@ -1,7 +1,5 @@
 #include "SwitchesComponent.h"
-
 #include <AnanasUtils.h>
-
 #include "../Utils.h"
 
 namespace ananas
@@ -23,7 +21,10 @@ namespace ananas
         title.setText(WFS::Strings::SwitchesSectionTitle, juce::dontSendNotification);
 
         addSwitchButton.setButtonText(WFS::Strings::AddSwitchButtonText);
-        addSwitchButton.onClick = [this] { switchesTable.addSwitch(); };
+        addSwitchButton.onClick = [this]
+        {
+            switchesTable.addSwitch();
+        };
 
         dynamicTree.addListener(this);
         persistentTree.addListener(this);
@@ -31,6 +32,11 @@ namespace ananas
         switchesTable.onCellEdited = [this](const int row, const int col, const juce::String &content)
         {
             updateSwitch(row, col, content);
+        };
+
+        switchesTable.onResetPtpForSwitch = [this](const int switchID)
+        {
+            resetPtpForSwitch(switchID);
         };
 
         switchesTable.onSwitchRemoved = [this](const int switchID)
@@ -93,6 +99,22 @@ namespace ananas
 
         persistentTree.setProperty(Identifiers::SwitchesParamID, switchesVar, nullptr);
         persistentTree.sendPropertyChangeMessage(Identifiers::SwitchesParamID);
+    }
+
+    void SwitchesComponent::resetPtpForSwitch(const int switchID) const
+    {
+        const auto switchesVar{dynamicTree.getProperty(Identifiers::SwitchesParamID)};
+
+        const auto switchesObject{switchesVar.getDynamicObject()};
+
+        const juce::String rowKey{"switch_" + juce::String(switchID)};
+
+        const auto rowVar = switchesObject->getProperty(rowKey);
+        rowVar.getDynamicObject()->setProperty(Identifiers::SwitchShouldResetPtpPropertyID, true);
+        switchesObject->setProperty(rowKey, rowVar);
+
+        dynamicTree.setProperty(Identifiers::SwitchesParamID, switchesVar, nullptr);
+        dynamicTree.sendPropertyChangeMessage(Identifiers::SwitchesParamID);
     }
 
     void SwitchesComponent::updateSwitch(const int row, const int col, const juce::String &content) const
@@ -173,7 +195,7 @@ namespace ananas
                     row.offsetNS = theSwitch->getProperty(Identifiers::SwitchOffsetPropertyId);
                 }
 
-                auto key{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
+                const auto key{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
                 rows.set(key, row);
             }
         }
@@ -323,8 +345,10 @@ namespace ananas
         }
     }
 
-    void SwitchesComponent::SwitchesTable::handleResetPtpForSwitch(int rowNumber)
+    void SwitchesComponent::SwitchesTable::handleResetPtpForSwitch(const int rowNumber) const
     {
+        if (onResetPtpForSwitch)
+            onResetPtpForSwitch(rowNumber);
     }
 
     void SwitchesComponent::SwitchesTable::handleRemoveSwitch(const int rowNumber) const
