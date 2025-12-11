@@ -25,6 +25,8 @@ namespace ananas
 
         void handleAsyncUpdate() override;
 
+        void removeSwitch(int switchID) const;
+
     private:
         class SwitchesTable final : public Component,
                                     public juce::TableListBoxModel
@@ -44,9 +46,15 @@ namespace ananas
 
             Component *refreshComponentForCell(int rowNumber, int columnId, bool isRowSelected, Component *existingComponentToUpdate) override;
 
-            void addSwitch();
+            void addSwitch() const;
+
+            void handleResetPtpForSwitch(int rowNumber);
+
+            void handleRemoveSwitch(int rowNumber) const;
 
             std::function<void(int rowNumber, int columnId, juce::String value)> onCellEdited;
+            std::function<void(int switchID)> onSwitchRemoved;
+            bool isEditing{false};
 
         private:
             struct Row
@@ -63,8 +71,9 @@ namespace ananas
             inline static const juce::Array<int> editableColumnIDs{1, 2, 3};
             juce::TableListBox table{{}, this};
             juce::HashMap<int, Row> rows;
-            // juce::Array<Row> rows;
         };
+
+        void updateSwitch(int row, int col, const juce::String &content) const;
 
         juce::Label title;
         juce::TextButton addSwitchButton;

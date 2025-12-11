@@ -13,6 +13,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     setSize(ananas::WFS::Constants::UiWidth, ananas::WFS::Constants::UiHeight);
 
     getProcessor().getPersistentTree().addListener(this);
+
+    setWantsKeyboardFocus(false);
 }
 
 PluginEditor::~PluginEditor()

@@ -121,17 +121,22 @@ namespace ananas::WFS
             juce::Justification::centredLeft
         };
         inline static const ColumnHeader SwitchesTableDrift{
-            4, "Freq. drift (ppb)", 150, 30, -1,
+            4, "Freq. drift (ppb)", 100, 30, -1,
             juce::TableHeaderComponent::notSortable,
             juce::Justification::centredRight
         };
         inline static const ColumnHeader SwitchesTableOffset{
-            5, "Offset (ns)", 150, 30, -1,
+            5, "Offset (ns)", 100, 30, -1,
             juce::TableHeaderComponent::notSortable,
             juce::Justification::centredRight
         };
         inline static const ColumnHeader SwitchesTableResetPTP{
-            6, "Reset PTP", 100, 30, -1,
+            6, "Reset PTP", 75, 30, -1,
+            juce::TableHeaderComponent::notSortable,
+            juce::Justification::centred
+        };
+        inline static const ColumnHeader SwitchesTableRemoveSwitch{
+            7, "Remove", 75, 30, -1,
             juce::TableHeaderComponent::notSortable,
             juce::Justification::centred
         };

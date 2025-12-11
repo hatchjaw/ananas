@@ -1,7 +1,5 @@
 #include "NetworkOverviewComponent.h"
 
-#include <AnanasUtils.h>
-
 ananas::NetworkOverviewComponent::NetworkOverviewComponent(juce::ValueTree &dynamicTree, juce::ValueTree &persistentTree)
     : switches(dynamicTree, persistentTree),
       timeAuthority(dynamicTree),
@@ -10,6 +8,8 @@ ananas::NetworkOverviewComponent::NetworkOverviewComponent(juce::ValueTree &dyna
     addAndMakeVisible(switches);
     addAndMakeVisible(timeAuthority);
     addAndMakeVisible(clientOverview);
+
+    setWantsKeyboardFocus(false);
 }
 
 void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)

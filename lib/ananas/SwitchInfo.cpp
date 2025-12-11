@@ -41,6 +41,12 @@ namespace ananas
             if (const auto *s = prop.value.getDynamicObject()) {
                 auto index{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
 
+                if (s->getProperty(Identifiers::SwitchShouldRemovePropertyID)) {
+                    switches.erase(index);
+                    sendChangeMessage();
+                    return;
+                }
+
                 auto iter{switches.find(index)};
                 if (iter == switches.end()) {
                     SwitchInfo i{};
@@ -51,6 +57,7 @@ namespace ananas
                 iter->second.ip = s->getProperty(Identifiers::SwitchIpPropertyID).toString();
                 iter->second.username = s->getProperty(Identifiers::SwitchUsernamePropertyID).toString();
                 iter->second.password = s->getProperty(Identifiers::SwitchPasswordPropertyID).toString();
+                // sendChangeMessage();
             }
         }
     }
