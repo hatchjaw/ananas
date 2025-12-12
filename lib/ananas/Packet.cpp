@@ -15,6 +15,12 @@ namespace ananas
         // (somewhat) accurately.
         nsPerPacket = Constants::NSPS * framesPerPacket / static_cast<int>(sampleRate);
         nsPerPacketRemainder = static_cast<double>(Constants::NSPS) * framesPerPacket / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
+        // Audio packets will be transmitted in bursts according to the number
+        // of frames available in the FIFO. E.g., for a host buffer size of 128
+        // frames, and a framesPerPacket value of 32, four packets will be
+        // transmitted for each host audio callback. Without a small delay
+        // between transmission of consecutive packets, these bursts can be
+        // disruptive to reception of PTP packets, client-side.
         nsSleepInterval = nsPerPacket * 1 / 64;
 
         clientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * Constants::ClientPacketBufferSize;

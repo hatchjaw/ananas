@@ -4,19 +4,26 @@
 
 namespace ananas
 {
-    ClientsOverviewComponent::ClientsOverviewComponent(juce::ValueTree& treeToListenTo)
+    ClientsOverviewComponent::ClientsOverviewComponent(juce::ValueTree &treeToListenTo)
         : tree(treeToListenTo)
     {
         addAndMakeVisible(title);
+        addAndMakeVisible(rebootAllClientsButton);
         addAndMakeVisible(overviewPanel);
         addAndMakeVisible(clientTable);
 
         title.setColour(juce::Label::textColourId, juce::Colours::black);
         title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
-        title.setJustificationType(juce::Justification::bottomLeft);
+        title.setJustificationType(juce::Justification::centredLeft);
         title.setText(WFS::Strings::ClientsSectionTitle, juce::dontSendNotification);
 
-        treeToListenTo.addListener(this);
+        rebootAllClientsButton.setButtonText(WFS::Strings::RebootAllClientsButtonText);
+        rebootAllClientsButton.onClick = [this]
+        {
+            triggerClientReboot();
+        };
+
+        tree.addListener(this);
     }
 
     ClientsOverviewComponent::~ClientsOverviewComponent()
@@ -40,9 +47,13 @@ namespace ananas
     void ClientsOverviewComponent::resized()
     {
         auto bounds{getLocalBounds()};
-        title.setBounds(bounds.removeFromTop(48).reduced(5));
+        auto titleRow{
+            bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+            .reduced(6, 0)
+        };
+        title.setBounds(titleRow.removeFromLeft(85));
+        rebootAllClientsButton.setBounds(titleRow.removeFromLeft(100).reduced(8));
         overviewPanel.setBounds(bounds.removeFromTop(35));
-        // Client table gets remaining bounds.
         clientTable.setBounds(bounds);
     }
 
@@ -59,6 +70,11 @@ namespace ananas
     void ClientsOverviewComponent::handleAsyncUpdate()
     {
         repaint();
+    }
+
+    void ClientsOverviewComponent::triggerClientReboot() const
+    {
+        tree.setProperty(Identifiers::ClientsShouldRebootParamID, true, nullptr);
     }
 
     //==========================================================================
@@ -271,8 +287,9 @@ namespace ananas
     //==========================================================================
 
     void ClientsOverviewComponent::ClientTable::LookAndFeel::drawTableHeaderColumn(juce::Graphics &g, juce::TableHeaderComponent &header,
-                                                                  const juce::String &columnName, int columnId, int width, int height, bool isMouseOver,
-                                                                  bool isMouseDown, int columnFlags)
+                                                                                   const juce::String &columnName, int columnId, int width, int height,
+                                                                                   bool isMouseOver,
+                                                                                   bool isMouseDown, int columnFlags)
     {
         auto highlightColour = header.findColour(juce::TableHeaderComponent::highlightColourId);
 

@@ -31,10 +31,15 @@ namespace ananas
 
         [[nodiscard]] juce::var toVar() const;
 
+        bool getShouldReboot() const;
+
+        void setShouldReboot(bool should);
+
     private:
         void checkConnectivity();
 
         std::map<juce::String, ClientInfo> clients;
+        bool shouldReboot{false};
     };
 }
 

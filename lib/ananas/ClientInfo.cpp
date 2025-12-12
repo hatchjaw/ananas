@@ -64,6 +64,16 @@ namespace ananas
         return object;
     }
 
+    bool ClientList::getShouldReboot() const
+    {
+        return shouldReboot;
+    }
+
+    void ClientList::setShouldReboot(const bool should)
+    {
+        shouldReboot = should;
+    }
+
     void ClientList::checkConnectivity()
     {
         for (auto it{clients.begin()}, next{it}; it != clients.end(); it = next) {

@@ -60,6 +60,9 @@ namespace ananas
                 auto index{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
 
                 if (s->getProperty(Identifiers::SwitchShouldRemovePropertyID)) {
+                    // TODO erasing switch_0 when, e.g., switch_0 and switch_1
+                    //  exist, breaks table logic that relies on switch indices
+                    //  matching row numbers; fix this.
                     switches.erase(index);
                     sendChangeMessage();
                     return;

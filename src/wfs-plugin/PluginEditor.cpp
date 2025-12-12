@@ -39,6 +39,9 @@ void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHa
 {
     if (property == ananas::Identifiers::SwitchesParamID) {
         getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
+    } else if (property == ananas::Identifiers::ClientsShouldRebootParamID) {
+        getProcessor().getServer().getClientList()->setShouldReboot(treeWhosePropertyHasChanged[property]);
+        treeWhosePropertyHasChanged.setPropertyExcludingListener(this, property, false, nullptr);
     }
 }
 

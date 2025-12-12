@@ -17,7 +17,8 @@ namespace ananas::WFS
         constexpr static int UiWidth{1200};
         constexpr static int UiHeight{900};
         constexpr static int SwitchesSectionHeight{175};
-        constexpr static int TimeAuthoritySectionHeight{120};
+        constexpr static int TimeAuthoritySectionHeight{112};
+        constexpr static int NetworkSectionTitleHeight{40};
     };
 
     class Params
@@ -158,6 +159,7 @@ namespace ananas::WFS
         inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
 
         inline static const juce::StringRef ClientsSectionTitle{"CLIENTS"};
+        inline static const juce::StringRef RebootAllClientsButtonText{"Reboot all"};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
     };

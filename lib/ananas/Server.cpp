@@ -10,7 +10,8 @@ namespace ananas
                                                       sender(fifo),
                                                       switchInspector(switches),
                                                       clientListener(clients),
-                                                      authorityListener(authority)
+                                                      authorityListener(authority),
+                                                      rebootSender(clients)
     {
     }
 
@@ -24,7 +25,8 @@ namespace ananas
         while (!sender.prepare(numChannels, samplesPerBlockExpected, sampleRate) ||
                !timestampListener.prepare() ||
                !clientListener.prepare() ||
-               !authorityListener.prepare()) {
+               !authorityListener.prepare() ||
+               !rebootSender.prepare()) {
             sleep(1);
         }
 
@@ -39,7 +41,7 @@ namespace ananas
     void Server::releaseResources()
     {
         if (sender.isThreadRunning()) {
-            sender.stopThread(Constants::SenderSocketTimeoutMs);
+            sender.stopThread(Constants::AudioSenderSocketTimeoutMs);
         }
         if (timestampListener.isThreadRunning()) {
             timestampListener.stopThread(Constants::TimestampListenerSocketTimeoutMs);
@@ -52,6 +54,9 @@ namespace ananas
         }
         if (switchInspector.isThreadRunning()) {
             switchInspector.stopThread(Constants::SwitchInspectorRequestTimeoutMs);
+        }
+        if (rebootSender.isThreadRunning()) {
+            rebootSender.stopThread(Constants::RebootSenderSocketTimeoutMs);
         }
     }
 
@@ -77,18 +82,18 @@ namespace ananas
 
     //==============================================================================
 
-    Server::Sender::Sender(Fifo &fifo) : Thread(Constants::SenderThreadName),
-                                         fifo(fifo)
+    Server::AudioSender::AudioSender(Fifo &fifo) : Thread(Constants::AudioSenderThreadName),
+                                                   fifo(fifo)
     {
     }
 
-    Server::Sender::~Sender()
+    Server::AudioSender::~AudioSender()
     {
         socket.leaveMulticast(Constants::AudioMulticastIP);
         socket.shutdown();
     }
 
-    bool Server::Sender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
+    bool Server::AudioSender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
     {
         juce::ignoreUnused(sampleRate);
 
@@ -103,7 +108,7 @@ namespace ananas
                 return false;
             }
 
-            if (!socket.bindToPort(Constants::SenderSocketLocalPort, Constants::LocalInterfaceIP)) {
+            if (!socket.bindToPort(Constants::AudioSenderSocketLocalPort, Constants::LocalInterfaceIP)) {
                 std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
                 return false;
@@ -125,8 +130,10 @@ namespace ananas
         return isReady;
     }
 
-    void Server::Sender::run()
+    void Server::AudioSender::run()
     {
+        DBG("Sending audio packets...");
+
         while (!threadShouldExit()) {
             // Read from the fifo into the packet.
             fifo.read(packet.getAudioData(), Constants::FramesPerPacket);
@@ -136,7 +143,7 @@ namespace ananas
             // Write the packet to the socket.
             socket.write(
                 Constants::AudioMulticastIP,
-                Constants::SenderSocketRemotePort,
+                Constants::AudioSenderSocketRemotePort,
                 packet.getData(),
                 static_cast<int>(packet.getSize())
             );
@@ -148,17 +155,17 @@ namespace ananas
         DBG("Stopping send thread");
     }
 
-    void Server::Sender::setPacketTime(const timespec ts)
+    void Server::AudioSender::setPacketTime(const timespec ts)
     {
         packet.setTime(ts);
     }
 
-    int64_t Server::Sender::getPacketTime() const
+    int64_t Server::AudioSender::getPacketTime() const
     {
         return packet.getTime();
     }
 
-    bool Server::Sender::stopThread(const int timeOutMilliseconds)
+    bool Server::AudioSender::stopThread(const int timeOutMilliseconds)
     {
         fifo.abortRead();
         return Thread::stopThread(timeOutMilliseconds);
@@ -358,7 +365,65 @@ namespace ananas
         DBG("Stopping timing authority listener thread");
     }
 
-    //==============================================================================
+    //==========================================================================
+
+    Server::RebootSender::RebootSender(ClientList &clients)
+        : Thread(Constants::RebootSenderThreadName),
+          clients(clients)
+    {
+    }
+
+    bool Server::RebootSender::prepare()
+    {
+        if (isReady) return true;
+
+        if (-1 == socket.getBoundPort()) {
+            if (!socket.setEnablePortReuse(true)) {
+                std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
+                socket.shutdown();
+                return false;
+            }
+
+            if (!socket.bindToPort(Constants::RebootSenderSocketLocalPort, Constants::LocalInterfaceIP)) {
+                std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
+                socket.shutdown();
+                return false;
+            }
+
+            if (!socket.joinMulticast(Constants::RebootMulticastIP)) {
+                std::cerr << getThreadName() << " Failed to join multicast group: " << strerror(errno) << std::endl;
+                socket.shutdown();
+                return false;
+            }
+
+            socket.setMulticastLoopbackEnabled(false);
+            socket.waitUntilReady(false, 1000);
+        }
+
+        isReady = startThread();
+        return isReady;
+    }
+
+    void Server::RebootSender::run()
+    {
+        while (!threadShouldExit()) {
+            if (clients.getShouldReboot()) {
+                clients.setShouldReboot(false);
+                socket.write(
+                    Constants::RebootMulticastIP,
+                    Constants::RebootSenderSocketRemotePort,
+                    nullptr,
+                    0
+                );
+            }
+
+            // Wait 1 second, but check for thread exit every 100ms
+            for (int i = 0; i < 10 && !threadShouldExit(); ++i)
+                wait(100);
+        }
+    }
+
+    //==========================================================================
 
     Server::SwitchInspector::SwitchInspector(SwitchList &switches)
         : Thread(Constants::SwitchInspectorThreadName), switches(switches)
@@ -391,14 +456,14 @@ namespace ananas
                             const juce::var jsonData{new juce::DynamicObject};
                             jsonData.getDynamicObject()->setProperty("numbers", "0");
                             postData = juce::JSON::toString(jsonData);
-                            path1 = "/rest/system/ptp/disable";
-                            path2 = "/rest/system/ptp/enable";
+                            path1 = Constants::SwitchDisablePtpPath;
+                            path2 = Constants::SwitchEnablePtpPath;
                         } else {
                             const juce::var jsonData{new juce::DynamicObject};
                             jsonData.getDynamicObject()->setProperty("numbers", "0");
                             jsonData.getDynamicObject()->setProperty("once", "");
                             postData = juce::JSON::toString(jsonData);
-                            path1 = "/rest/system/ptp/monitor";
+                            path1 = Constants::SwitchMonitorPtpPath;
                         }
 
                         juce::URL url("http://" + ip.toString() + path1);
@@ -422,6 +487,7 @@ namespace ananas
                             switches.handleResponse(index, juce::JSON::parse(response));
                         }
 
+                        // TODO don't make this terrible repetition
                         if (shouldResetPtp) {
                             args.clear();
                             args.add("curl");

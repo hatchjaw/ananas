@@ -10,10 +10,10 @@ ananas::TimeAuthorityComponent::TimeAuthorityComponent(juce::ValueTree &treeToLi
 
     title.setColour(juce::Label::textColourId, juce::Colours::black);
     title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
-    title.setJustificationType(juce::Justification::bottomLeft);
+    title.setJustificationType(juce::Justification::centredLeft);
     title.setText(WFS::Strings::TimeAuthoritySectionTitle, juce::dontSendNotification);
 
-    treeToListenTo.addListener(this);
+    tree.addListener(this);
 }
 
 ananas::TimeAuthorityComponent::~TimeAuthorityComponent()
@@ -34,7 +34,10 @@ void ananas::TimeAuthorityComponent::paint(juce::Graphics &g)
 void ananas::TimeAuthorityComponent::resized()
 {
     auto bounds{getLocalBounds()};
-    title.setBounds(bounds.removeFromTop(48).reduced(5));
+    title.setBounds(
+        bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+        .reduced(6, 0)
+    );
     authorityTable.setBounds(bounds);
 }
 

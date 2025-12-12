@@ -24,11 +24,11 @@ namespace ananas
 
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
 
-        inline const static juce::StringRef SenderThreadName{"Ananas Sender"};
-        constexpr static int SenderSocketLocalPort{14841};
-        constexpr static int SenderSocketRemotePort{49152};
+        inline const static juce::StringRef AudioSenderThreadName{"Ananas Audio Sender"};
+        constexpr static int AudioSenderSocketLocalPort{14841};
+        constexpr static int AudioSenderSocketRemotePort{49152};
         inline const static juce::StringRef AudioMulticastIP{"224.4.224.4"};
-        constexpr static int SenderSocketTimeoutMs{500};
+        constexpr static int AudioSenderSocketTimeoutMs{500};
 
         inline const static juce::StringRef ControlMulticastIP{"224.4.224.5"};
 
@@ -56,8 +56,17 @@ namespace ananas
         constexpr static juce::uint32 AuthorityDisconnectedThresholdMs{1000};
         constexpr static juce::int32 AuthorityInitialUSBFeedbackAccumulator{48 << 25};
 
+        inline const static juce::StringRef RebootSenderThreadName{"Ananas Reboot Sender"};
+        constexpr static int RebootSenderSocketLocalPort{14842};
+        constexpr static int RebootSenderSocketRemotePort{49155};
+        inline const static juce::StringRef RebootMulticastIP{"224.4.224.8"};
+        constexpr static int RebootSenderSocketTimeoutMs{500};
+
         inline static const juce::StringRef SwitchInspectorThreadName{"Ananas Switch Inspector"};
         constexpr static juce::uint32 SwitchInspectorRequestTimeoutMs{1000};
+        inline static const juce::StringRef SwitchMonitorPtpPath{"/rest/system/ptp/monitor"};
+        inline static const juce::StringRef SwitchDisablePtpPath{"/rest/system/ptp/disable"};
+        inline static const juce::StringRef SwitchEnablePtpPath{"/rest/system/ptp/enable"};
     };
 
     class Identifiers
@@ -73,6 +82,8 @@ namespace ananas
         inline const static juce::Identifier ClientBufferFillPercentPropertyID{"bufferFillPercent"};
         inline const static juce::Identifier ClientSamplingRatePropertyID{"samplingRate"};
         inline const static juce::Identifier ClientPercentCPUPropertyID{"percentCPU"};
+
+        inline const static juce::Identifier ClientsShouldRebootParamID{"ClientsShouldReboot"};
 
         inline static const juce::Identifier TimeAuthorityParamID{"TimeAuthority"};
 

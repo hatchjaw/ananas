@@ -25,6 +25,8 @@ namespace ananas
 
         void handleAsyncUpdate() override;
 
+        void triggerClientReboot() const;
+
     private:
         class OverviewPanel final : public Component
         {
@@ -94,6 +96,7 @@ namespace ananas
         };
 
         juce::Label title;
+        juce::TextButton rebootAllClientsButton;
         OverviewPanel overviewPanel;
         ClientTable clientTable;
         juce::ValueTree &tree;

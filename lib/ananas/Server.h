@@ -30,12 +30,12 @@ namespace ananas
         SwitchList *getSwitches();
 
     private:
-        class Sender final : public juce::Thread
+        class AudioSender final : public juce::Thread
         {
         public:
-            explicit Sender(Fifo &fifo);
+            explicit AudioSender(Fifo &fifo);
 
-            ~Sender() override;
+            ~AudioSender() override;
 
             bool prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
@@ -54,7 +54,7 @@ namespace ananas
             int audioBlockSamples{0};
             bool isReady{false};
 
-            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Sender);
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioSender);
         };
 
         class AnnouncementListenerThread : public juce::Thread
@@ -117,6 +117,23 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AuthorityListener);
         };
 
+        class RebootSender final : public juce::Thread
+        {
+        public:
+            explicit RebootSender(ClientList &clients);
+
+            bool prepare();
+
+            void run() override;
+
+        private:
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RebootSender)
+
+            ClientList &clients;;
+            juce::DatagramSocket socket;
+            bool isReady{false};
+        };
+
         class SwitchInspector final : public juce::Thread
         {
         public:
@@ -132,7 +149,7 @@ namespace ananas
 
         uint8_t numChannels;
         Fifo fifo;
-        Sender sender;
+        AudioSender sender;
         TimestampListener timestampListener;
         SwitchInspector switchInspector;
         SwitchList switches;
@@ -140,6 +157,7 @@ namespace ananas
         ClientList clients;
         AuthorityListener authorityListener;
         AuthorityInfo authority;
+        RebootSender rebootSender;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
     };

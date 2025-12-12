@@ -59,9 +59,12 @@ namespace ananas
     void SwitchesComponent::resized()
     {
         auto bounds{getLocalBounds()};
-        auto titleRow{bounds.removeFromTop(48).reduced(5)};
+        auto titleRow{
+            bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+            .reduced(6, 0)
+        };
         title.setBounds(titleRow.removeFromLeft(85));
-        addSwitchButton.setBounds(titleRow.removeFromLeft(45).reduced(7));
+        addSwitchButton.setBounds(titleRow.removeFromLeft(45).reduced(8));
         switchesTable.setBounds(bounds);
     }
 
