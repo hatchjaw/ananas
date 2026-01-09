@@ -10,19 +10,17 @@ sub-microsecond) applications in mind, nor those that entail distributed signal
 processing.
 
 Ananas exists with the aim of being a lightweight, multicast, _time-sensitive_
-audio system for local area networks. It's a work-in-progress.
-
-Current assumptions include:
-- The system has a network interface with hardware timestamping support (one
-  like [this](https://www.delock.com/produkt/66045/kaufen.html), perhaps).
-- A PTP daemon (e.g. `linuxptp`) is running.
+audio system for local area networks.
 
 ## Dependencies
 
 - JUCE 8.0.6
-- borrows some bits and pieces from `linuxptp`.
 
 ## Deliverables
+
+### AnanasWFS
+
+A CLAP DAW plugin that embeds `ananas_server`. (Instructions to follow.)
 
 ### `ananas_console`
 
@@ -37,12 +35,6 @@ Transmits `filename` (.wav, .aif) to the network on UDP multicast IP
 
 Audio packets are software timestamped. Timestamps are derived from the system
 PTP clock; consequently `ananas_console` requires root access. 
-
-## Roadmap
-
-- [ ] DAW plugin that embeds `ananas_server`.
-  - This should ideally be in CLAP format for improved flexibility (with respect
-    to VST/AU) in terms of channel count and layout.
 
 ---
 

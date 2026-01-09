@@ -45,7 +45,7 @@ namespace ananas
     public:
         void handleEdit(const juce::var &data);
 
-        void handleResponse(const int switchIndex, const juce::var &response);
+        void handleResponse(const juce::Identifier &switchID, const juce::var &response);
 
         [[nodiscard]] juce::var toVar() const;
 
@@ -54,8 +54,7 @@ namespace ananas
         void fromValueTree(const juce::ValueTree& tree);
 
     private:
-        // std::map<juce::String, SwitchInfo> switches;
-        std::map<int, SwitchInfo> switches;
+        std::map<juce::Identifier, SwitchInfo> switches;
     };
 }
 

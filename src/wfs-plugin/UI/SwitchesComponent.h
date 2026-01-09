@@ -25,9 +25,11 @@ namespace ananas
 
         void handleAsyncUpdate() override;
 
-        void removeSwitch(int switchID) const;
+        void addSwitch() const;
 
-        void resetPtpForSwitch(int switchID) const;
+        void removeSwitch(const juce::Identifier &switchID) const;
+
+        void resetPtpForSwitch(const juce::Identifier &switchID) const;
 
     private:
         class SwitchesTable final : public Component,
@@ -48,20 +50,21 @@ namespace ananas
 
             Component *refreshComponentForCell(int rowNumber, int columnId, bool isRowSelected, Component *existingComponentToUpdate) override;
 
-            void addSwitch() const;
+            void handleResetPtpForSwitch(const juce::Identifier& switchID) const;
 
-            void handleResetPtpForSwitch(int rowNumber) const;
+            void handleRemoveSwitch(const juce::Identifier& switchID) const;
 
-            void handleRemoveSwitch(int rowNumber) const;
+            [[nodiscard]] juce::Identifier getSwitchID(int rowNumber) const;
 
             std::function<void(int rowNumber, int columnId, juce::String value)> onCellEdited;
-            std::function<void(int switchID)> onSwitchRemoved;
-            std::function<void(int switchID)> onResetPtpForSwitch;
+            std::function<void(juce::Identifier switchID)> onSwitchRemoved;
+            std::function<void(juce::Identifier switchID)> onResetPtpForSwitch;
             bool isEditing{false};
 
         private:
             struct Row
             {
+                juce::Identifier id;
                 juce::String ip;
                 juce::String username;
                 juce::String password;
@@ -73,10 +76,10 @@ namespace ananas
 
             inline static const juce::Array<int> editableColumnIDs{1, 2, 3};
             juce::TableListBox table{{}, this};
-            juce::HashMap<int, Row> rows;
+            juce::Array<Row> rows;
         };
 
-        void updateSwitch(int row, int col, const juce::String &content) const;
+        void updateSwitch(const juce::Identifier &switchID, int col, const juce::String &content) const;
 
         juce::Label title;
         juce::TextButton addSwitchButton;

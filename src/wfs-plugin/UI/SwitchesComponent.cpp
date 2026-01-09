@@ -23,7 +23,7 @@ namespace ananas
         addSwitchButton.setButtonText(WFS::Strings::AddSwitchButtonText);
         addSwitchButton.onClick = [this]
         {
-            switchesTable.addSwitch();
+            addSwitch();
         };
 
         dynamicTree.addListener(this);
@@ -31,15 +31,15 @@ namespace ananas
 
         switchesTable.onCellEdited = [this](const int row, const int col, const juce::String &content)
         {
-            updateSwitch(row, col, content);
+            updateSwitch(switchesTable.getSwitchID(row), col, content);
         };
 
-        switchesTable.onResetPtpForSwitch = [this](const int switchID)
+        switchesTable.onResetPtpForSwitch = [this](const juce::Identifier &switchID)
         {
             resetPtpForSwitch(switchID);
         };
 
-        switchesTable.onSwitchRemoved = [this](const int switchID)
+        switchesTable.onSwitchRemoved = [this](const juce::Identifier &switchID)
         {
             removeSwitch(switchID);
         };
@@ -88,39 +88,44 @@ namespace ananas
         repaint();
     }
 
-    void SwitchesComponent::removeSwitch(const int switchID) const
+    void SwitchesComponent::addSwitch() const
+    {
+        juce::Random r;
+
+        const auto switchID{juce::Identifier{"switch_" + juce::String{abs(r.nextInt())}}};
+
+        updateSwitch(switchID, 0, "");
+    }
+
+    void SwitchesComponent::removeSwitch(const juce::Identifier &switchID) const
     {
         const auto switchesVar{persistentTree.getProperty(Identifiers::SwitchesParamID)};
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
-        const juce::String rowKey{"switch_" + juce::String(switchID)};
-
-        const auto rowVar = switchesObject->getProperty(rowKey);
-        rowVar.getDynamicObject()->setProperty(Identifiers::SwitchShouldRemovePropertyID, true);
-        switchesObject->setProperty(rowKey, rowVar);
+        const auto switchVar = switchesObject->getProperty(switchID);
+        switchVar.getDynamicObject()->setProperty(Identifiers::SwitchShouldRemovePropertyID, true);
+        switchesObject->setProperty(switchID, switchVar);
 
         persistentTree.setProperty(Identifiers::SwitchesParamID, switchesVar, nullptr);
         persistentTree.sendPropertyChangeMessage(Identifiers::SwitchesParamID);
     }
 
-    void SwitchesComponent::resetPtpForSwitch(const int switchID) const
+    void SwitchesComponent::resetPtpForSwitch(const juce::Identifier &switchID) const
     {
         const auto switchesVar{dynamicTree.getProperty(Identifiers::SwitchesParamID)};
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
-        const juce::String rowKey{"switch_" + juce::String(switchID)};
-
-        const auto rowVar = switchesObject->getProperty(rowKey);
-        rowVar.getDynamicObject()->setProperty(Identifiers::SwitchShouldResetPtpPropertyID, true);
-        switchesObject->setProperty(rowKey, rowVar);
+        const auto switchVar = switchesObject->getProperty(switchID);
+        switchVar.getDynamicObject()->setProperty(Identifiers::SwitchShouldResetPtpPropertyID, true);
+        switchesObject->setProperty(switchID, switchVar);
 
         dynamicTree.setProperty(Identifiers::SwitchesParamID, switchesVar, nullptr);
         dynamicTree.sendPropertyChangeMessage(Identifiers::SwitchesParamID);
     }
 
-    void SwitchesComponent::updateSwitch(const int row, const int col, const juce::String &content) const
+    void SwitchesComponent::updateSwitch(const juce::Identifier &switchID, const int col, const juce::String &content) const
     {
         auto switchesVar{persistentTree.getProperty(Identifiers::SwitchesParamID)};
 
@@ -130,15 +135,13 @@ namespace ananas
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
-        const juce::String rowKey{"switch_" + juce::String(row)};
-
-        auto rowVar = switchesObject->getProperty(rowKey);
+        auto rowVar = switchesObject->getProperty(switchID);
         if (!rowVar.isObject()) {
             rowVar = new juce::DynamicObject();
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchIpPropertyID, "");
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchUsernamePropertyID, "");
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchPasswordPropertyID, "");
-            switchesObject->setProperty(rowKey, rowVar);
+            switchesObject->setProperty(switchID, rowVar);
         }
 
         const auto rowObject = rowVar.getDynamicObject();
@@ -191,6 +194,7 @@ namespace ananas
                 Row row;
 
                 if (const auto *theSwitch = prop.value.getDynamicObject()) {
+                    row.id = prop.name;
                     row.ip = theSwitch->getProperty(Identifiers::SwitchIpPropertyID);
                     row.username = theSwitch->getProperty(Identifiers::SwitchUsernamePropertyID);
                     row.password = theSwitch->getProperty(Identifiers::SwitchPasswordPropertyID);
@@ -198,8 +202,7 @@ namespace ananas
                     row.offsetNS = theSwitch->getProperty(Identifiers::SwitchOffsetPropertyId);
                 }
 
-                const auto key{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
-                rows.set(key, row);
+                rows.add(row);
             }
         }
 
@@ -229,7 +232,7 @@ namespace ananas
         juce::ignoreUnused(rowIsSelected);
 
         if (rowNumber < rows.size()) {
-            const auto &[ip, username, password, drift, offset] = rows[rowNumber];
+            const auto &[id, ip, username, password, drift, offset] = rows[rowNumber];
             juce::String text;
             juce::Justification justification{juce::Justification::centredLeft};
 
@@ -319,7 +322,7 @@ namespace ananas
                 button = new juce::TextButton("Reset");
                 button->onClick = [this, rowNumber]
                 {
-                    handleResetPtpForSwitch(rowNumber);
+                    handleResetPtpForSwitch(rows[rowNumber].id);
                 };
             }
 
@@ -331,7 +334,7 @@ namespace ananas
                 button = new juce::TextButton("Remove");
                 button->onClick = [this, rowNumber]
                 {
-                    handleRemoveSwitch(rowNumber);
+                    handleRemoveSwitch(rows[rowNumber].id);
                 };
             }
 
@@ -341,23 +344,21 @@ namespace ananas
         return nullptr;
     }
 
-    void SwitchesComponent::SwitchesTable::addSwitch() const
-    {
-        if (onCellEdited) {
-            onCellEdited(rows.size(), 0, "");
-        }
-    }
-
-    void SwitchesComponent::SwitchesTable::handleResetPtpForSwitch(const int rowNumber) const
+    void SwitchesComponent::SwitchesTable::handleResetPtpForSwitch(const juce::Identifier &switchID) const
     {
         if (onResetPtpForSwitch)
-            onResetPtpForSwitch(rowNumber);
+            onResetPtpForSwitch(switchID);
     }
 
-    void SwitchesComponent::SwitchesTable::handleRemoveSwitch(const int rowNumber) const
+    void SwitchesComponent::SwitchesTable::handleRemoveSwitch(const juce::Identifier &switchID) const
     {
         if (onSwitchRemoved)
-            onSwitchRemoved(rowNumber);
+            onSwitchRemoved(switchID);
+    }
+
+    juce::Identifier SwitchesComponent::SwitchesTable::getSwitchID(const int rowNumber) const
+    {
+        return rows[rowNumber].id;
     }
 
     void SwitchesComponent::SwitchesTable::addColumn(const WFS::TableColumns::ColumnHeader &h) const

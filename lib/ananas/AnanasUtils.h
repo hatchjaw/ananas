@@ -16,8 +16,8 @@ namespace ananas
          * Increase the divider if clients are reporting a lot of available
          * packets; decrease it if they're reporting too few.
          */
-        constexpr static int64_t PacketOffsetNs{NSPS / 60};
-        constexpr static size_t ClientPacketBufferSize{50};
+        constexpr static int64_t PacketOffsetNs{NSPS / 150};
+        constexpr static size_t ClientPacketBufferSize{30};
 
         constexpr static uint16_t FifoCapacityFrames{(1 << 10)};
         constexpr static int FifoReportIntervalMs{2000};

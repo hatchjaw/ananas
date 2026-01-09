@@ -484,7 +484,7 @@ namespace ananas
                         if (curl.start(args)) {
                             const auto response{curl.readAllProcessOutput()};
 
-                            switches.handleResponse(index, juce::JSON::parse(response));
+                            switches.handleResponse(prop.name, juce::JSON::parse(response));
                         }
 
                         // TODO don't make this terrible repetition
@@ -504,7 +504,7 @@ namespace ananas
                             if (curl.start(args)) {
                                 const auto response{curl.readAllProcessOutput()};
 
-                                switches.handleResponse(index, juce::JSON::parse(response));
+                                switches.handleResponse(prop.name, juce::JSON::parse(response));
                             }
                         }
                     }

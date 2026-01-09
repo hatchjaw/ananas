@@ -57,28 +57,24 @@ namespace ananas
         const auto obj{data.getDynamicObject()};
         for (const auto &prop: obj->getProperties()) {
             if (const auto *s = prop.value.getDynamicObject()) {
-                auto index{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
-
                 if (s->getProperty(Identifiers::SwitchShouldRemovePropertyID)) {
-                    // TODO erasing switch_0 when, e.g., switch_0 and switch_1
-                    //  exist, breaks table logic that relies on switch indices
-                    //  matching row numbers; fix this.
-                    switches.erase(index);
+                    std::cout << "Removing " << prop.name.toString() << std::endl;
+                    switches.erase(prop.name);//(index);
                     sendChangeMessage();
                     return;
                 }
 
                 if (s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)) {
-                    switches.at(index).shouldResetPtp = true;
+                    switches.at(prop.name).shouldResetPtp = true;//(index).shouldResetPtp = true;
                     sendChangeMessage();
                     return;
                 }
 
-                auto iter{switches.find(index)};
+                auto iter{switches.find(prop.name)};//(index)};
                 if (iter == switches.end()) {
                     SwitchInfo i{};
-                    iter = switches.insert(std::make_pair(index, i)).first;
-                    std::cout << "Adding switch " << iter->first << std::endl;
+                    iter = switches.insert(std::make_pair(prop.name, i)).first;//(index, i)).first;
+                    std::cout << "Adding " << iter->first.toString() << std::endl;
                 }
 
                 iter->second.ip = s->getProperty(Identifiers::SwitchIpPropertyID).toString();
@@ -88,22 +84,22 @@ namespace ananas
         }
     }
 
-    void SwitchList::handleResponse(const int switchIndex, const juce::var &response)
+    void SwitchList::handleResponse(const juce::Identifier &switchID, const juce::var &response)
     {
         if (response.isArray()) {
             // TODO: don't make this dreadful assumption.
             if (response.getArray()->isEmpty()) {
-                switches.at(switchIndex).shouldResetPtp = false;
+                switches.at(switchID).shouldResetPtp = false;
                 sendChangeMessage();
                 return;
             }
 
             const auto switchInfo = response.getArray()->getFirst();
-            auto iter{switches.find(switchIndex)};
+            auto iter{switches.find(switchID)};
             if (iter == switches.end()) {
                 SwitchInfo s{};
-                iter = switches.insert(std::make_pair(switchIndex, s)).first;
-                std::cout << "Found switch " << iter->first << std::endl;
+                iter = switches.insert(std::make_pair(switchID, s)).first;
+                std::cout << "Found " << iter->first.toString() << std::endl;
             }
             iter->second.update(&switchInfo);
             sendChangeMessage();
@@ -116,8 +112,8 @@ namespace ananas
     {
         const auto object{new juce::DynamicObject()};
 
-        for (const auto &[index, switchInfo]: switches) {
-            object->setProperty("switch_" + juce::String{index}, switchInfo.toVar());
+        for (const auto &[identifier, switchInfo]: switches) {
+            object->setProperty(identifier, switchInfo.toVar());
         }
 
         return object;
@@ -127,9 +123,9 @@ namespace ananas
     {
         juce::ValueTree tree(Identifiers::SwitchesParamID);
 
-        for (const auto &[index, switchInfo]: switches) {
+        for (const auto &[identifier, switchInfo]: switches) {
             auto switchTree{switchInfo.toValueTree()};
-            switchTree.setProperty("index", index, nullptr);
+            switchTree.setProperty("identifier", identifier.toString(), nullptr);
             tree.addChild(switchTree, -1, nullptr);
         }
 
@@ -142,8 +138,8 @@ namespace ananas
 
         for (int i{0}; i < tree.getNumChildren(); ++i) {
             auto switchTree{tree.getChild(i)};
-            int index{switchTree.getProperty("index")};
-            switches[index] = SwitchInfo::fromValueTree(switchTree);
+            juce::Identifier identifier{switchTree.getProperty("identifier")};
+            switches[identifier] = SwitchInfo::fromValueTree(switchTree);
         }
     }
 }
