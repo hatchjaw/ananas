@@ -87,7 +87,9 @@ namespace ananas
     void SwitchList::handleResponse(const juce::Identifier &switchID, const juce::var &response)
     {
         if (response.isArray()) {
-            // TODO: don't make this dreadful assumption.
+            // TODO: maybe don't make this dreadful assumption.
+            //  Thing is, the switch returns an empty JSON array on (successful)
+            //  PTP disable/enable.
             if (response.getArray()->isEmpty()) {
                 switches.at(switchID).shouldResetPtp = false;
                 sendChangeMessage();
@@ -104,7 +106,7 @@ namespace ananas
             iter->second.update(&switchInfo);
             sendChangeMessage();
         } else {
-            // Probably got an error response...
+            // TODO: Probably got an error response...
         }
     }
 

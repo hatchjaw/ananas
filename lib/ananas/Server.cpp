@@ -80,7 +80,7 @@ namespace ananas
         return &switches;
     }
 
-    //==============================================================================
+    //==========================================================================
 
     Server::AudioSender::AudioSender(Fifo &fifo) : Thread(Constants::AudioSenderThreadName),
                                                    fifo(fifo)
@@ -171,7 +171,7 @@ namespace ananas
         return Thread::stopThread(timeOutMilliseconds);
     }
 
-    //==============================================================================
+    //==========================================================================
 
     Server::AnnouncementListenerThread::AnnouncementListenerThread(
         const juce::String &threadName,
@@ -434,78 +434,33 @@ namespace ananas
     {
         DBG("Inspecting switches...");
 
-        // curl -k -u admin:emeraude http://192.168.10.1/rest/system/ptp/monitor -d \'{"numbers":"0","once":""}\' -H "content-type: application/json"
-
         while (!threadShouldExit()) {
             auto switchesVar{switches.toVar()};
 
             if (auto *obj = switchesVar.getDynamicObject()) {
                 for (const auto &prop: obj->getProperties()) {
                     if (const auto *s = prop.value.getDynamicObject()) {
-                        auto index{prop.name.toString().fromLastOccurrenceOf("_", false, false).getIntValue()};
-
-                        auto ip{s->getProperty(Identifiers::SwitchIpPropertyID)};
+                        auto ip{s->getProperty(Identifiers::SwitchIpPropertyID).toString()};
                         auto username{s->getProperty(Identifiers::SwitchUsernamePropertyID).toString()};
                         auto password{s->getProperty(Identifiers::SwitchPasswordPropertyID).toString()};
                         bool shouldResetPtp{s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)};
 
-                        if (!ip.isString() || ip.toString().isEmpty() || username.isEmpty() || password.isEmpty()) break;
+                        if (ip.isEmpty() || username.isEmpty() || password.isEmpty()) break;
 
-                        juce::String postData, path1, path2;
+                        juce::var jsonData{new juce::DynamicObject};
+                        juce::var response;
+
                         if (shouldResetPtp) {
-                            const juce::var jsonData{new juce::DynamicObject};
                             jsonData.getDynamicObject()->setProperty("numbers", "0");
-                            postData = juce::JSON::toString(jsonData);
-                            path1 = Constants::SwitchDisablePtpPath;
-                            path2 = Constants::SwitchEnablePtpPath;
+                            response = curlRequest(ip, username, password, Constants::SwitchDisablePtpPath, juce::JSON::toString(jsonData));
+                            switches.handleResponse(prop.name, response);
+                            response = curlRequest(ip, username, password, Constants::SwitchEnablePtpPath, juce::JSON::toString(jsonData));
+                            switches.handleResponse(prop.name, response);
                         } else {
-                            const juce::var jsonData{new juce::DynamicObject};
                             jsonData.getDynamicObject()->setProperty("numbers", "0");
                             jsonData.getDynamicObject()->setProperty("once", "");
-                            postData = juce::JSON::toString(jsonData);
-                            path1 = Constants::SwitchMonitorPtpPath;
-                        }
-
-                        juce::URL url("http://" + ip.toString() + path1);
-
-                        juce::ChildProcess curl;
-                        juce::StringArray args;
-                        args.add("curl");
-                        args.add("-s"); // Silent, no stats
-                        args.add("-k"); // Insecure (no TLS)
-                        args.add("-u"); // Specify username and password
-                        args.add(username + ":" + password);
-                        args.add(url.toString(false));
-                        args.add("-H");
-                        args.add("Content-Type: application/json");
-                        args.add("-d");
-                        args.add(postData);
-
-                        if (curl.start(args)) {
-                            const auto response{curl.readAllProcessOutput()};
-
-                            switches.handleResponse(prop.name, juce::JSON::parse(response));
-                        }
-
-                        // TODO don't make this terrible repetition
-                        if (shouldResetPtp) {
-                            args.clear();
-                            args.add("curl");
-                            args.add("-s"); // Silent, no stats
-                            args.add("-k"); // Insecure (no TLS)
-                            args.add("-u"); // Specify username and password
-                            args.add(username + ":" + password);
-                            args.add(juce::URL{"http://" + ip.toString() + path2}.toString(false));
-                            args.add("-H");
-                            args.add("Content-Type: application/json");
-                            args.add("-d");
-                            args.add(postData);
-
-                            if (curl.start(args)) {
-                                const auto response{curl.readAllProcessOutput()};
-
-                                switches.handleResponse(prop.name, juce::JSON::parse(response));
-                            }
+                            response = curlRequest(ip, username, password, Constants::SwitchMonitorPtpPath, juce::JSON::toString(jsonData));
+                            switches.handleResponse(prop.name, response);
                         }
                     }
                 }
@@ -517,5 +472,32 @@ namespace ananas
         }
 
         DBG("Stopping switch inspector thread");
+    }
+
+    juce::var Server::SwitchInspector::curlRequest(const juce::String &ip,
+                                                   const juce::String &username,
+                                                   const juce::String &password,
+                                                   const juce::StringRef &path,
+                                                   const juce::String &postData)
+    {
+        const juce::URL url("http://" + ip + path);
+
+        juce::StringArray args;
+        args.add("curl");
+        args.add("-s"); // Silent, no stats
+        args.add("-k"); // Insecure (no TLS)
+        args.add("-u"); // Specify username and password
+        args.add(username + ":" + password);
+        args.add(url.toString(false));
+        args.add("-H");
+        args.add("Content-Type: application/json");
+        args.add("-d");
+        args.add(postData);
+
+        if (juce::ChildProcess curl; curl.start(args)) {
+            const auto response{curl.readAllProcessOutput()};
+            return juce::JSON::parse(response);
+        }
+        return juce::var{};
     }
 }

@@ -144,6 +144,21 @@ namespace ananas
         private:
             SwitchList &switches;
 
+            /**
+             * E.g. curl -s -k -u admin:emeraude http://192.168.10.1/rest/system/ptp/monitor -d \'{"numbers":"0","once":""}\' -H "content-type: application/json"
+             * @param ip
+             * @param username
+             * @param password
+             * @param path
+             * @param postData
+             * @return
+             */
+            juce::var curlRequest(const juce::String &ip,
+                                  const juce::String &username,
+                                  const juce::String &password,
+                                  const juce::StringRef &path,
+                                  const juce::String &postData);
+
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SwitchInspector);
         };
 
