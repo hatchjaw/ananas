@@ -43,6 +43,7 @@ target_sources(ananasWFS
         PRIVATE
         PluginEditor.cpp
         PluginProcessor.cpp
+        WFSMessenger.cpp
         UI/LookAndFeel.cpp
         UI/NetworkOverviewComponent.cpp
         UI/SwitchesComponent.cpp
@@ -53,6 +54,7 @@ target_sources(ananasWFS
 target_link_libraries(ananasWFS
         PRIVATE
         juce::juce_core
+        juce::juce_osc
         clap_juce_extensions
         ananas_server
         PUBLIC

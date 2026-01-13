@@ -75,6 +75,7 @@ namespace ananas
             void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
 
             inline static const juce::Array<int> editableColumnIDs{1, 2, 3};
+            constexpr static int passwordColumnID{3};
             juce::TableListBox table{{}, this};
             juce::Array<Row> rows;
         };

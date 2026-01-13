@@ -10,7 +10,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, nullptr, false);
     tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
 
-    setSize(ananas::WFS::Constants::UiWidth, ananas::WFS::Constants::UiHeight);
+    setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);
 
     getProcessor().getPersistentTree().addListener(this);
     getProcessor().getDynamicTree().addListener(this);

@@ -2,6 +2,8 @@
 #define WFSUTILS_H
 
 #include <juce_core/juce_core.h>
+#include <juce_graphics/juce_graphics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 
 #ifndef MAX_CHANNELS_TO_SEND
 #define MAX_CHANNELS_TO_SEND 16
@@ -14,11 +16,26 @@ namespace ananas::WFS
     public:
         constexpr static uint8_t MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
 
-        constexpr static int UiWidth{1200};
-        constexpr static int UiHeight{900};
-        constexpr static int SwitchesSectionHeight{175};
-        constexpr static int TimeAuthoritySectionHeight{112};
-        constexpr static int NetworkSectionTitleHeight{40};
+        inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
+        constexpr static int WFSMessengerSocketLocalPort{49160};
+        constexpr static int WFSMessengerSocketRemotePort{49160};
+        inline const static juce::StringRef WFSControlMulticastIP{"224.4.224.10"};
+
+        class UI
+        {
+        public:
+            constexpr static int UiWidth{1200};
+            constexpr static int UiHeight{900};
+            constexpr static int SwitchesSectionHeight{175};
+            constexpr static int TimeAuthoritySectionHeight{112};
+            constexpr static int NetworkSectionTitleHeight{40};
+        };
+    };
+
+    enum class SourcePositionAxis : char
+    {
+        X = 'x',
+        Y = 'y'
     };
 
     class Params
@@ -33,6 +50,30 @@ namespace ananas::WFS
         };
 
         inline static const Param SpeakerSpacing{"/spacing", "Speaker Spacing (m)", {.05f, .4f, .001f}, .2f};
+
+        constexpr static float SourcePositionDefaultX{.5f};
+        constexpr static float SourcePositionDefaultY{.5f};
+        inline static const juce::NormalisableRange<float> SourcePositionRange{0.f, 1.f, 1e-6f};
+
+        static juce::String getSourcePositionParamID(const uint index, SourcePositionAxis axis)
+        {
+            return "/source/" + juce::String{index} + "/" + static_cast<char>(axis);
+        }
+
+        static juce::String getSourcePositionParamName(const uint index, SourcePositionAxis axis)
+        {
+            return "Source " + juce::String{index + 1} + " " + static_cast<char>(axis);
+        }
+
+        static float getSourcePositionDefaultX(const uint sourceIndex)
+        {
+            return (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::MaxChannelsToSend;
+        }
+
+        static juce::String getModuleIndexParamID(const uint index)
+        {
+            return "/module/" + juce::String{index};
+        }
     };
 
     class TableColumns

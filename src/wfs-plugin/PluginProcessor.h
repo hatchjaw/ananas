@@ -3,6 +3,7 @@
 
 #include <Server.h>
 #include <juce_audio_processors/juce_audio_processors.h>
+#include "WFSMessenger.h"
 
 
 class PluginProcessor final : public juce::AudioProcessor,
@@ -69,6 +70,8 @@ private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
     std::unique_ptr<ananas::Server> server;
+
+    ananas::WFS::WFSMessenger wfsMessenger;
 
     // For handling (audio) parameters that are known at compile time.
     juce::AudioProcessorValueTreeState apvts;

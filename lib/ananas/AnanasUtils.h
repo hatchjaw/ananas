@@ -45,7 +45,7 @@ namespace ananas
         constexpr static int ClientListenerSocketTimeoutMs{500};
         constexpr static int ClientListenerBufferSize{1500};
         constexpr static int ClientConnectednessCheckIntervalMs{1000};
-        constexpr static juce::uint32 ClientDisconnectedThresholdMs{1000};
+        constexpr static juce::uint32 ClientDisconnectedThresholdMs{1250};
 
         inline const static juce::StringRef AuthorityListenerThreadName{"Ananas Authority Listener"};
         constexpr static int AuthorityListenerLocalPort{49154};

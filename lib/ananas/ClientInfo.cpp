@@ -32,6 +32,7 @@ namespace ananas
             ClientInfo c{};
             iter = clients.insert(std::make_pair(clientIP, c)).first;
             std::cout << "Client " << iter->first << " connected." << std::endl;
+            clientJoined = true;
         }
         iter->second.update(packet);
 
@@ -72,6 +73,20 @@ namespace ananas
     void ClientList::setShouldReboot(const bool should)
     {
         shouldReboot = should;
+    }
+
+    bool ClientList::shouldNotify()
+    {
+        if (clientJoined) {
+            clientJoined = false;
+            return true;
+        }
+        return false;
+    }
+
+    uint ClientList::getCount() const
+    {
+        return clients.size();
     }
 
     void ClientList::checkConnectivity()

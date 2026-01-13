@@ -20,8 +20,8 @@ void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)
 void ananas::NetworkOverviewComponent::resized()
 {
     auto bounds{getLocalBounds()};
-    switches.setBounds(bounds.removeFromTop(WFS::Constants::SwitchesSectionHeight));
-    timeAuthority.setBounds(bounds.removeFromTop(WFS::Constants::TimeAuthoritySectionHeight));
+    switches.setBounds(bounds.removeFromTop(WFS::Constants::UI::SwitchesSectionHeight));
+    timeAuthority.setBounds(bounds.removeFromTop(WFS::Constants::UI::TimeAuthoritySectionHeight));
     // Client overview gets remaining bounds.
     clientOverview.setBounds(bounds);
 }

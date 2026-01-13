@@ -35,7 +35,7 @@ void ananas::TimeAuthorityComponent::resized()
 {
     auto bounds{getLocalBounds()};
     title.setBounds(
-        bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+        bounds.removeFromTop(WFS::Constants::UI::NetworkSectionTitleHeight)
         .reduced(6, 0)
     );
     authorityTable.setBounds(bounds);

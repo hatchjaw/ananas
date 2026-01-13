@@ -48,7 +48,7 @@ namespace ananas
     {
         auto bounds{getLocalBounds()};
         auto titleRow{
-            bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+            bounds.removeFromTop(WFS::Constants::UI::NetworkSectionTitleHeight)
             .reduced(6, 0)
         };
         title.setBounds(titleRow.removeFromLeft(85));

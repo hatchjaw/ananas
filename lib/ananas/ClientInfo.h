@@ -35,11 +35,16 @@ namespace ananas
 
         void setShouldReboot(bool should);
 
+        bool shouldNotify();
+
+        uint getCount() const;
+
     private:
         void checkConnectivity();
 
         std::map<juce::String, ClientInfo> clients;
         bool shouldReboot{false};
+        bool clientJoined{false};
     };
 }
 

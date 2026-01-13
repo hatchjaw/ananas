@@ -60,7 +60,7 @@ namespace ananas
     {
         auto bounds{getLocalBounds()};
         auto titleRow{
-            bounds.removeFromTop(WFS::Constants::NetworkSectionTitleHeight)
+            bounds.removeFromTop(WFS::Constants::UI::NetworkSectionTitleHeight)
             .reduced(6, 0)
         };
         title.setBounds(titleRow.removeFromLeft(85));
@@ -272,6 +272,10 @@ namespace ananas
                 textEditor->setWantsKeyboardFocus(true);
                 textEditor->setMouseClickGrabsKeyboardFocus(true);
                 textEditor->setExplicitFocusOrder(1);
+
+                if (columnId == passwordColumnID) {
+                    textEditor->setPasswordCharacter(L'•');
+                }
 
                 textEditor->onTextChange = [this]()
                 {
