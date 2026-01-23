@@ -5,6 +5,7 @@
 #include "UI/ClientsOverviewComponent.h"
 #include "UI/LookAndFeel.h"
 #include "UI/NetworkOverviewComponent.h"
+#include "UI/WFSInterface.h"
 
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::ValueTree::Listener
@@ -30,6 +31,7 @@ private:
     ananas::LookAndFeel lookAndFeel;
     juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
     ananas::NetworkOverviewComponent networkOverview;
+    ananas::WFS::WFSInterface wfsInterface;
 };
 
 

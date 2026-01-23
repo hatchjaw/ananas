@@ -2,12 +2,21 @@
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
-      networkOverview(getProcessor().getDynamicTree(), getProcessor().getPersistentTree())
+      networkOverview(
+          getProcessor().getDynamicTree(),
+          getProcessor().getPersistentTree()
+      ),
+      wfsInterface(
+          ananas::WFS::Constants::MaxChannelsToSend,
+          ananas::WFS::Constants::NumModules,
+          getProcessor().getParamState(),
+          getProcessor().getPersistentTree()
+      )
 {
     setLookAndFeel(&lookAndFeel);
 
     addAndMakeVisible(tabbedComponent);
-    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, nullptr, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, &wfsInterface, false);
     tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
 
     setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);

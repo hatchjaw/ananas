@@ -197,6 +197,16 @@ void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
     }
 }
 
+juce::AudioProcessorValueTreeState & PluginProcessor::getParamState()
+{
+    return apvts;
+}
+
+const juce::AudioProcessorValueTreeState & PluginProcessor::getParamState() const
+{
+    return apvts;
+}
+
 juce::ValueTree &PluginProcessor::getDynamicTree()
 {
     return dynamicTree;
@@ -226,7 +236,7 @@ juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
 {
     BusesProperties buses;
 
-    for (int i{0}; i < ananas::WFS::Constants::MaxChannelsToSend; ++i) {
+    for (uint i{0}; i < ananas::WFS::Constants::MaxChannelsToSend; ++i) {
         buses.addBus(true, ananas::WFS::Strings::InputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
         buses.addBus(false, ananas::WFS::Strings::OutputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
     }

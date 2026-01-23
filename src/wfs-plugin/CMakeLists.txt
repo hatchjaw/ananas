@@ -10,6 +10,8 @@ set(juceFormats AU VST3 Standalone)
 # Up to 44 channels @ 16 frames
 set(maxChannels 16)
 
+set(numModules 8)
+
 juce_add_plugin(ananasWFS
         COMPANY_NAME "${companyName}"
         IS_SYNTH FALSE
@@ -34,6 +36,7 @@ target_compile_definitions(ananasWFS
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
         MAX_CHANNELS_TO_SEND=${maxChannels}
+        NUM_MODULES=${numModules}
 )
 
 #file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
@@ -49,6 +52,9 @@ target_sources(ananasWFS
         UI/SwitchesComponent.cpp
         UI/TimeAuthorityComponent.cpp
         UI/ClientsOverviewComponent.cpp
+        UI/WFSInterface.cpp
+        UI/XYController.cpp
+        UI/ModuleSelector.cpp
 )
 
 target_link_libraries(ananasWFS

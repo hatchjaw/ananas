@@ -9,12 +9,17 @@
 #define MAX_CHANNELS_TO_SEND 16
 #endif
 
+#ifndef NUM_MODULES
+#define NUM_MODULES 8
+#endif
+
 namespace ananas::WFS
 {
     class Constants
     {
     public:
-        constexpr static uint8_t MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
+        constexpr static uint MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
+        constexpr static uint NumModules{NUM_MODULES};
 
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
         constexpr static int WFSMessengerSocketLocalPort{49160};
@@ -26,9 +31,14 @@ namespace ananas::WFS
         public:
             constexpr static int UiWidth{1200};
             constexpr static int UiHeight{900};
+
             constexpr static int SwitchesSectionHeight{175};
             constexpr static int TimeAuthoritySectionHeight{112};
             constexpr static int NetworkSectionTitleHeight{40};
+
+            constexpr static int SpeakerSpacingSectionHeight{50};
+            constexpr static float NodeDiameter{40.f};
+            constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
         };
     };
 
@@ -46,14 +56,21 @@ namespace ananas::WFS
             juce::StringRef id;
             juce::StringRef name;
             juce::NormalisableRange<float> range;
+            juce::NormalisableRange<double> rangeDouble;
             float defaultValue{0.f};
         };
 
-        inline static const Param SpeakerSpacing{"/spacing", "Speaker Spacing (m)", {.05f, .4f, .001f}, .2f};
+        inline static const Param SpeakerSpacing{
+            "/spacing",
+            "Speaker Spacing (m)",
+            {.05f, .3f, .001f},
+            {.05, .3, .001},
+            .2
+        };
 
         constexpr static float SourcePositionDefaultX{.5f};
         constexpr static float SourcePositionDefaultY{.5f};
-        inline static const juce::NormalisableRange<float> SourcePositionRange{0.f, 1.f, 1e-6f};
+        inline static const juce::NormalisableRange<float> SourcePositionRange{-1.f, 1.f, 1e-6f};
 
         static juce::String getSourcePositionParamID(const uint index, SourcePositionAxis axis)
         {
@@ -67,7 +84,7 @@ namespace ananas::WFS
 
         static float getSourcePositionDefaultX(const uint sourceIndex)
         {
-            return (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::MaxChannelsToSend;
+            return -1.f + (2.f * (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::MaxChannelsToSend);
         }
 
         static juce::String getModuleIndexParamID(const uint index)
@@ -81,9 +98,9 @@ namespace ananas::WFS
     public:
         struct ColumnHeader
         {
-            int id;
+            int id{};
             juce::StringRef label;
-            int width;
+            int width{};
             int minWidth{30};
             int maxWidth{-1};
             int flags{juce::TableHeaderComponent::defaultFlags};

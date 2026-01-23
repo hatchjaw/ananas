@@ -52,6 +52,10 @@ public:
 
     void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
+    juce::AudioProcessorValueTreeState &getParamState();
+
+    const juce::AudioProcessorValueTreeState &getParamState() const;
+
     juce::ValueTree &getDynamicTree();
 
     const juce::ValueTree &getDynamicTree() const;
