@@ -82,6 +82,7 @@ namespace ananas
         inline const static juce::Identifier ClientBufferFillPercentPropertyID{"bufferFillPercent"};
         inline const static juce::Identifier ClientSamplingRatePropertyID{"samplingRate"};
         inline const static juce::Identifier ClientPercentCPUPropertyID{"percentCPU"};
+        inline const static juce::Identifier ClientModuleIDPropertyID{"moduleID"};
 
         inline const static juce::Identifier ClientsShouldRebootParamID{"ClientsShouldReboot"};
 
@@ -112,6 +113,11 @@ namespace ananas
         inline const static juce::Identifier SwitchPriority2PropertyId{"priority2"};
         inline const static juce::Identifier SwitchSlavePortPropertyId{"slave-port"};
         inline const static juce::Identifier SwitchSlavePortDelayPropertyId{"slave-port-delay"};
+
+        inline const static juce::Identifier ModulesParamID{"Modules"};
+
+        inline const static juce::Identifier ModuleIDPropertyID{"ModuleID"};
+        inline const static juce::Identifier ModuleIsConnectedPropertyID{"ModuleIsConnected"};
     };
 }
 

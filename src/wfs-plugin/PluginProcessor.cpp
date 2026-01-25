@@ -10,6 +10,7 @@ PluginProcessor::PluginProcessor()
       persistentTree(ananas::WFS::Identifiers::PersistentTreeType)
 {
     server->getClientList()->addChangeListener(this);
+    server->getModuleList()->addChangeListener(this);
     server->getAuthority()->addChangeListener(this);
     server->getSwitches()->addChangeListener(this);
     persistentTree.addListener(&wfsMessenger);
@@ -23,6 +24,7 @@ PluginProcessor::PluginProcessor()
 PluginProcessor::~PluginProcessor()
 {
     server->getClientList()->removeChangeListener(this);
+    server->getModuleList()->removeChangeListener(this);
     server->getAuthority()->removeChangeListener(this);
     server->getSwitches()->removeChangeListener(this);
     persistentTree.removeListener(&wfsMessenger);
@@ -143,6 +145,8 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock &destData)
 
     state.addChild(getServer().getSwitches()->toValueTree(), -1, nullptr);
 
+    state.addChild(getServer().getModuleList()->toValueTree(), -1, nullptr);
+
     const auto xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -161,33 +165,32 @@ void PluginProcessor::setStateInformation(const void *data, int size)
             if (switchListTree.isValid()) {
                 getServer().getSwitches()->fromValueTree(switchListTree);
             }
+
+            const auto moduleListTree{tree.getChildWithName(ananas::Identifiers::ModulesParamID)};
+            if (moduleListTree.isValid()) {
+                getServer().getModuleList()->fromValueTree(moduleListTree);
+            }
         }
     }
 }
 
 void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
-    if (auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
+    if (const auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
         dynamicTree.setProperty(ananas::Identifiers::ConnectedClientsParamID, clients->toVar(), nullptr);
+    } else if (const auto *modules = dynamic_cast<ananas::ModuleList *>(source)) {
+        persistentTree.setProperty(ananas::Identifiers::ModulesParamID, modules->toVar(), nullptr);
 
-        if (clients->shouldNotify()) {
-            wfsMessenger.parameterChanged(
-                ananas::WFS::Params::SpeakerSpacing.id,
-                apvts.getRawParameterValue(ananas::WFS::Params::SpeakerSpacing.id)->load()
-            );
+        wfsMessenger.parameterChanged(
+            ananas::WFS::Params::SpeakerSpacing.id,
+            apvts.getRawParameterValue(ananas::WFS::Params::SpeakerSpacing.id)->load()
+        );
 
-            for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
-                auto idX{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X)},
-                        idY{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y)};
-                wfsMessenger.parameterChanged(idX, apvts.getRawParameterValue(idX)->load());
-                wfsMessenger.parameterChanged(idY, apvts.getRawParameterValue(idY)->load());
-            }
-
-            for (uint n{0}; n < clients->getCount(); ++n) {
-                // TODO (I don't think this works)
-                auto prop{ananas::WFS::Params::getModuleIndexParamID(n)};
-                persistentTree.sendPropertyChangeMessage(prop);
-            }
+        for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
+            auto idX{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X)},
+                    idY{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y)};
+            wfsMessenger.parameterChanged(idX, apvts.getRawParameterValue(idX)->load());
+            wfsMessenger.parameterChanged(idY, apvts.getRawParameterValue(idY)->load());
         }
     } else if (const auto *authority = dynamic_cast<ananas::AuthorityInfo *>(source)) {
         dynamicTree.setProperty(ananas::Identifiers::TimeAuthorityParamID, authority->toVar(), nullptr);
@@ -197,12 +200,12 @@ void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
     }
 }
 
-juce::AudioProcessorValueTreeState & PluginProcessor::getParamState()
+juce::AudioProcessorValueTreeState &PluginProcessor::getParamState()
 {
     return apvts;
 }
 
-const juce::AudioProcessorValueTreeState & PluginProcessor::getParamState() const
+const juce::AudioProcessorValueTreeState &PluginProcessor::getParamState() const
 {
     return apvts;
 }

@@ -176,6 +176,7 @@ namespace ananas
         addColumn(WFS::TableColumns::SwitchesTableResetPTP);
         addColumn(WFS::TableColumns::SwitchesTableRemoveSwitch);
 
+        table.setModel(this);
         table.setColour(juce::ListBox::outlineColourId, juce::Colours::black);
         table.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentWhite);
         table.setOutlineThickness(1);
@@ -363,10 +364,5 @@ namespace ananas
     juce::Identifier SwitchesComponent::SwitchesTable::getSwitchID(const int rowNumber) const
     {
         return rows[rowNumber].id;
-    }
-
-    void SwitchesComponent::SwitchesTable::addColumn(const WFS::TableColumns::ColumnHeader &h) const
-    {
-        table.getHeader().addColumn(h.label, h.id, h.width, h.minWidth, h.maxWidth, h.flags);
     }
 } // ananas

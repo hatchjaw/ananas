@@ -2,6 +2,7 @@
 #define CLIENTSOVERVIEWCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "AnanasNetworkTable.h"
 #include "../Utils.h"
 
 namespace ananas
@@ -46,8 +47,7 @@ namespace ananas
             juce::Label presentationTimeIntervalValue;
         };
 
-        class ClientTable final : public Component,
-                                  public juce::TableListBoxModel
+        class ClientTable final : public AnanasNetworkTable
         {
         public:
             ClientTable();
@@ -86,11 +86,9 @@ namespace ananas
                 juce::int32 bufferFillPercent;
                 float samplingRate;
                 float percentCPU;
+                juce::int32 moduleID;
             };
 
-            void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
-
-            juce::TableListBox table{{}, this};
             juce::Array<Row> rows;
             LookAndFeel lookAndFeel;
         };

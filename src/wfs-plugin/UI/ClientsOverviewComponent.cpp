@@ -167,6 +167,7 @@ namespace ananas
         addColumn(WFS::TableColumns::ClientTableBufferFillPercent);
         addColumn(WFS::TableColumns::ClientTableSamplingRate);
         addColumn(WFS::TableColumns::ClientTablePercentCPU);
+        addColumn(WFS::TableColumns::ClientTableModuleID);
 
         table.getHeader().setLookAndFeel(&lookAndFeel);
 
@@ -201,6 +202,7 @@ namespace ananas
                     row.bufferFillPercent = client->getProperty(Identifiers::ClientBufferFillPercentPropertyID);
                     row.samplingRate = client->getProperty(Identifiers::ClientSamplingRatePropertyID);
                     row.percentCPU = client->getProperty(Identifiers::ClientPercentCPUPropertyID);
+                    row.moduleID = client->getProperty(Identifiers::ClientModuleIDPropertyID);
                 }
 
                 rows.add(row);
@@ -233,7 +235,18 @@ namespace ananas
         juce::ignoreUnused(rowIsSelected);
 
         if (rowNumber < rows.size()) {
-            const auto &[ip, serialNumber, ptpLock, offsetTime, offsetFrame, audioPTPOffset, bufferFillPercent, samplingRate, percentCPU] = rows[rowNumber];
+            const auto &[
+                ip,
+                serialNumber,
+                ptpLock,
+                offsetTime,
+                offsetFrame,
+                audioPTPOffset,
+                bufferFillPercent,
+                samplingRate,
+                percentCPU,
+                moduleID
+            ] = rows[rowNumber];
             juce::String text;
             juce::Justification justification{juce::Justification::centredLeft};
 
@@ -265,6 +278,8 @@ namespace ananas
                 case 7: text = juce::String(percentCPU, 3);
                     justification = WFS::TableColumns::ClientTablePercentCPU.justification;
                     break;
+                case 8: text = juce::String{moduleID};
+                justification = WFS::TableColumns::ClientTableModuleID.justification;
                 default: break;
             }
 
@@ -277,11 +292,6 @@ namespace ananas
     void ClientsOverviewComponent::ClientTable::resized()
     {
         table.setBounds(getLocalBounds().reduced(10));
-    }
-
-    void ClientsOverviewComponent::ClientTable::addColumn(const WFS::TableColumns::ColumnHeader &h) const
-    {
-        table.getHeader().addColumn(h.label, h.id, h.width, h.minWidth, h.maxWidth, h.flags);
     }
 
     //==========================================================================
@@ -329,6 +339,7 @@ namespace ananas
                 break;
             case 7: justification = WFS::TableColumns::ClientTablePercentCPU.justification;
                 break;
+            case 8: justification = WFS::TableColumns::ClientTableModuleID.justification;
             default:
                 break;
         }

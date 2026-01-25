@@ -1,4 +1,5 @@
 #include "WFSInterface.h"
+#include <AnanasUtils.h>
 #include "../Utils.h"
 
 namespace ananas::WFS
@@ -7,8 +8,9 @@ namespace ananas::WFS
         const uint numSources,
         const uint numModules,
         juce::AudioProcessorValueTreeState &apvts,
-        juce::ValueTree &persistentTree
-    ) : xyController(numSources, apvts)
+        juce::ValueTree &persistentTreeToListenTo
+    ) : xyController(numSources, apvts),
+        persistentTree(persistentTreeToListenTo)
     {
         addAndMakeVisible(xyController);
 
@@ -36,9 +38,19 @@ namespace ananas::WFS
         );
 
         for (uint n{0}; n < numModules; ++n) {
-            const auto cb{moduleSelectors.add(new ModuleSelector(n, persistentTree))};
-            addAndMakeVisible(cb);
+            const auto m{moduleSelectors.add(new ModuleSelector(n, persistentTree))};
+            addAndMakeVisible(m);
+            m->setBroughtToFrontOnMouseClick(true);
         }
+
+        persistentTree.addListener(this);
+
+        updateModuleLists(persistentTree[ananas::Identifiers::ModulesParamID]);
+    }
+
+    WFSInterface::~WFSInterface()
+    {
+        persistentTree.removeListener(this);
     }
 
     void WFSInterface::paint(juce::Graphics &g)
@@ -50,11 +62,46 @@ namespace ananas::WFS
     {
         auto bounds{getLocalBounds()};
         auto spacingRow{
-            bounds.removeFromTop(WFS::Constants::UI::SpeakerSpacingSectionHeight)
+            bounds.removeFromTop(Constants::UI::SpeakerSpacingSectionHeight)
             .reduced(6, 0)
         };
         speakerSpacingSlider.setBounds(spacingRow.removeFromRight(100).reduced(1, 3));
         speakerSpacingLabel.setBounds(spacingRow.removeFromRight(200));
         xyController.setBounds(bounds.reduced(10));
+
+        const auto moduleSelectorWidth{xyController.getWidth() / moduleSelectors.size()};
+        for (int i{0}; i < moduleSelectors.size(); ++i) {
+            moduleSelectors[i]->setBounds(
+                xyController.getX() + i * moduleSelectorWidth,
+                Constants::UI::SpeakerSpacingSectionHeight + xyController.getHeight() / 2,
+                moduleSelectorWidth - 1,
+                Constants::UI::ModuleSelectorHeight
+            );
+        }
+    }
+
+    void WFSInterface::updateModuleLists(const juce::var &var)
+    {
+        juce::StringArray ips;
+        if (auto *obj = var.getDynamicObject()) {
+            for (const auto &prop: obj->getProperties()) {
+                auto module{obj->getProperty(prop.name)};
+                if (module.getProperty(ananas::Identifiers::ModuleIsConnectedPropertyID, false)) {
+                    ips.add(prop.name.toString());
+                }
+            }
+        }
+        for (const auto &m: moduleSelectors) {
+            m->setAvailableModules(ips);
+        }
+    }
+
+    void WFSInterface::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
+    {
+        if (!isVisible()) return;
+
+        if (property == ananas::Identifiers::ModulesParamID) {
+            updateModuleLists(treeWhosePropertyHasChanged[property]);
+        }
     }
 } // ananas::WFS

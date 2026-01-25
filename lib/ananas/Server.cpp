@@ -9,7 +9,7 @@ namespace ananas
                                                       fifo(numChannelsToSend),
                                                       sender(fifo),
                                                       switchInspector(switches),
-                                                      clientListener(clients),
+                                                      clientListener(clients, modules),
                                                       authorityListener(authority),
                                                       rebootSender(clients)
     {
@@ -68,6 +68,11 @@ namespace ananas
     ClientList *Server::getClientList()
     {
         return &clients;
+    }
+
+    ModuleList *Server::getModuleList()
+    {
+        return &modules;
     }
 
     AuthorityInfo *Server::getAuthority()
@@ -295,11 +300,12 @@ namespace ananas
 
     //==============================================================================
 
-    Server::ClientListener::ClientListener(ClientList &clients)
+    Server::ClientListener::ClientListener(ClientList &clients, ModuleList &modules)
         : AnnouncementListenerThread(Constants::ClientListenerThreadName,
                                      Constants::ClientAnnounceMulticastIP,
                                      Constants::ClientListenerLocalPort),
-          clients(clients)
+          clients(clients),
+          modules(modules)
     {
     }
 
@@ -321,6 +327,7 @@ namespace ananas
                     bytesRead > 0
                 ) {
                     clients.handlePacket(senderIP, reinterpret_cast<const ClientAnnouncePacket *>(buffer));
+                    modules.handlePacket(senderIP);
                 } else if (bytesRead < 0) {
                     DBG("Error receiving data: " << strerror(errno));
                 }

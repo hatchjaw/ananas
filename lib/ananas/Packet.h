@@ -47,6 +47,7 @@ namespace ananas
         juce::int32 audioPTPOffsetNs;
         juce::uint8 bufferFillPercent;
         bool ptpLock;
+        juce::uint16 moduleID;
     };
 
     struct AuthorityAnnouncePacket

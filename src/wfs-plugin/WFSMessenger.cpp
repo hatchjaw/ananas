@@ -1,4 +1,7 @@
 #include "WFSMessenger.h"
+
+#include <AnanasUtils.h>
+
 #include "Utils.h"
 
 namespace ananas::WFS
@@ -21,14 +24,17 @@ namespace ananas::WFS
     void WFSMessenger::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged,
                                                 const juce::Identifier &property)
     {
-        const auto &propString{property.toString()};
-        if (propString.contains("module")) {
-            auto val{treeWhosePropertyHasChanged.getProperty(property).toString()};
-            if (val.isNotEmpty()) {
-                juce::OSCBundle bundle;
-                DBG("Sending OSC: " << propString << " " << val);
-                bundle.addElement(juce::OSCMessage{propString, val});
-                send(bundle);
+        if (property == ananas::Identifiers::ModulesParamID) {
+            if (auto *obj = treeWhosePropertyHasChanged[property].getDynamicObject()) {
+                for (const auto &prop: obj->getProperties()) {
+                    auto module{obj->getProperty(prop.name)};
+                    auto id{module.getProperty(ananas::Identifiers::ModuleIDPropertyID, 0)};
+                    auto path{Params::getModuleIndexParamID(id)};
+                    juce::OSCBundle bundle;
+                    DBG("Sending OSC: " << path << " " << prop.name);
+                    bundle.addElement(juce::OSCMessage{path, prop.name.toString()});
+                    send(bundle);
+                }
             }
         }
     }

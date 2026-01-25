@@ -140,8 +140,3 @@ void ananas::TimeAuthorityComponent::TimeAuthorityTable::resized()
 {
     table.setBounds(getLocalBounds().reduced(10));
 }
-
-void ananas::TimeAuthorityComponent::TimeAuthorityTable::addColumn(const WFS::TableColumns::ColumnHeader &h) const
-{
-    table.getHeader().addColumn(h.label, h.id, h.width, h.minWidth, h.maxWidth, h.flags);
-}

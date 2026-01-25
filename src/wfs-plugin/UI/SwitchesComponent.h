@@ -2,6 +2,7 @@
 #define SWITCHESCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "AnanasNetworkTable.h"
 #include "../Utils.h"
 
 namespace ananas
@@ -32,8 +33,7 @@ namespace ananas
         void resetPtpForSwitch(const juce::Identifier &switchID) const;
 
     private:
-        class SwitchesTable final : public Component,
-                                    public juce::TableListBoxModel
+        class SwitchesTable final : public AnanasNetworkTable
         {
         public:
             SwitchesTable();
@@ -72,11 +72,8 @@ namespace ananas
                 juce::int32 offsetNS{0};
             };
 
-            void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
-
             inline static const juce::Array<int> editableColumnIDs{1, 2, 3};
             constexpr static int passwordColumnID{3};
-            juce::TableListBox table{{}, this};
             juce::Array<Row> rows;
         };
 

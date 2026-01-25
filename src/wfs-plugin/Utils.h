@@ -39,6 +39,8 @@ namespace ananas::WFS
             constexpr static int SpeakerSpacingSectionHeight{50};
             constexpr static float NodeDiameter{40.f};
             constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
+
+            constexpr static int ModuleSelectorHeight{30};
         };
     };
 
@@ -87,7 +89,7 @@ namespace ananas::WFS
             return -1.f + (2.f * (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::MaxChannelsToSend);
         }
 
-        static juce::String getModuleIndexParamID(const uint index)
+        static juce::String getModuleIndexParamID(const int index)
         {
             return "/module/" + juce::String{index};
         }
@@ -141,6 +143,11 @@ namespace ananas::WFS
             7, "CPU %", 75, 30, -1,
             juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
             juce::Justification::centredRight
+        };
+        inline static const ColumnHeader ClientTableModuleID{
+            8, "Module ID", 75, 30, -1,
+            juce::TableHeaderComponent::visible | juce::TableHeaderComponent::resizable | juce::TableHeaderComponent::appearsOnColumnMenu,
+            juce::Justification::centred
         };
 
         inline static const ColumnHeader AuthorityTableIpAddress{

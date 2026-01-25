@@ -10,7 +10,7 @@ namespace ananas::WFS
             // Add a node for each sound source
             const auto node{nodes.add(new Node(n))};
             addAndMakeVisible(node);
-            node->setBounds();
+            node->setBroughtToFrontOnMouseClick(true);
 
             // Add a parameter attachment
             attachments.add(new Attachment(

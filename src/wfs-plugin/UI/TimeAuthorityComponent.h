@@ -2,6 +2,7 @@
 #define TIMEAUTHORITYCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "AnanasNetworkTable.h"
 #include "../Utils.h"
 
 namespace ananas
@@ -27,8 +28,7 @@ namespace ananas
         void handleAsyncUpdate() override;
 
     private:
-        class TimeAuthorityTable final : public Component,
-                                         public juce::TableListBoxModel
+        class TimeAuthorityTable final : public AnanasNetworkTable
         {
         public:
             TimeAuthorityTable();
@@ -52,10 +52,7 @@ namespace ananas
                 juce::String samplingRate;
             };
 
-            void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
-
             Row row{};
-            juce::TableListBox table{{}, this};
         };
 
         juce::Label title;

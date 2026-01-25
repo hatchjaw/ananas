@@ -25,6 +25,8 @@ namespace ananas
 
         ClientList *getClientList();
 
+        ModuleList *getModuleList();
+
         AuthorityInfo *getAuthority();
 
         SwitchList *getSwitches();
@@ -94,12 +96,13 @@ namespace ananas
         class ClientListener final : public AnnouncementListenerThread
         {
         public:
-            explicit ClientListener(ClientList &clients);
+            ClientListener(ClientList &clients, ModuleList &modules);
 
             void run() override;
 
         private:
             ClientList &clients;
+            ModuleList &modules;
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ClientListener);
         };
@@ -170,6 +173,7 @@ namespace ananas
         SwitchList switches;
         ClientListener clientListener;
         ClientList clients;
+        ModuleList modules;
         AuthorityListener authorityListener;
         AuthorityInfo authority;
         RebootSender rebootSender;
