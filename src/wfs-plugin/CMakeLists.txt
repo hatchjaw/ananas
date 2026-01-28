@@ -62,6 +62,8 @@ target_link_libraries(ananasWFS
         PRIVATE
         juce::juce_core
         juce::juce_osc
+        juce::juce_audio_devices
+        juce::juce_audio_utils
         clap_juce_extensions
         ananas_server
         PUBLIC

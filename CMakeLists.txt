@@ -12,5 +12,3 @@ add_subdirectory(lib/ananas)
 add_subdirectory(src/console-app)
 
 add_subdirectory(src/wfs-plugin)
-
-add_subdirectory(src/clockcheck)
