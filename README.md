@@ -93,7 +93,7 @@ Transmits `filename` (.wav, .aif) to the network on UDP multicast IP
 
 A CLAP DAW plugin that embeds `ananas_server` and controls a distributed WFS
 algorithm running on a network of embedded devices. See associated repository
-[teensy-audiosync](https://github.com/hatchjaw/teensy-audiosync]).
+[teensy-audiosync](https://github.com/hatchjaw/teensy-audiosync).
 
 (Instructions to follow.)
 
