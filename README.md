@@ -1,4 +1,4 @@
-# Ananas
+# Ananas Server
 
 > _Ananas necessitates another networked audio system_
 
