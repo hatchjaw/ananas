@@ -33,6 +33,7 @@ private:
     juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
     ananas::NetworkOverviewComponent networkOverview;
     ananas::WFS::WFSInterfaceComponent wfsInterface;
+    juce::TooltipWindow tooltipWindow;
 };
 
 

@@ -21,6 +21,7 @@ namespace ananas
         title.setText(WFS::Strings::SwitchesSectionTitle, juce::dontSendNotification);
 
         addSwitchButton.setButtonText(WFS::Strings::AddSwitchButtonText);
+        addSwitchButton.setTooltip(WFS::Strings::AddSwitchButtonTooltip);
         addSwitchButton.onClick = [this]
         {
             addSwitch();
@@ -92,7 +93,7 @@ namespace ananas
     {
         juce::Random r;
 
-        const auto switchID{juce::Identifier{"switch_" + juce::String{abs(r.nextInt())}}};
+        const auto switchID{juce::Identifier{ananas::Identifiers::SwitchIdentifierBase + juce::String{abs(r.nextInt())}}};
 
         updateSwitch(switchID, 0, "");
     }

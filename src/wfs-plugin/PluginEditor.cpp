@@ -11,7 +11,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
           ananas::WFS::Constants::NumModules,
           getProcessor().getParamState(),
           getProcessor().getPersistentTree()
-      )
+      ),
+      tooltipWindow(this, ananas::WFS::Constants::UI::TooltipDelayTimeMs)
 {
     setLookAndFeel(&lookAndFeel);
 

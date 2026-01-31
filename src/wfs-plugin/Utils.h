@@ -42,6 +42,17 @@ namespace ananas::WFS
             constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
 
             constexpr static int ModuleSelectorHeight{30};
+
+            constexpr static float OverlayBgAlpha{.25f};
+            constexpr static int OverlayBoxWidth{400};
+            constexpr static int OverlayBoxHeight{200};
+            constexpr static float OverlayBoxBorderRadius{10.f};
+            constexpr static float OverlayBoxShadowAlpha{.5f};
+            constexpr static int OverlayBoxShadowOffset{4};
+            constexpr static float OverlayBoxTextSize{20.f};
+            constexpr static float OverlayBoxBorderThickness{5.f};
+
+            constexpr static int TooltipDelayTimeMs{500};
         };
     };
 
@@ -221,15 +232,20 @@ namespace ananas::WFS
         inline static const juce::StringRef SwitchesSectionTitle{"SWITCHES"};
         inline static const juce::StringRef AddSwitchButtonName{"Add switch button"};
         inline static const juce::StringRef AddSwitchButtonText{"+"};
+        inline static const juce::StringRef AddSwitchButtonTooltip{"Click to add a new switch."};
 
         inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
 
         inline static const juce::StringRef ClientsSectionTitle{"CLIENTS"};
         inline static const juce::StringRef RebootAllClientsButtonText{"Reboot all"};
+        inline static const juce::StringRef RebootAllClientsButtonTooltip{"Click to send a reboot instruction to all clients."};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
 
         inline static const juce::StringRef WFSMessengerThreadName;
+
+        inline static const juce::String OverlayInitialText{"Looking for network..."};
+        inline static const juce::String OverlayNoNetworkText{"No network connection."};
     };
 
     class Identifiers

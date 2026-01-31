@@ -8,8 +8,6 @@ ananas::NetworkOverviewComponent::NetworkOverviewComponent(juce::ValueTree &dyna
     addAndMakeVisible(switches);
     addAndMakeVisible(timeAuthority);
     addAndMakeVisible(clientOverview);
-
-    setWantsKeyboardFocus(false);
 }
 
 void ananas::NetworkOverviewComponent::paint(juce::Graphics &g)

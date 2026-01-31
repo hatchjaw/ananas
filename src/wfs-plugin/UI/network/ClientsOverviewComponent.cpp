@@ -18,6 +18,7 @@ namespace ananas
         title.setText(WFS::Strings::ClientsSectionTitle, juce::dontSendNotification);
 
         rebootAllClientsButton.setButtonText(WFS::Strings::RebootAllClientsButtonText);
+        rebootAllClientsButton.setTooltip(WFS::Strings::RebootAllClientsButtonTooltip);
         rebootAllClientsButton.onClick = [this]
         {
             triggerClientReboot();
@@ -279,7 +280,7 @@ namespace ananas
                     justification = WFS::TableColumns::ClientTablePercentCPU.justification;
                     break;
                 case 8: text = juce::String{moduleID};
-                justification = WFS::TableColumns::ClientTableModuleID.justification;
+                    justification = WFS::TableColumns::ClientTableModuleID.justification;
                 default: break;
             }
 

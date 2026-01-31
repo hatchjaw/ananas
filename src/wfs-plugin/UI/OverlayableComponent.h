@@ -2,7 +2,6 @@
 #define OVERLAYABLECOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "OverlayComponent.h"
 
 namespace ananas
 {
@@ -10,11 +9,23 @@ namespace ananas
                                  public juce::ChangeListener
     {
     public:
+        OverlayableComponent();
+
         void changeListenerCallback(juce::ChangeBroadcaster *source) override;
 
         void resized() override;
 
     private:
+        class OverlayComponent final : public Component
+        {
+        public:
+            void paint(juce::Graphics &g) override;
+
+            void setText(const juce::String &textToDisplay);
+        private:
+            juce::String text;
+        };
+
         std::unique_ptr<OverlayComponent> overlay;
     };
 } // ananas

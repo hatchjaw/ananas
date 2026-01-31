@@ -69,7 +69,7 @@ namespace ananas
         inline static const juce::StringRef SwitchDisablePtpPath{"/rest/system/ptp/disable"};
         inline static const juce::StringRef SwitchEnablePtpPath{"/rest/system/ptp/enable"};
 
-        constexpr static uint ThreadConnectSleepIntervalMs{5000};
+        constexpr static uint ThreadConnectSleepIntervalMs{2500};
         constexpr static uint ThreadConnectWaitIterations{ThreadConnectSleepIntervalMs / 100};
         constexpr static uint ThreadConnectWaitIntervalMs{ThreadConnectSleepIntervalMs / ThreadConnectWaitIterations};
     };
@@ -104,6 +104,7 @@ namespace ananas
         inline const static juce::Identifier SwitchPasswordPropertyID{"switchPassword"};
         inline const static juce::Identifier SwitchShouldResetPtpPropertyID{"shouldResetPtp"};
         inline const static juce::Identifier SwitchShouldRemovePropertyID{"switchShouldRemove"};
+        inline static const juce::Identifier SwitchIdentifierBase{"switch_"};
 
         inline const static juce::Identifier SwitchClockIdPropertyId{"clock-id"};
         inline const static juce::Identifier SwitchFreqDriftPropertyId{"freq-drift"};
