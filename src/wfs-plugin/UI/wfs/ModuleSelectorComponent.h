@@ -1,14 +1,14 @@
-#ifndef MODULESELECTOR_H
-#define MODULESELECTOR_H
+#ifndef MODULESELECTORCOMPONENT_H
+#define MODULESELECTORCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace ananas::WFS
 {
-    class ModuleSelector : public juce::Component
+    class ModuleSelectorComponent final : public juce::Component
     {
     public:
-        explicit ModuleSelector(uint moduleIndex, juce::ValueTree &persistentTree);
+        explicit ModuleSelectorComponent(uint moduleIndex, juce::ValueTree &persistentTree);
 
         void paint(juce::Graphics &g) override;
 
@@ -19,7 +19,7 @@ namespace ananas::WFS
         void setIndexForModule() const;
 
     private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModuleSelector)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModuleSelectorComponent)
 
         void setSelectedModule(const juce::var &var);
 
@@ -29,4 +29,4 @@ namespace ananas::WFS
     };
 } // ananas::WFS
 
-#endif //MODULESELECTOR_H
+#endif //MODULESELECTORCOMPONENT_H

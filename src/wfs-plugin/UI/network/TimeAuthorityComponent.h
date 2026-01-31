@@ -3,7 +3,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "AnanasNetworkTable.h"
-#include "../Utils.h"
+#include "../../Utils.h"
 
 namespace ananas
 {

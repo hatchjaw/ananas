@@ -18,20 +18,28 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     addAndMakeVisible(tabbedComponent);
     tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, &wfsInterface, false);
     tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
+    lookAndFeel.setNumberOfTabs(tabbedComponent.getNumTabs());
 
     setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);
 
     getProcessor().getPersistentTree().addListener(this);
     getProcessor().getDynamicTree().addListener(this);
 
+    getProcessor().getServer().addChangeListener(&wfsInterface);
+    getProcessor().getServer().addChangeListener(&networkOverview);
+
     setWantsKeyboardFocus(false);
 }
 
 PluginEditor::~PluginEditor()
 {
+    setLookAndFeel(nullptr);
+
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
-    setLookAndFeel(nullptr);
+
+    getProcessor().getServer().removeChangeListener(&wfsInterface);
+    getProcessor().getServer().removeChangeListener(&networkOverview);
 }
 
 void PluginEditor::paint(juce::Graphics &g)
@@ -41,7 +49,9 @@ void PluginEditor::paint(juce::Graphics &g)
 
 void PluginEditor::resized()
 {
+    lookAndFeel.setTotalWidth(getWidth());
     tabbedComponent.setBounds(getLocalBounds());
+    tabbedComponent.setLookAndFeel(&lookAndFeel);
 }
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
@@ -56,10 +66,10 @@ void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHa
 
 PluginProcessor &PluginEditor::getProcessor()
 {
-    return static_cast<PluginProcessor &>(processor);
+    return dynamic_cast<PluginProcessor &>(processor);
 }
 
 const PluginProcessor &PluginEditor::getProcessor() const
 {
-    return static_cast<const PluginProcessor &>(processor);
+    return dynamic_cast<const PluginProcessor &>(processor);
 }

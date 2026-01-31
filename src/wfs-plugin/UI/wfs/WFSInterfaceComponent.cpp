@@ -1,10 +1,12 @@
-#include "WFSInterface.h"
+#include "WFSInterfaceComponent.h"
 #include <AnanasUtils.h>
-#include "../Utils.h"
+#include <Server.h>
+
+#include "../../Utils.h"
 
 namespace ananas::WFS
 {
-    WFSInterface::WFSInterface(
+    WFSInterfaceComponent::WFSInterfaceComponent(
         const uint numSources,
         const uint numModules,
         juce::AudioProcessorValueTreeState &apvts,
@@ -38,7 +40,7 @@ namespace ananas::WFS
         );
 
         for (uint n{0}; n < numModules; ++n) {
-            const auto m{moduleSelectors.add(new ModuleSelector(n, persistentTree))};
+            const auto m{moduleSelectors.add(new ModuleSelectorComponent(n, persistentTree))};
             addAndMakeVisible(m);
             m->setBroughtToFrontOnMouseClick(true);
         }
@@ -48,17 +50,17 @@ namespace ananas::WFS
         updateModuleLists(persistentTree[ananas::Identifiers::ModulesParamID]);
     }
 
-    WFSInterface::~WFSInterface()
+    WFSInterfaceComponent::~WFSInterfaceComponent()
     {
         persistentTree.removeListener(this);
     }
 
-    void WFSInterface::paint(juce::Graphics &g)
+    void WFSInterfaceComponent::paint(juce::Graphics &g)
     {
         g.fillAll(juce::Colours::transparentWhite);
     }
 
-    void WFSInterface::resized()
+    void WFSInterfaceComponent::resized()
     {
         auto bounds{getLocalBounds()};
         auto spacingRow{
@@ -78,9 +80,11 @@ namespace ananas::WFS
                 Constants::UI::ModuleSelectorHeight
             );
         }
+
+        OverlayableComponent::resized();
     }
 
-    void WFSInterface::updateModuleLists(const juce::var &var)
+    void WFSInterfaceComponent::updateModuleLists(const juce::var &var)
     {
         juce::StringArray ips;
         if (auto *obj = var.getDynamicObject()) {
@@ -96,7 +100,7 @@ namespace ananas::WFS
         }
     }
 
-    void WFSInterface::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
+    void WFSInterfaceComponent::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
     {
         if (!isVisible()) return;
 

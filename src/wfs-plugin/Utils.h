@@ -24,6 +24,7 @@ namespace ananas::WFS
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
         constexpr static int WFSMessengerSocketLocalPort{49160};
         constexpr static int WFSMessengerSocketRemotePort{49160};
+        constexpr static int WFSMessengerThreadTimeout{1000};
         inline const static juce::StringRef WFSControlMulticastIP{"224.4.224.10"};
 
         class UI
@@ -227,6 +228,8 @@ namespace ananas::WFS
         inline static const juce::StringRef RebootAllClientsButtonText{"Reboot all"};
         inline static const juce::StringRef TotalClientsLabel{"Total clients: "};
         inline static const juce::StringRef PresentationTimeIntervalLabel{"Approx. group asynchronicity: "};
+
+        inline static const juce::StringRef WFSMessengerThreadName;
     };
 
     class Identifiers

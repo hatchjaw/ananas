@@ -9,4 +9,19 @@ namespace ananas
 
         setColour(juce::ResizableWindow::backgroundColourId, bg);
     }
+
+    int LookAndFeel::getTabButtonBestWidth(juce::TabBarButton &tabBarButton, const int tabDepth)
+    {
+        return totalNumTabs > 0 ? totalWidth / totalNumTabs : LookAndFeel_V4::getTabButtonBestWidth(tabBarButton, tabDepth);
+    }
+
+    void LookAndFeel::setTotalWidth(int width)
+    {
+        totalWidth = width;
+    }
+
+    void LookAndFeel::setNumberOfTabs(int numTabs)
+    {
+        totalNumTabs = numTabs;
+    }
 }

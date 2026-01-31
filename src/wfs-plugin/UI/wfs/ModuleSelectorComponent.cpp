@@ -1,10 +1,10 @@
-#include "ModuleSelector.h"
+#include "ModuleSelectorComponent.h"
 #include <AnanasUtils.h>
-#include "../Utils.h"
+#include "../../Utils.h"
 
 namespace ananas::WFS
 {
-    ModuleSelector::ModuleSelector(const uint moduleIndex, juce::ValueTree &persistentTree)
+    ModuleSelectorComponent::ModuleSelectorComponent(const uint moduleIndex, juce::ValueTree &persistentTree)
         : tree(persistentTree),
           index(moduleIndex)
     {
@@ -16,17 +16,17 @@ namespace ananas::WFS
         };
     }
 
-    void ModuleSelector::paint(juce::Graphics &g)
+    void ModuleSelectorComponent::paint(juce::Graphics &g)
     {
         Component::paint(g);
     }
 
-    void ModuleSelector::resized()
+    void ModuleSelectorComponent::resized()
     {
         comboBox.setBounds(getLocalBounds());
     }
 
-    void ModuleSelector::setAvailableModules(const juce::StringArray &ips)
+    void ModuleSelectorComponent::setAvailableModules(const juce::StringArray &ips)
     {
         comboBox.clear(juce::dontSendNotification);
         comboBox.addItemList(ips, 1);
@@ -42,7 +42,7 @@ namespace ananas::WFS
         }
     }
 
-    void ModuleSelector::setIndexForModule() const
+    void ModuleSelectorComponent::setIndexForModule() const
     {
         auto modules{tree.getProperty(ananas::Identifiers::ModulesParamID)};
         if (auto *obj = modules.getDynamicObject()) {
@@ -56,7 +56,7 @@ namespace ananas::WFS
         }
     }
 
-    void ModuleSelector::setSelectedModule(const juce::var &var)
+    void ModuleSelectorComponent::setSelectedModule(const juce::var &var)
     {
         if (var.isString()) {
             comboBox.setText(var.toString(), juce::dontSendNotification);

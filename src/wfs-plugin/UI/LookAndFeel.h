@@ -9,6 +9,16 @@ namespace ananas
     {
     public:
         LookAndFeel();
+
+        int getTabButtonBestWidth(juce::TabBarButton &, int tabDepth) override;
+
+        void setTotalWidth(int width);
+
+        void setNumberOfTabs(int numTabs);
+
+    private:
+        int totalWidth;
+        int totalNumTabs;
     };
 }
 

@@ -48,14 +48,16 @@ target_sources(ananasWFS
         PluginProcessor.cpp
         WFSMessenger.cpp
         UI/LookAndFeel.cpp
-        UI/AnanasNetworkTable.cpp
-        UI/NetworkOverviewComponent.cpp
-        UI/SwitchesComponent.cpp
-        UI/TimeAuthorityComponent.cpp
-        UI/ClientsOverviewComponent.cpp
-        UI/WFSInterface.cpp
-        UI/XYController.cpp
-        UI/ModuleSelector.cpp
+        UI/OverlayableComponent.cpp
+        UI/OverlayComponent.cpp
+        UI/network/AnanasNetworkTable.cpp
+        UI/network/NetworkOverviewComponent.cpp
+        UI/network/SwitchesComponent.cpp
+        UI/network/TimeAuthorityComponent.cpp
+        UI/network/ClientsOverviewComponent.cpp
+        UI/wfs/WFSInterfaceComponent.cpp
+        UI/wfs/XYControllerComponent.cpp
+        UI/wfs/ModuleSelectorComponent.cpp
 )
 
 target_link_libraries(ananasWFS

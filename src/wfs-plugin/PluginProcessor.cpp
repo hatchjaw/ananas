@@ -33,12 +33,15 @@ PluginProcessor::~PluginProcessor()
         apvts.removeParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X), &wfsMessenger);
         apvts.removeParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y), &wfsMessenger);
     }
+    if (wfsMessenger.isThreadRunning()) {
+        wfsMessenger.stopThread(ananas::WFS::Constants::WFSMessengerThreadTimeout);
+    }
 }
 
 void PluginProcessor::prepareToPlay(const double sampleRate, const int samplesPerBlock)
 {
     server->prepareToPlay(samplesPerBlock, sampleRate);
-    wfsMessenger.prepare();
+    wfsMessenger.startThread();
 }
 
 void PluginProcessor::releaseResources()

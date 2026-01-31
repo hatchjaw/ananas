@@ -1,10 +1,10 @@
-#include "XYController.h"
+#include "XYControllerComponent.h"
 
-#include "../Utils.h"
+#include "../../Utils.h"
 
 namespace ananas::WFS
 {
-    XYController::XYController(const uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts)
+    XYControllerComponent::XYControllerComponent(const uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts)
     {
         for (uint n{0}; n < numNodesToCreate; ++n) {
             // Add a node for each sound source
@@ -22,12 +22,12 @@ namespace ananas::WFS
         }
     }
 
-    void XYController::paint(juce::Graphics &g)
+    void XYControllerComponent::paint(juce::Graphics &g)
     {
         g.fillAll(juce::Colour{0.f, 0.f, 0.f, .1f});
     }
 
-    void XYController::resized()
+    void XYControllerComponent::resized()
     {
         for (const auto &node: nodes) {
             node->setBounds();
@@ -36,11 +36,11 @@ namespace ananas::WFS
 
     //==========================================================================
 
-    XYController::Node::Node(const uint idx) : index(idx)
+    XYControllerComponent::Node::Node(const uint idx) : index(idx)
     {
     }
 
-    void XYController::Node::paint(juce::Graphics &g)
+    void XYControllerComponent::Node::paint(juce::Graphics &g)
     {
         const auto colour{
             juce::Colours::black
@@ -56,14 +56,14 @@ namespace ananas::WFS
         g.drawText(juce::String(index + 1), getLocalBounds(), juce::Justification::centred);
     }
 
-    void XYController::Node::mouseDown(const juce::MouseEvent &event)
+    void XYControllerComponent::Node::mouseDown(const juce::MouseEvent &event)
     {
         ignoreUnused(event);
         currentDrag.reset();
         currentDrag = std::make_unique<ScopedDragNotification>(*this);
     }
 
-    void XYController::Node::mouseDrag(const juce::MouseEvent &event)
+    void XYControllerComponent::Node::mouseDrag(const juce::MouseEvent &event)
     {
         if (!event.mods.isLeftButtonDown()) return;
 
@@ -89,27 +89,27 @@ namespace ananas::WFS
         setBounds();
     }
 
-    void XYController::Node::mouseUp(const juce::MouseEvent &event)
+    void XYControllerComponent::Node::mouseUp(const juce::MouseEvent &event)
     {
         ignoreUnused(event);
         currentDrag.reset();
     }
 
-    void XYController::Node::setValueX(const float newX, const juce::NotificationType notification)
+    void XYControllerComponent::Node::setValueX(const float newX, const juce::NotificationType notification)
     {
         value.x = newX;
         triggerChangeMessage(notification);
     }
 
 
-    void XYController::Node::setValueY(const float newY, const juce::NotificationType notification)
+    void XYControllerComponent::Node::setValueY(const float newY, const juce::NotificationType notification)
     {
         value.y = newY;
         triggerChangeMessage(notification);
     }
 
 
-    void XYController::Node::setBounds()
+    void XYControllerComponent::Node::setBounds()
     {
         const auto bounds{getParentComponent()->getBounds().toFloat()};
         const auto x{bounds.getWidth() * (value.x + 1.f) / 2.f};
@@ -122,7 +122,7 @@ namespace ananas::WFS
         );
     }
 
-    void XYController::Node::handleAsyncUpdate()
+    void XYControllerComponent::Node::handleAsyncUpdate()
     {
         cancelPendingUpdate();
 
@@ -139,34 +139,34 @@ namespace ananas::WFS
         }
     }
 
-    juce::Point<float> XYController::Node::getValue() const
+    juce::Point<float> XYControllerComponent::Node::getValue() const
     {
         return value;
     }
 
-    void XYController::Node::sendDragStart()
+    void XYControllerComponent::Node::sendDragStart()
     {
         const BailOutChecker checker{this};
         listeners.callChecked(checker, [&](Listener &l) { l.dragStarted(this); });
     }
 
-    void XYController::Node::sendDragEnd()
+    void XYControllerComponent::Node::sendDragEnd()
     {
         const BailOutChecker checker{this};
         listeners.callChecked(checker, [&](Listener &l) { l.dragEnded(this); });
     }
 
-    void XYController::Node::addListener(Listener *listener)
+    void XYControllerComponent::Node::addListener(Listener *listener)
     {
         listeners.add(listener);
     }
 
-    void XYController::Node::removeListener(Listener *listener)
+    void XYControllerComponent::Node::removeListener(Listener *listener)
     {
         listeners.remove(listener);
     }
 
-    void XYController::Node::triggerChangeMessage(const juce::NotificationType notification)
+    void XYControllerComponent::Node::triggerChangeMessage(const juce::NotificationType notification)
     {
         if (notification == juce::dontSendNotification) return;
 
@@ -178,20 +178,20 @@ namespace ananas::WFS
 
     //==========================================================================
 
-    XYController::Node::ScopedDragNotification::ScopedDragNotification(Node &node)
+    XYControllerComponent::Node::ScopedDragNotification::ScopedDragNotification(Node &node)
         : nodeBeingDragged(node)
     {
         nodeBeingDragged.sendDragStart();
     }
 
-    XYController::Node::ScopedDragNotification::~ScopedDragNotification()
+    XYControllerComponent::Node::ScopedDragNotification::~ScopedDragNotification()
     {
         nodeBeingDragged.sendDragEnd();
     }
 
     //==========================================================================
 
-    XYController::ParameterAttachment::ParameterAttachment(
+    XYControllerComponent::ParameterAttachment::ParameterAttachment(
         juce::RangedAudioParameter &paramX,
         juce::RangedAudioParameter &paramY,
         Node &n,
@@ -205,26 +205,26 @@ namespace ananas::WFS
         attachmentY.sendInitialUpdate();
     }
 
-    XYController::ParameterAttachment::~ParameterAttachment()
+    XYControllerComponent::ParameterAttachment::~ParameterAttachment()
     {
         node.removeListener(this);
     }
 
-    void XYController::ParameterAttachment::setValueX(const float newX)
+    void XYControllerComponent::ParameterAttachment::setValueX(const float newX)
     {
         const juce::ScopedValueSetter svs(ignoreCallbacks, true);
         node.setValueX(newX, juce::sendNotificationSync);
         node.setBounds();
     }
 
-    void XYController::ParameterAttachment::setValueY(const float newY)
+    void XYControllerComponent::ParameterAttachment::setValueY(const float newY)
     {
         const juce::ScopedValueSetter svs(ignoreCallbacks, true);
         node.setValueY(newY, juce::sendNotificationSync);
         node.setBounds();
     }
 
-    void XYController::ParameterAttachment::valueChanged(Node *)
+    void XYControllerComponent::ParameterAttachment::valueChanged(Node *)
     {
         if (!ignoreCallbacks) {
             const auto val{node.getValue()};
@@ -233,13 +233,13 @@ namespace ananas::WFS
         }
     }
 
-    void XYController::ParameterAttachment::dragStarted(Node *)
+    void XYControllerComponent::ParameterAttachment::dragStarted(Node *)
     {
         attachmentX.beginGesture();
         attachmentY.beginGesture();
     }
 
-    void XYController::ParameterAttachment::dragEnded(Node *)
+    void XYControllerComponent::ParameterAttachment::dragEnded(Node *)
     {
         attachmentX.endGesture();
         attachmentY.endGesture();
@@ -247,7 +247,7 @@ namespace ananas::WFS
 
     //==========================================================================
 
-    XYController::Attachment::Attachment(
+    XYControllerComponent::Attachment::Attachment(
         const juce::AudioProcessorValueTreeState &state,
         const juce::String &parameterIDX,
         const juce::String &parameterIDY,

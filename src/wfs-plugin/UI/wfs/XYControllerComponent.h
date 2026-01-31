@@ -1,15 +1,15 @@
-#ifndef XYCONTROLLER_H
-#define XYCONTROLLER_H
+#ifndef XYCONTROLLERCOMPONENT_H
+#define XYCONTROLLERCOMPONENT_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
 namespace ananas::WFS
 {
-    class XYController final : public juce::Component
+    class XYControllerComponent final : public juce::Component
     {
     public:
-        XYController(uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts);
+        XYControllerComponent(uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts);
 
         void paint(juce::Graphics &g) override;
 
@@ -123,11 +123,11 @@ namespace ananas::WFS
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Attachment);
         };
 
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(XYController)
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(XYControllerComponent)
 
         juce::OwnedArray<Node> nodes;
         juce::OwnedArray<Attachment> attachments;
     };
 } // ananas::WFS
 
-#endif //XYCONTROLLER_H
+#endif //XYCONTROLLERCOMPONENT_H

@@ -10,7 +10,9 @@
 
 namespace ananas
 {
-    class Server final : public juce::AudioSource
+    class Server final : public juce::AudioSource,
+                         public juce::ChangeListener,
+                         public juce::ChangeBroadcaster
     {
     public:
         explicit Server(uint8_t numChannelsToSend);
@@ -23,6 +25,10 @@ namespace ananas
 
         void getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill) override;
 
+        void changeListenerCallback(ChangeBroadcaster *source) override;
+
+        [[nodiscard]] bool isConnected() const;
+
         ClientList *getClientList();
 
         ModuleList *getModuleList();
@@ -32,16 +38,56 @@ namespace ananas
         SwitchList *getSwitches();
 
     private:
-        class AudioSender final : public juce::Thread
+        //======================================================================
+
+        class AnanasThread : public juce::Thread,
+                             public ChangeBroadcaster
+        {
+        public:
+            AnanasThread(const juce::String &threadName, int timeoutMs);
+
+            virtual bool connect() = 0;
+
+            void run() override;
+
+            int getTimeout() const;
+
+            bool isConnected() const;
+
+        protected:
+            virtual void runImpl() = 0;
+
+            int timeoutMs{0};
+            bool connected{false};
+        };
+
+        //======================================================================
+
+        class UDPMulticastThread : public AnanasThread
+        {
+        public:
+            UDPMulticastThread(const juce::String &threadName, juce::String multicastIP, int timeoutMs);
+
+            ~UDPMulticastThread() override;
+
+            bool connect() override;
+
+        protected:
+            void runImpl() override = 0;
+
+            juce::DatagramSocket socket;
+            juce::String ip;
+        };
+
+        //======================================================================
+
+        class AudioSender final : public UDPMulticastThread,
+                                  public ChangeListener
         {
         public:
             explicit AudioSender(Fifo &fifo);
 
-            ~AudioSender() override;
-
             bool prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
-
-            void run() override;
 
             void setPacketTime(timespec ts);
 
@@ -49,33 +95,35 @@ namespace ananas
 
             bool stopThread(int timeOutMilliseconds);
 
+            void changeListenerCallback(ChangeBroadcaster *source) override;
+
+        protected:
+            void runImpl() override;
+
         private:
-            juce::DatagramSocket socket;
+            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioSender);
+
             Fifo &fifo;
             AudioPacket packet{};
             int audioBlockSamples{0};
-            bool isReady{false};
-
-            JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AudioSender);
         };
 
-        class AnnouncementListenerThread : public juce::Thread
+        //======================================================================
+
+        class AnnouncementListenerThread : public UDPMulticastThread
         {
         public:
-            AnnouncementListenerThread(const juce::String &threadName, const juce::String &multicastIP, int portToListenOn);
+            AnnouncementListenerThread(const juce::String &threadName, const juce::String &multicastIP, int timeoutMs, int portToListenOn);
 
-            ~AnnouncementListenerThread() override;
-
-            bool prepare();
-
-            void run() override = 0;
+            bool connect() override;
 
         protected:
-            juce::DatagramSocket socket;
-            bool isReady{false};
-            juce::String ip;
+            void runImpl() override = 0;
+
             int port;
         };
+
+        //======================================================================
 
         /**
          * A thread to listen out for PTP timestamps.
@@ -85,20 +133,28 @@ namespace ananas
         public:
             TimestampListener();
 
-            void run() override;
+            timespec getPacketTime() const;
 
-            std::function<void(timespec)> onTimestamp;
+            bool getTimestampChanged() const;
+
+        protected:
+            void runImpl() override;
 
         private:
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
+            timespec timestamp{};
+            bool timestampChanged{false};
         };
+
+        //======================================================================
 
         class ClientListener final : public AnnouncementListenerThread
         {
         public:
             ClientListener(ClientList &clients, ModuleList &modules);
 
-            void run() override;
+        protected:
+            void runImpl() override;
 
         private:
             ClientList &clients;
@@ -107,45 +163,55 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ClientListener);
         };
 
+        //======================================================================
+
         class AuthorityListener final : public AnnouncementListenerThread
         {
         public:
             explicit AuthorityListener(AuthorityInfo &authority);
 
-            void run() override;
-
-            AuthorityInfo &authority;
+        protected:
+            void runImpl() override;
 
         private:
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AuthorityListener);
+
+            AuthorityInfo &authority;
         };
 
-        class RebootSender final : public juce::Thread
+        //======================================================================
+
+        class RebootSender final : public UDPMulticastThread
         {
         public:
             explicit RebootSender(ClientList &clients);
 
             bool prepare();
 
-            void run() override;
+        protected:
+            void runImpl() override;
 
         private:
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RebootSender)
 
-            ClientList &clients;;
-            juce::DatagramSocket socket;
-            bool isReady{false};
+            ClientList &clients;
         };
 
-        class SwitchInspector final : public juce::Thread
+        //======================================================================
+
+        class SwitchInspector final : public AnanasThread
         {
         public:
             explicit SwitchInspector(SwitchList &switches);
 
-            void run() override;
+            void runImpl() override;
+
+            bool connect() override;
 
         private:
             SwitchList &switches;
+            juce::ChildProcess curl;
+            int curlTimeoutS{0};
 
             /**
              * E.g. curl -s -k -u admin:emeraude http://192.168.10.1/rest/system/ptp/monitor -d \'{"numbers":"0","once":""}\' -H "content-type: application/json"
@@ -165,20 +231,17 @@ namespace ananas
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SwitchInspector);
         };
 
-        uint8_t numChannels;
-        Fifo fifo;
-        AudioSender sender;
-        TimestampListener timestampListener;
-        SwitchInspector switchInspector;
-        SwitchList switches;
-        ClientListener clientListener;
-        ClientList clients;
-        ModuleList modules;
-        AuthorityListener authorityListener;
-        AuthorityInfo authority;
-        RebootSender rebootSender;
+        //======================================================================
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
+
+        uint8_t numChannels;
+        Fifo fifo;
+        SwitchList switches;
+        ClientList clients;
+        ModuleList modules;
+        AuthorityInfo authority;
+        juce::OwnedArray<AnanasThread> threads;
     };
 }
 

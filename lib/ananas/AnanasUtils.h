@@ -63,10 +63,15 @@ namespace ananas
         constexpr static int RebootSenderSocketTimeoutMs{500};
 
         inline static const juce::StringRef SwitchInspectorThreadName{"Ananas Switch Inspector"};
-        constexpr static juce::uint32 SwitchInspectorRequestTimeoutMs{1000};
+        constexpr static int SwitchInspectorThreadTimeoutMs{1000};
+        constexpr static juce::uint32 SwitchInspectorRequestTimeoutMs{1500};
         inline static const juce::StringRef SwitchMonitorPtpPath{"/rest/system/ptp/monitor"};
         inline static const juce::StringRef SwitchDisablePtpPath{"/rest/system/ptp/disable"};
         inline static const juce::StringRef SwitchEnablePtpPath{"/rest/system/ptp/enable"};
+
+        constexpr static uint ThreadConnectSleepIntervalMs{5000};
+        constexpr static uint ThreadConnectWaitIterations{ThreadConnectSleepIntervalMs / 100};
+        constexpr static uint ThreadConnectWaitIntervalMs{ThreadConnectSleepIntervalMs / ThreadConnectWaitIterations};
     };
 
     class Identifiers

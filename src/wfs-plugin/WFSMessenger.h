@@ -4,25 +4,33 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_osc/juce_osc.h>
 
+#include "Utils.h"
+
 namespace ananas::WFS
 {
-    class WFSMessenger final : public juce::OSCSender,
+    class WFSMessenger final : public juce::Thread,
+                               public juce::OSCSender,
                                public juce::AudioProcessorValueTreeState::Listener,
                                public juce::ValueTree::Listener
     {
     public:
-        WFSMessenger()
+        WFSMessenger() : Thread(Strings::WFSMessengerThreadName)
         {
         }
 
-        bool prepare();
+        bool connect();
+
+        void run() override;
 
         void valueTreePropertyChanged(::juce::ValueTree &treeWhosePropertyHasChanged, const ::juce::Identifier &property) override;
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
 
     private:
+        void runImpl() const;
+
         juce::DatagramSocket socket;
+        bool connected{false};
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WFSMessenger);
     };

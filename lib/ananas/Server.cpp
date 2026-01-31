@@ -6,13 +6,19 @@
 namespace ananas
 {
     Server::Server(const uint8_t numChannelsToSend) : numChannels(numChannelsToSend),
-                                                      fifo(numChannelsToSend),
-                                                      sender(fifo),
-                                                      switchInspector(switches),
-                                                      clientListener(clients, modules),
-                                                      authorityListener(authority),
-                                                      rebootSender(clients)
+                                                      fifo(numChannelsToSend)
     {
+        threads.add(new AudioSender(fifo));
+        threads.add(new TimestampListener());
+        threads.add(new ClientListener(clients, modules));
+        threads.add(new AuthorityListener(authority));
+        threads.add(new RebootSender(clients));
+        threads.add(new SwitchInspector(switches));
+
+        for (const auto &t: threads) {
+            t->addChangeListener(this);
+            t->startThread();
+        }
     }
 
     Server::~Server()
@@ -22,47 +28,43 @@ namespace ananas
 
     void Server::prepareToPlay(const int samplesPerBlockExpected, const double sampleRate)
     {
-        while (!sender.prepare(numChannels, samplesPerBlockExpected, sampleRate) ||
-               !timestampListener.prepare() ||
-               !clientListener.prepare() ||
-               !authorityListener.prepare() ||
-               !rebootSender.prepare()) {
-            sleep(1);
+        if (auto *s = dynamic_cast<AudioSender *>(threads[0])) {
+            s->prepare(numChannels, samplesPerBlockExpected, sampleRate);
         }
-
-        switchInspector.startThread();
-
-        timestampListener.onTimestamp = [this](const timespec &ts)
-        {
-            sender.setPacketTime(ts);
-        };
     }
 
     void Server::releaseResources()
     {
-        if (sender.isThreadRunning()) {
-            sender.stopThread(Constants::AudioSenderSocketTimeoutMs);
-        }
-        if (timestampListener.isThreadRunning()) {
-            timestampListener.stopThread(Constants::TimestampListenerSocketTimeoutMs);
-        }
-        if (clientListener.isThreadRunning()) {
-            clientListener.stopThread(Constants::ClientListenerSocketTimeoutMs);
-        }
-        if (authorityListener.isThreadRunning()) {
-            authorityListener.stopThread(Constants::AuthorityListenerSocketTimeoutMs);
-        }
-        if (switchInspector.isThreadRunning()) {
-            switchInspector.stopThread(Constants::SwitchInspectorRequestTimeoutMs);
-        }
-        if (rebootSender.isThreadRunning()) {
-            rebootSender.stopThread(Constants::RebootSenderSocketTimeoutMs);
+        for (const auto &t: threads) {
+            if (t->isThreadRunning()) {
+                t->stopThread(t->getTimeout());
+            }
         }
     }
 
     void Server::getNextAudioBlock(const juce::AudioSourceChannelInfo &bufferToFill)
     {
         fifo.write(bufferToFill.buffer);
+    }
+
+    void Server::changeListenerCallback(ChangeBroadcaster *source)
+    {
+        if (const auto *t = dynamic_cast<TimestampListener *>(source)) {
+            if (t->getTimestampChanged()) {
+                return;
+            }
+        }
+        sendChangeMessage();
+    }
+
+    bool Server::isConnected() const
+    {
+        for (const auto &t: threads) {
+            if (!t->isConnected()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     ClientList *Server::getClientList()
@@ -85,42 +87,70 @@ namespace ananas
         return &switches;
     }
 
+
     //==========================================================================
 
-    Server::AudioSender::AudioSender(Fifo &fifo) : Thread(Constants::AudioSenderThreadName),
-                                                   fifo(fifo)
+    Server::AnanasThread::AnanasThread(const juce::String &threadName, const int timeoutMs)
+        : Thread(threadName), timeoutMs(timeoutMs)
     {
     }
 
-    Server::AudioSender::~AudioSender()
+    void Server::AnanasThread::run()
     {
-        socket.leaveMulticast(Constants::AudioMulticastIP);
+        while (!connect() && !threadShouldExit()) {
+            for (uint i{0}; i < Constants::ThreadConnectWaitIterations && !threadShouldExit(); ++i)
+                wait(Constants::ThreadConnectWaitIntervalMs);
+        }
+
+        if (!threadShouldExit()) {
+            connected = true;
+            runImpl();
+        }
+    }
+
+    int Server::AnanasThread::getTimeout() const
+    {
+        return timeoutMs;
+    }
+
+    bool Server::AnanasThread::isConnected() const
+    {
+        return connected;
+    }
+
+    //==========================================================================
+
+    Server::UDPMulticastThread::UDPMulticastThread(const juce::String &threadName, juce::String multicastIP, int timeoutMs)
+        : AnanasThread(threadName, timeoutMs), ip(std::move(multicastIP))
+    {
+    }
+
+    Server::UDPMulticastThread::~UDPMulticastThread()
+    {
+        socket.leaveMulticast(ip);
         socket.shutdown();
     }
 
-    bool Server::AudioSender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
+    bool Server::UDPMulticastThread::connect()
     {
-        juce::ignoreUnused(sampleRate);
-
-        if (isReady) return true;
-
-        audioBlockSamples = samplesPerBlockExpected;
-
         if (-1 == socket.getBoundPort()) {
             if (!socket.setEnablePortReuse(true)) {
-                std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to set socket port reuse: " << strerror(errno) << std::endl;
                 socket.shutdown();
+                sendChangeMessage();
                 return false;
             }
 
             if (!socket.bindToPort(Constants::AudioSenderSocketLocalPort, Constants::LocalInterfaceIP)) {
-                std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
+                sendChangeMessage();
                 return false;
             }
 
             if (!socket.joinMulticast(Constants::AudioMulticastIP)) {
-                std::cerr << getThreadName() << " Failed to join multicast group: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to join multicast group: " << strerror(errno) << std::endl;
+                sendChangeMessage();
                 socket.shutdown();
                 return false;
             }
@@ -129,13 +159,57 @@ namespace ananas
             socket.waitUntilReady(false, 1000);
         }
 
-        packet.prepare(numChannels, Constants::FramesPerPacket, sampleRate);
-
-        isReady = startThread();
-        return isReady;
+        sendChangeMessage();
+        return true;
     }
 
-    void Server::AudioSender::run()
+    //==========================================================================
+
+    Server::AudioSender::AudioSender(Fifo &fifo)
+        : UDPMulticastThread(
+              Constants::AudioSenderThreadName,
+              Constants::AudioMulticastIP,
+              Constants::AudioSenderSocketTimeoutMs
+          ),
+          fifo(fifo)
+    {
+    }
+
+    bool Server::AudioSender::prepare(const int numChannels, const int samplesPerBlockExpected, const double sampleRate)
+    {
+        juce::ignoreUnused(sampleRate);
+
+        audioBlockSamples = samplesPerBlockExpected;
+
+        packet.prepare(numChannels, Constants::FramesPerPacket, sampleRate);
+
+        return startThread();
+    }
+
+    void Server::AudioSender::setPacketTime(const timespec ts)
+    {
+        packet.setTime(ts);
+    }
+
+    int64_t Server::AudioSender::getPacketTime() const
+    {
+        return packet.getTime();
+    }
+
+    bool Server::AudioSender::stopThread(const int timeOutMilliseconds)
+    {
+        fifo.abortRead();
+        return Thread::stopThread(timeOutMilliseconds);
+    }
+
+    void Server::AudioSender::changeListenerCallback(juce::ChangeBroadcaster *source)
+    {
+        if (const auto *t = dynamic_cast<TimestampListener *>(source)) {
+            setPacketTime(t->getPacketTime());
+        }
+    }
+
+    void Server::AudioSender::runImpl()
     {
         DBG("Sending audio packets...");
 
@@ -160,42 +234,19 @@ namespace ananas
         DBG("Stopping send thread");
     }
 
-    void Server::AudioSender::setPacketTime(const timespec ts)
-    {
-        packet.setTime(ts);
-    }
-
-    int64_t Server::AudioSender::getPacketTime() const
-    {
-        return packet.getTime();
-    }
-
-    bool Server::AudioSender::stopThread(const int timeOutMilliseconds)
-    {
-        fifo.abortRead();
-        return Thread::stopThread(timeOutMilliseconds);
-    }
-
     //==========================================================================
 
     Server::AnnouncementListenerThread::AnnouncementListenerThread(
         const juce::String &threadName,
         const juce::String &multicastIP,
+        const int timeoutMs,
         const int portToListenOn
-    ) : Thread(threadName), ip(multicastIP), port(portToListenOn)
+    ) : UDPMulticastThread(threadName, multicastIP, timeoutMs), port(portToListenOn)
     {
     }
 
-    Server::AnnouncementListenerThread::~AnnouncementListenerThread()
+    bool Server::AnnouncementListenerThread::connect()
     {
-        socket.leaveMulticast(ip);
-        socket.shutdown();
-    }
-
-    bool Server::AnnouncementListenerThread::prepare()
-    {
-        if (isReady) return true;
-
         if (-1 == socket.getBoundPort()) {
             // JUCE doesn't handle multicast in a manner that's compatible with
             // reading multicast packets on a specific interface...
@@ -203,16 +254,18 @@ namespace ananas
             // ...(it's probably not necessary to allow port-reuse, but what the
             // hell)...
             if (!socket.setEnablePortReuse(true)) {
-                std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to set socket port reuse: " << strerror(errno) << std::endl;
                 socket.shutdown();
+                sendChangeMessage();
                 return false;
             }
 
             // ...bind the relevant port to ALL interfaces (INADDR_ANY) by not
             // specifying a local interface here...
             if (!socket.bindToPort(port)) {
-                std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
+                sendChangeMessage();
                 return false;
             }
 
@@ -227,16 +280,17 @@ namespace ananas
                     IPPROTO_IP,
                     IP_ADD_MEMBERSHIP,
                     &mreq, sizeof (mreq)) < 0) {
-                std::cerr << getThreadName() << " Failed to add multicast membership: " << strerror(errno) << std::endl;
+                std::cerr << getThreadName() << " failed to add multicast membership: " << strerror(errno) << std::endl;
                 socket.shutdown();
+                sendChangeMessage();
                 return false;
             }
 
             socket.setMulticastLoopbackEnabled(false);
         }
 
-        isReady = startThread();
-        return isReady;
+        sendChangeMessage();
+        return true;
     }
 
     //==============================================================================
@@ -244,11 +298,22 @@ namespace ananas
     Server::TimestampListener::TimestampListener()
         : AnnouncementListenerThread(Constants::TimestampListenerThreadName,
                                      Constants::PTPMulticastIP,
+                                     Constants::TimestampListenerSocketTimeoutMs,
                                      Constants::TimestampListenerLocalPort)
     {
     }
 
-    void Server::TimestampListener::run()
+    timespec Server::TimestampListener::getPacketTime() const
+    {
+        return timestamp;
+    }
+
+    bool Server::TimestampListener::getTimestampChanged() const
+    {
+        return timestampChanged;
+    }
+
+    void Server::TimestampListener::runImpl()
     {
         DBG("Listening for PTP timestamps...");
 
@@ -285,9 +350,10 @@ namespace ananas
 
                         // DBG("Timestamp: " << ts.tv_sec << "." << ts.tv_nsec << " --- " << ctime(&ts.tv_sec));
 
-                        if (onTimestamp != nullptr) {
-                            onTimestamp(ts);
-                        }
+                        timestamp = ts;
+                        timestampChanged = true;
+                        sendSynchronousChangeMessage();
+                        timestampChanged = false;
                     }
                 } else if (bytesRead < 0) {
                     DBG("Error receiving data: " << strerror(errno));
@@ -301,15 +367,18 @@ namespace ananas
     //==============================================================================
 
     Server::ClientListener::ClientListener(ClientList &clients, ModuleList &modules)
-        : AnnouncementListenerThread(Constants::ClientListenerThreadName,
-                                     Constants::ClientAnnounceMulticastIP,
-                                     Constants::ClientListenerLocalPort),
+        : AnnouncementListenerThread(
+              Constants::ClientListenerThreadName,
+              Constants::ClientAnnounceMulticastIP,
+              Constants::ClientListenerSocketTimeoutMs,
+              Constants::ClientListenerLocalPort
+          ),
           clients(clients),
           modules(modules)
     {
     }
 
-    void Server::ClientListener::run()
+    void Server::ClientListener::runImpl()
     {
         DBG("Listening for clients...");
 
@@ -340,14 +409,17 @@ namespace ananas
     //==============================================================================
 
     Server::AuthorityListener::AuthorityListener(AuthorityInfo &authority)
-        : AnnouncementListenerThread(Constants::AuthorityListenerThreadName,
-                                     Constants::AuthorityAnnounceMulticastIP,
-                                     Constants::AuthorityListenerLocalPort),
+        : AnnouncementListenerThread(
+              Constants::AuthorityListenerThreadName,
+              Constants::AuthorityAnnounceMulticastIP,
+              Constants::AuthorityListenerSocketTimeoutMs,
+              Constants::AuthorityListenerLocalPort
+          ),
           authority(authority)
     {
     }
 
-    void Server::AuthorityListener::run()
+    void Server::AuthorityListener::runImpl()
     {
         DBG("Listening for timing authority...");
 
@@ -375,43 +447,16 @@ namespace ananas
     //==========================================================================
 
     Server::RebootSender::RebootSender(ClientList &clients)
-        : Thread(Constants::RebootSenderThreadName),
+        : UDPMulticastThread(
+              Constants::RebootSenderThreadName,
+              Constants::RebootMulticastIP,
+              Constants::RebootSenderSocketTimeoutMs
+          ),
           clients(clients)
     {
     }
 
-    bool Server::RebootSender::prepare()
-    {
-        if (isReady) return true;
-
-        if (-1 == socket.getBoundPort()) {
-            if (!socket.setEnablePortReuse(true)) {
-                std::cerr << getThreadName() << " Failed to set socket port reuse: " << strerror(errno) << std::endl;
-                socket.shutdown();
-                return false;
-            }
-
-            if (!socket.bindToPort(Constants::RebootSenderSocketLocalPort, Constants::LocalInterfaceIP)) {
-                std::cerr << getThreadName() << " Failed to bind socket to port: " << strerror(errno) << std::endl;
-                socket.shutdown();
-                return false;
-            }
-
-            if (!socket.joinMulticast(Constants::RebootMulticastIP)) {
-                std::cerr << getThreadName() << " Failed to join multicast group: " << strerror(errno) << std::endl;
-                socket.shutdown();
-                return false;
-            }
-
-            socket.setMulticastLoopbackEnabled(false);
-            socket.waitUntilReady(false, 1000);
-        }
-
-        isReady = startThread();
-        return isReady;
-    }
-
-    void Server::RebootSender::run()
+    void Server::RebootSender::runImpl()
     {
         while (!threadShouldExit()) {
             if (clients.getShouldReboot()) {
@@ -433,11 +478,11 @@ namespace ananas
     //==========================================================================
 
     Server::SwitchInspector::SwitchInspector(SwitchList &switches)
-        : Thread(Constants::SwitchInspectorThreadName), switches(switches)
+        : AnanasThread(Constants::SwitchInspectorThreadName, Constants::SwitchInspectorThreadTimeoutMs), switches(switches)
     {
     }
 
-    void Server::SwitchInspector::run()
+    void Server::SwitchInspector::runImpl()
     {
         DBG("Inspecting switches...");
 
@@ -481,6 +526,12 @@ namespace ananas
         DBG("Stopping switch inspector thread");
     }
 
+    bool Server::SwitchInspector::connect()
+    {
+        sendChangeMessage();
+        return true;
+    }
+
     juce::var Server::SwitchInspector::curlRequest(const juce::String &ip,
                                                    const juce::String &username,
                                                    const juce::String &password,
@@ -492,6 +543,7 @@ namespace ananas
         juce::StringArray args;
         args.add("curl");
         args.add("-s"); // Silent, no stats
+        args.add("-m" + juce::String{getTimeout() / 1000}); // Max request time 1 second
         args.add("-k"); // Insecure (no TLS)
         args.add("-u"); // Specify username and password
         args.add(username + ":" + password);
@@ -501,7 +553,7 @@ namespace ananas
         args.add("-d");
         args.add(postData);
 
-        if (juce::ChildProcess curl; curl.start(args)) {
+        if (curl.start(args)) {
             const auto response{curl.readAllProcessOutput()};
             return juce::JSON::parse(response);
         }

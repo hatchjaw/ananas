@@ -1,12 +1,10 @@
 #include "WFSMessenger.h"
-
 #include <AnanasUtils.h>
-
 #include "Utils.h"
 
 namespace ananas::WFS
 {
-    bool WFSMessenger::prepare()
+    bool WFSMessenger::connect()
     {
         if (!socket.bindToPort(Constants::WFSMessengerSocketLocalPort, Constants::LocalInterfaceIP)) {
             std::cerr << "WFS Messenger failed to bind to port: " << std::strerror(errno) << std::endl;
@@ -18,12 +16,25 @@ namespace ananas::WFS
             return false;
         }
 
+        connected = true;
         return true;
+    }
+
+    void WFSMessenger::run()
+    {
+        while (!connect() && !threadShouldExit()) {
+            for (int i = 0; i < 50 && !threadShouldExit(); ++i)
+                sleep(100);
+        }
+
+        runImpl();
     }
 
     void WFSMessenger::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged,
                                                 const juce::Identifier &property)
     {
+        if (!connected) { return; }
+
         if (property == ananas::Identifiers::ModulesParamID) {
             if (auto *obj = treeWhosePropertyHasChanged[property].getDynamicObject()) {
                 for (const auto &prop: obj->getProperties()) {
@@ -41,9 +52,19 @@ namespace ananas::WFS
 
     void WFSMessenger::parameterChanged(const juce::String &parameterID, float newValue)
     {
+        if (!connected) { return; }
+
         juce::OSCBundle bundle;
         DBG("Sending OSC: " << parameterID << " " << newValue);
         bundle.addElement(juce::OSCMessage{parameterID, newValue});
         send(bundle);
+    }
+
+    void WFSMessenger::runImpl() const
+    {
+        while (!threadShouldExit()) {
+            // for (int i = 0; i < 10 && !threadShouldExit(); ++i)
+                // wait(100);
+        }
     }
 } // ananas::WFS
