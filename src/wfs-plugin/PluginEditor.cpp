@@ -39,6 +39,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 
 PluginEditor::~PluginEditor()
 {
+    setLookAndFeel(nullptr);
+
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
 
@@ -79,22 +81,28 @@ void PluginEditor::getAllCommands(juce::Array<int> &commands)
 {
     return commands.addArray({
         ananas::WFS::SwitchToWfsTab,
-        ananas::WFS::SwitchToNetworkTab
+        ananas::WFS::SwitchToNetworkTab,
+        ananas::WFS::ToggleModuleSelectorDisplay
     });
 }
 
 void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo &result)
 {
+    // TODO: move strings to Utils
     switch (commandID) {
         case ananas::WFS::SwitchToWfsTab:
-            result.setInfo("Switch to WFS Control tab", "Switches to the WFS Control tab", "Tabs", 0);
-        result.addDefaultKeypress('1', juce::ModifierKeys::ctrlModifier);
-        break;
+            result.setInfo("WFS Control tab", "Switches to the WFS Control tab", "Tabs", 0);
+            result.addDefaultKeypress('1', juce::ModifierKeys::noModifiers);
+            break;
 
         case ananas::WFS::SwitchToNetworkTab:
-            result.setInfo("Switch to Network Overview tab", "Switches to the Network Overview tab", "Tabs", 0);
-        result.addDefaultKeypress('2', juce::ModifierKeys::ctrlModifier);
-        break;
+            result.setInfo("Network Overview tab", "Switches to the Network Overview tab", "Tabs", 0);
+            result.addDefaultKeypress('2', juce::ModifierKeys::noModifiers);
+            break;
+
+        case ananas::WFS::ToggleModuleSelectorDisplay:
+            result.setInfo("Toggle module selectors", "Toggle display of module selector lists", "Options", 0);
+            result.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
 
         default:
             break;
@@ -106,11 +114,17 @@ bool PluginEditor::perform(const InvocationInfo &info)
     switch (info.commandID) {
         case ananas::WFS::SwitchToWfsTab:
             tabbedComponent.setCurrentTabIndex(0);
-        return true;
+            return true;
 
         case ananas::WFS::SwitchToNetworkTab:
             tabbedComponent.setCurrentTabIndex(1);
-        return true;
+            return true;
+
+        case ananas::WFS::ToggleModuleSelectorDisplay: {
+            const auto showModuleSelectors{getProcessor().getParamState().getParameter(ananas::WFS::Params::ShowModuleSelectors.id)};
+            showModuleSelectors->setValueNotifyingHost(fabsf(showModuleSelectors->getValue() - 1.f));
+            return true;
+        }
 
         default:
             return false;

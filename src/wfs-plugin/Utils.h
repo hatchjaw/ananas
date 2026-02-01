@@ -18,7 +18,8 @@ namespace ananas::WFS
     enum CommandIDs
     {
         SwitchToWfsTab = 0x1001,
-        SwitchToNetworkTab = 0x1002
+        SwitchToNetworkTab = 0x1002,
+        ToggleModuleSelectorDisplay = 0x1003,
     };
 
     class Constants
@@ -52,19 +53,19 @@ namespace ananas::WFS
             constexpr static float NodeDiameter{40.f};
             constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
 
-            constexpr static int ModuleSelectorComboBoxHeight{25};
-            constexpr static int ModuleSelectorSpeakerHeight{25};
-            constexpr static int ModuleSelectorHeight{ModuleSelectorComboBoxHeight + ModuleSelectorSpeakerHeight};
+            constexpr static int ModuleSelectorHeight{25};
+            constexpr static int ModuleSpeakerHeight{25};
+            constexpr static int ModuleHeight{ModuleSelectorHeight + ModuleSpeakerHeight};
 
             constexpr static float SpeakerIconDimension{100.f};
-            constexpr static float SpeakerIconCoilStartX{25.f};
+            constexpr static float SpeakerIconCoilStartX{26.f};
             constexpr static float SpeakerIconCoilStartY{0.f};
             constexpr static float SpeakerIconCoilWidth{SpeakerIconDimension - 2.f * SpeakerIconCoilStartX};
-            constexpr static float SpeakerIconCoilHeight{20.f};
+            constexpr static float SpeakerIconCoilHeight{25.f};
             constexpr static float SpeakerIconConeRightX{SpeakerIconDimension};
             constexpr static float SpeakerIconConeEndY{SpeakerIconDimension};
             constexpr static float SpeakerIconConeLeftX{0.f};
-            constexpr static float SpeakerIconOutlineThickness{1.f};
+            constexpr static float SpeakerIconOutlineThickness{0.f};
             inline static const juce::Colour SpeakerIconFillColour{juce::Colours::ghostwhite};
             inline static const juce::Colour SpeakerIconOutlineColour{juce::Colours::darkgrey};
 
@@ -94,17 +95,31 @@ namespace ananas::WFS
         {
             juce::StringRef id;
             juce::StringRef name;
+        };
+        struct RangedParam : Param
+        {
             juce::NormalisableRange<float> range;
             juce::NormalisableRange<double> rangeDouble;
             float defaultValue{0.f};
         };
 
-        inline static const Param SpeakerSpacing{
+        struct BoolParam : Param
+        {
+            bool defaultValue{true};
+        };
+
+        inline static const RangedParam SpeakerSpacing{
             "/spacing",
             "Speaker Spacing (m)",
             {.05f, .3f, .001f},
             {.05, .3, .001},
             .2
+        };
+
+        inline static const BoolParam ShowModuleSelectors{
+            "showModuleSelectors",
+            "Show module selectors",
+            true
         };
 
         constexpr static float SourcePositionDefaultX{.5f};

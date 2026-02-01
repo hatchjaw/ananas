@@ -1,46 +1,51 @@
-#include "ModuleSelectorComponent.h"
+#include "ModuleComponent.h"
 #include <AnanasUtils.h>
 #include "../../Utils.h"
 
 namespace ananas::WFS
 {
-    ModuleSelectorComponent::ModuleSelectorComponent(const uint moduleIndex, juce::ValueTree &persistentTree)
+    ModuleComponent::ModuleComponent(const uint moduleIndex, juce::ValueTree &persistentTree)
         : tree(persistentTree),
           index(moduleIndex)
     {
-        addAndMakeVisible(comboBox);
+        addAndMakeVisible(moduleSelector);
         addAndMakeVisible(speakerIcon1);
         addAndMakeVisible(speakerIcon2);
 
-        comboBox.onChange = [this]
+        moduleSelector.onChange = [this]
         {
             setIndexForModule();
         };
     }
 
-    void ModuleSelectorComponent::resized()
+    void ModuleComponent::resized()
     {
         auto bounds{getLocalBounds()};
-        const auto comboBoxBounds{bounds.removeFromTop(Constants::UI::ModuleSelectorComboBoxHeight + 1)};
-        comboBox.setBounds(comboBoxBounds);
+
+        if (showModuleSelector) {
+            const auto comboBoxBounds{bounds.removeFromTop(Constants::UI::ModuleSelectorHeight)};
+            moduleSelector.setBounds(comboBoxBounds);
+        } else {
+            moduleSelector.setBounds(0, 0, 0, 0);
+        }
 
         juce::FlexBox flex;
         flex.flexDirection = juce::FlexBox::Direction::row;
         flex.justifyContent = juce::FlexBox::JustifyContent::center;
         flex.items.add(juce::FlexItem(speakerIcon1)
             .withFlex(1.f)
-            .withHeight(Constants::UI::ModuleSelectorSpeakerHeight));
+            .withHeight(Constants::UI::ModuleSpeakerHeight));
         flex.items.add(juce::FlexItem(speakerIcon2)
             .withFlex(1.f)
-            .withHeight(Constants::UI::ModuleSelectorSpeakerHeight));
+            .withHeight(Constants::UI::ModuleSpeakerHeight));
 
         flex.performLayout(bounds);
     }
 
-    void ModuleSelectorComponent::setAvailableModules(const juce::StringArray &ips)
+    void ModuleComponent::setAvailableModules(const juce::StringArray &ips)
     {
-        comboBox.clear(juce::dontSendNotification);
-        comboBox.addItemList(ips, 1);
+        moduleSelector.clear(juce::dontSendNotification);
+        moduleSelector.addItemList(ips, 1);
 
         auto modules{tree.getProperty(ananas::Identifiers::ModulesParamID)};
         auto varIntN{juce::var{static_cast<int>(index)}};
@@ -53,12 +58,12 @@ namespace ananas::WFS
         }
     }
 
-    void ModuleSelectorComponent::setIndexForModule() const
+    void ModuleComponent::setIndexForModule() const
     {
         auto modules{tree.getProperty(ananas::Identifiers::ModulesParamID)};
         if (auto *obj = modules.getDynamicObject()) {
             for (const auto &prop: obj->getProperties()) {
-                if (prop.name.toString() == comboBox.getText()) {
+                if (prop.name.toString() == moduleSelector.getText()) {
                     auto module{obj->getProperty(prop.name).getDynamicObject()};
                     module->setProperty(ananas::Identifiers::ModuleIDPropertyID, static_cast<int>(index));
                     tree.sendPropertyChangeMessage(ananas::Identifiers::ModulesParamID);
@@ -67,16 +72,22 @@ namespace ananas::WFS
         }
     }
 
-    void ModuleSelectorComponent::setSelectedModule(const juce::var &var)
+    void ModuleComponent::shouldShowModuleSelector(const bool show)
+    {
+        showModuleSelector = show;
+        resized();
+    }
+
+    void ModuleComponent::setSelectedModule(const juce::var &var)
     {
         if (var.isString()) {
-            comboBox.setText(var.toString(), juce::dontSendNotification);
+            moduleSelector.setText(var.toString(), juce::dontSendNotification);
         }
     }
 
     //==========================================================================
 
-    void ModuleSelectorComponent::SpeakerIconComponent::paint(juce::Graphics &g)
+    void ModuleComponent::SpeakerIconComponent::paint(juce::Graphics &g)
     {
         const auto speaker = createSpeakerPath();
 
@@ -95,7 +106,7 @@ namespace ananas::WFS
         g.strokePath(speaker, juce::PathStrokeType{Constants::UI::SpeakerIconOutlineThickness, juce::PathStrokeType::mitered}, transform);
     }
 
-    juce::Path ModuleSelectorComponent::SpeakerIconComponent::createSpeakerPath()
+    juce::Path ModuleComponent::SpeakerIconComponent::createSpeakerPath()
     {
         juce::Path speaker;
 

@@ -4,7 +4,9 @@
 #include "SwitchesComponent.h"
 #include "TimeAuthorityComponent.h"
 #include "ClientsOverviewComponent.h"
+#ifdef SHOW_NO_NETWORK_OVERLAY
 #include "../OverlayableComponent.h"
+#endif
 
 namespace ananas
 {

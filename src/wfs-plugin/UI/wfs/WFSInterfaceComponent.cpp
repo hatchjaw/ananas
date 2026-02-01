@@ -11,7 +11,8 @@ namespace ananas::WFS
         const uint numModules,
         juce::AudioProcessorValueTreeState &apvts,
         juce::ValueTree &persistentTreeToListenTo
-    ) : xyController(numSources, apvts),
+    ) : state(apvts),
+        xyController(numSources, apvts),
         persistentTree(persistentTreeToListenTo)
     {
         addAndMakeVisible(xyController);
@@ -34,25 +35,47 @@ namespace ananas::WFS
         speakerSpacingSlider.setIncDecButtonsMode(juce::Slider::incDecButtonsDraggable_Vertical);
 
         speakerSpacingAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-            apvts,
+            state,
             Params::SpeakerSpacing.id,
             speakerSpacingSlider
         );
 
+        addAndMakeVisible(showModuleSelectorsButton);
+        showModuleSelectorsButton.setButtonText(Params::ShowModuleSelectors.name);
+        showModuleSelectorsButton.setColour(juce::ToggleButton::textColourId, juce::Colours::black);
+        showModuleSelectorsButton.setColour(juce::ToggleButton::tickColourId, juce::Colours::black);
+        showModuleSelectorsButton.setColour(juce::ToggleButton::tickDisabledColourId, juce::Colours::black);
+
+        showModuleSelectorsAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+            state,
+            Params::ShowModuleSelectors.id,
+            showModuleSelectorsButton
+        );
+
         for (uint n{0}; n < numModules; ++n) {
-            const auto m{moduleSelectors.add(new ModuleSelectorComponent(n, persistentTree))};
+            const auto m{modules.add(new ModuleComponent(n, persistentTree))};
             addAndMakeVisible(m);
             m->setBroughtToFrontOnMouseClick(true);
         }
 
+        // Set initial module selector display state.
+        parameterChanged(Params::ShowModuleSelectors.id, state.getRawParameterValue(Params::ShowModuleSelectors.id)->load());
+
+        // Listen for changes to module selector display state.
+        state.addParameterListener(Params::ShowModuleSelectors.id, this);
+
+        // Listen to the persistent tree for module ID changes
         persistentTree.addListener(this);
 
+        // Set initial moduleIDs from the persistent tree... todo: needs to be fixed
         updateModuleLists(persistentTree[ananas::Identifiers::ModulesParamID]);
     }
 
     WFSInterfaceComponent::~WFSInterfaceComponent()
     {
+        state.removeParameterListener(Params::ShowModuleSelectors.id, this);
         persistentTree.removeListener(this);
+        showModuleSelectorsButton.setLookAndFeel(nullptr);
     }
 
     void WFSInterfaceComponent::paint(juce::Graphics &g)
@@ -63,24 +86,29 @@ namespace ananas::WFS
     void WFSInterfaceComponent::resized()
     {
         auto bounds{getLocalBounds()};
-        auto spacingRow{
+        auto optionsRow{
             bounds.removeFromTop(Constants::UI::SpeakerSpacingSectionHeight)
             .reduced(6, 0)
         };
-        speakerSpacingSlider.setBounds(spacingRow.removeFromRight(100).reduced(1, 3));
-        speakerSpacingLabel.setBounds(spacingRow.removeFromRight(200));
+        speakerSpacingSlider.setBounds(optionsRow.removeFromRight(100).reduced(1, 3));
+        speakerSpacingLabel.setBounds(optionsRow.removeFromRight(200));
+        showModuleSelectorsButton.setBounds(optionsRow.removeFromLeft(300));
         bounds = bounds.reduced(10);
         xyController.setBounds(bounds);
 
-        bounds.removeFromTop(bounds.getHeight() / 2 - Constants::UI::ModuleSelectorHeight);
+        const auto moduleHeight{
+            state.getRawParameterValue(Params::ShowModuleSelectors.id)->load() > 0.5 ? Constants::UI::ModuleHeight : Constants::UI::ModuleSpeakerHeight
+        };
+
+        bounds.removeFromTop(bounds.getHeight() / 2 - moduleHeight);
 
         juce::FlexBox flex;
         flex.flexDirection = juce::FlexBox::Direction::row;
 
-        for (auto *m: moduleSelectors) {
+        for (auto *m: modules) {
             flex.items.add(juce::FlexItem(*m)
                 .withFlex(1.f) // Equal flex = equal width
-                .withMaxHeight(Constants::UI::ModuleSelectorHeight));
+                .withMaxHeight(moduleHeight));
         }
 
         flex.performLayout(bounds);
@@ -101,7 +129,7 @@ namespace ananas::WFS
                 }
             }
         }
-        for (const auto &m: moduleSelectors) {
+        for (const auto &m: modules) {
             m->setAvailableModules(ips);
         }
     }
@@ -113,5 +141,16 @@ namespace ananas::WFS
         if (property == ananas::Identifiers::ModulesParamID) {
             updateModuleLists(treeWhosePropertyHasChanged[property]);
         }
+    }
+
+    void WFSInterfaceComponent::parameterChanged(const juce::String &parameterID, const float newValue)
+    {
+        if (parameterID == Params::ShowModuleSelectors.id) {
+            const auto show{newValue > .5f};
+            for (auto *m: modules) {
+                m->shouldShowModuleSelector(show);
+            }
+        }
+        resized();
     }
 } // ananas::WFS

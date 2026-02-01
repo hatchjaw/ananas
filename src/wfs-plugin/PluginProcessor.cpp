@@ -261,6 +261,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
         ananas::WFS::Params::SpeakerSpacing.defaultValue
     ));
 
+    params.add(std::make_unique<juce::AudioParameterBool>(
+        ananas::WFS::Params::ShowModuleSelectors.id,
+        ananas::WFS::Params::ShowModuleSelectors.name,
+        ananas::WFS::Params::ShowModuleSelectors.defaultValue
+    ));
+
     for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
         params.add(std::make_unique<juce::AudioParameterFloat>(
             ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X),
