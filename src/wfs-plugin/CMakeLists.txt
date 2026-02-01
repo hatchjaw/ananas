@@ -49,7 +49,6 @@ target_sources(ananasWFS
         PluginProcessor.cpp
         WFSMessenger.cpp
         UI/LookAndFeel.cpp
-        UI/TabbedView.cpp
         UI/OverlayableComponent.cpp
         UI/network/AnanasNetworkTable.cpp
         UI/network/NetworkOverviewComponent.cpp

@@ -3,9 +3,23 @@
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
       tooltipWindow(this, ananas::WFS::Constants::UI::TooltipDelayTimeMs),
-      tabbedView(getProcessor())
+      networkOverview(
+          getProcessor().getDynamicTree(),
+          getProcessor().getPersistentTree()
+      ),
+      wfsInterface(
+          ananas::WFS::Constants::MaxChannelsToSend,
+          ananas::WFS::Constants::NumModules,
+          getProcessor().getParamState(),
+          getProcessor().getPersistentTree()
+      )
 {
-    addAndMakeVisible(tabbedView);
+    setLookAndFeel(&lookAndFeel);
+
+    addAndMakeVisible(tabbedComponent);
+    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, &wfsInterface, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
+    lookAndFeel.setNumberOfTabs(tabbedComponent.getNumTabs());
 
     setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);
 
@@ -16,6 +30,11 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     getProcessor().getServer().addChangeListener(&wfsInterface);
     getProcessor().getServer().addChangeListener(&networkOverview);
 #endif
+
+    commandManager.setFirstCommandTarget(this);
+    commandManager.registerAllCommandsForTarget(this);
+    addKeyListener(commandManager.getKeyMappings());
+    setWantsKeyboardFocus(true);
 }
 
 PluginEditor::~PluginEditor()
@@ -36,7 +55,9 @@ void PluginEditor::paint(juce::Graphics &g)
 
 void PluginEditor::resized()
 {
-    tabbedView.setBounds(getLocalBounds());
+    lookAndFeel.setTotalWidth(getWidth());
+    tabbedComponent.setBounds(getLocalBounds());
+    tabbedComponent.setLookAndFeel(&lookAndFeel);
 }
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
@@ -46,6 +67,53 @@ void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHa
     } else if (property == ananas::Identifiers::ClientsShouldRebootParamID) {
         getProcessor().getServer().getClientList()->setShouldReboot(treeWhosePropertyHasChanged[property]);
         treeWhosePropertyHasChanged.setPropertyExcludingListener(this, property, false, nullptr);
+    }
+}
+
+juce::ApplicationCommandTarget *PluginEditor::getNextCommandTarget()
+{
+    return nullptr;
+}
+
+void PluginEditor::getAllCommands(juce::Array<int> &commands)
+{
+    return commands.addArray({
+        ananas::WFS::SwitchToWfsTab,
+        ananas::WFS::SwitchToNetworkTab
+    });
+}
+
+void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo &result)
+{
+    switch (commandID) {
+        case ananas::WFS::SwitchToWfsTab:
+            result.setInfo("Switch to WFS Control tab", "Switches to the WFS Control tab", "Tabs", 0);
+        result.addDefaultKeypress('1', juce::ModifierKeys::ctrlModifier);
+        break;
+
+        case ananas::WFS::SwitchToNetworkTab:
+            result.setInfo("Switch to Network Overview tab", "Switches to the Network Overview tab", "Tabs", 0);
+        result.addDefaultKeypress('2', juce::ModifierKeys::ctrlModifier);
+        break;
+
+        default:
+            break;
+    }
+}
+
+bool PluginEditor::perform(const InvocationInfo &info)
+{
+    switch (info.commandID) {
+        case ananas::WFS::SwitchToWfsTab:
+            tabbedComponent.setCurrentTabIndex(0);
+        return true;
+
+        case ananas::WFS::SwitchToNetworkTab:
+            tabbedComponent.setCurrentTabIndex(1);
+        return true;
+
+        default:
+            return false;
     }
 }
 
