@@ -69,19 +69,25 @@ namespace ananas::WFS
         };
         speakerSpacingSlider.setBounds(spacingRow.removeFromRight(100).reduced(1, 3));
         speakerSpacingLabel.setBounds(spacingRow.removeFromRight(200));
-        xyController.setBounds(bounds.reduced(10));
+        bounds = bounds.reduced(10);
+        xyController.setBounds(bounds);
 
-        const auto moduleSelectorWidth{xyController.getWidth() / moduleSelectors.size()};
-        for (int i{0}; i < moduleSelectors.size(); ++i) {
-            moduleSelectors[i]->setBounds(
-                xyController.getX() + i * moduleSelectorWidth,
-                Constants::UI::SpeakerSpacingSectionHeight + xyController.getHeight() / 2,
-                moduleSelectorWidth - 1,
-                Constants::UI::ModuleSelectorHeight
-            );
+        bounds.removeFromTop(bounds.getHeight() / 2 - Constants::UI::ModuleSelectorHeight);
+
+        juce::FlexBox flex;
+        flex.flexDirection = juce::FlexBox::Direction::row;
+
+        for (auto *m: moduleSelectors) {
+            flex.items.add(juce::FlexItem(*m)
+                .withFlex(1.f) // Equal flex = equal width
+                .withMaxHeight(Constants::UI::ModuleSelectorHeight));
         }
 
+        flex.performLayout(bounds);
+
+#ifdef SHOW_NO_NETWORK_OVERLAY
         OverlayableComponent::resized();
+#endif
     }
 
     void WFSInterfaceComponent::updateModuleLists(const juce::var &var)

@@ -13,8 +13,6 @@ namespace ananas
         addAndMakeVisible(addSwitchButton);
         addAndMakeVisible(switchesTable);
 
-        setWantsKeyboardFocus(false);
-
         title.setColour(juce::Label::textColourId, juce::Colours::black);
         title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
         title.setJustificationType(juce::Justification::centredLeft);
@@ -181,8 +179,6 @@ namespace ananas
         table.setColour(juce::ListBox::outlineColourId, juce::Colours::black);
         table.setColour(juce::ListBox::backgroundColourId, juce::Colours::transparentWhite);
         table.setOutlineThickness(1);
-
-        setWantsKeyboardFocus(false);
     }
 
     void SwitchesComponent::SwitchesTable::update(const juce::var &var)

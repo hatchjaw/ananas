@@ -15,11 +15,20 @@
 
 namespace ananas::WFS
 {
+    enum CommandIDs
+    {
+        SwitchToWfsTab = 0x1001,
+        SwitchToNetworkTab = 0x1002
+    };
+
     class Constants
     {
     public:
+        // For the following, see ananas-client wfsParams.lib
         constexpr static uint MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
         constexpr static uint NumModules{NUM_MODULES};
+        constexpr static int MaxYMetres{10};
+        constexpr static int MinYMetres{-3};
 
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
         constexpr static int WFSMessengerSocketLocalPort{49160};
@@ -37,11 +46,27 @@ namespace ananas::WFS
             constexpr static int TimeAuthoritySectionHeight{112};
             constexpr static int NetworkSectionTitleHeight{40};
 
+            inline static const juce::Colour XYControllerGridlineColour{juce::Colours::lightgrey};
+
             constexpr static int SpeakerSpacingSectionHeight{50};
             constexpr static float NodeDiameter{40.f};
             constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
 
-            constexpr static int ModuleSelectorHeight{30};
+            constexpr static int ModuleSelectorComboBoxHeight{25};
+            constexpr static int ModuleSelectorSpeakerHeight{25};
+            constexpr static int ModuleSelectorHeight{ModuleSelectorComboBoxHeight + ModuleSelectorSpeakerHeight};
+
+            constexpr static float SpeakerIconDimension{100.f};
+            constexpr static float SpeakerIconCoilStartX{25.f};
+            constexpr static float SpeakerIconCoilStartY{0.f};
+            constexpr static float SpeakerIconCoilWidth{SpeakerIconDimension - 2.f * SpeakerIconCoilStartX};
+            constexpr static float SpeakerIconCoilHeight{20.f};
+            constexpr static float SpeakerIconConeRightX{SpeakerIconDimension};
+            constexpr static float SpeakerIconConeEndY{SpeakerIconDimension};
+            constexpr static float SpeakerIconConeLeftX{0.f};
+            constexpr static float SpeakerIconOutlineThickness{1.f};
+            inline static const juce::Colour SpeakerIconFillColour{juce::Colours::ghostwhite};
+            inline static const juce::Colour SpeakerIconOutlineColour{juce::Colours::darkgrey};
 
             constexpr static float OverlayBgAlpha{.25f};
             constexpr static int OverlayBoxWidth{400};

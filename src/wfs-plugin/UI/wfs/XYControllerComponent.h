@@ -6,17 +6,24 @@
 
 namespace ananas::WFS
 {
-    class XYControllerComponent final : public juce::Component
+    class XYControllerComponent final : public juce::Component,
+                                        public juce::AudioProcessorValueTreeState::Listener
     {
     public:
-        XYControllerComponent(uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts);
+        XYControllerComponent(uint numNodesToCreate, juce::AudioProcessorValueTreeState &apvts);
 
         void paint(juce::Graphics &g) override;
 
         void resized() override;
 
+        void calculateGridSpacingX(float newValue);
+
+        void parameterChanged(const juce::String &parameterID, float newValue) override;
+
     private:
-        class Node final : public Component, public juce::AsyncUpdater
+        class Node final : public Component,
+                           public juce::AsyncUpdater,
+                           public juce::SettableTooltipClient
         {
         public:
             class Listener;
@@ -115,9 +122,10 @@ namespace ananas::WFS
         {
         public:
             Attachment(const juce::AudioProcessorValueTreeState &state,
-                const juce::String &parameterIDX,
-                const juce::String &parameterIDY,
-                Node &node);
+                       const juce::String &parameterIDX,
+                       const juce::String &parameterIDY,
+                       Node &node);
+
         private:
             std::unique_ptr<ParameterAttachment> attachment;
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Attachment);
@@ -127,6 +135,8 @@ namespace ananas::WFS
 
         juce::OwnedArray<Node> nodes;
         juce::OwnedArray<Attachment> attachments;
+        int xGridSpacing{};
+        juce::AudioProcessorValueTreeState &state;
     };
 } // ananas::WFS
 

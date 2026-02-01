@@ -4,8 +4,12 @@
 
 namespace ananas::WFS
 {
-    XYControllerComponent::XYControllerComponent(const uint numNodesToCreate, const juce::AudioProcessorValueTreeState &apvts)
+    XYControllerComponent::XYControllerComponent(const uint numNodesToCreate, juce::AudioProcessorValueTreeState &apvts)
+        : state(apvts)
     {
+        apvts.addParameterListener(Params::SpeakerSpacing.id, this);
+        calculateGridSpacingX(apvts.getRawParameterValue(Params::SpeakerSpacing.id)->load());
+
         for (uint n{0}; n < numNodesToCreate; ++n) {
             // Add a node for each sound source
             const auto node{nodes.add(new Node(n))};
@@ -25,12 +29,59 @@ namespace ananas::WFS
     void XYControllerComponent::paint(juce::Graphics &g)
     {
         g.fillAll(juce::Colour{0.f, 0.f, 0.f, .1f});
+
+        g.setColour(Constants::UI::XYControllerGridlineColour);
+        const auto left{getBounds().toFloat().getWidth()};
+        const auto halfHeight{getHeight() / 2};
+
+        // Draw virtual source y grid lines, one per metre.
+        const auto posUnit{halfHeight / Constants::MaxYMetres};
+        for (int y{0}; y < Constants::MaxYMetres; ++y) {
+            g.drawHorizontalLine(halfHeight - y * posUnit, 0.f, left);
+        }
+
+        // Draw focused source y grid lines, one per metre.
+        const auto negUnit{halfHeight / Constants::MinYMetres};
+        for (int y{-1}; y > Constants::MinYMetres; --y) {
+            g.drawHorizontalLine(halfHeight + y * negUnit, 0.f, left);
+        }
+
+        if (xGridSpacing > 0) {
+            // Draw positive x grid lines, one per metre
+            for (int x{getWidth() / 2}; x < getWidth(); x += xGridSpacing) {
+                g.drawVerticalLine(x, 0.f, getHeight());
+            }
+
+            // Draw negative x grid lines
+            for (int x{getWidth() / 2 - xGridSpacing}; x > 0; x -= xGridSpacing) {
+                g.drawVerticalLine(x, 0.f, getHeight());
+            }
+        }
     }
 
     void XYControllerComponent::resized()
     {
         for (const auto &node: nodes) {
             node->setBounds();
+        }
+
+        calculateGridSpacingX(state.getRawParameterValue(Params::SpeakerSpacing.id)->load());
+    }
+
+    void XYControllerComponent::calculateGridSpacingX(const float newValue)
+    {
+        // x grid spacing is speaker spacing times twice the number of
+        // modules...
+        const auto halfArrayWidth{newValue * Constants::NumModules};
+        const auto halfXYWidth{getWidth() / 2};
+        xGridSpacing = halfXYWidth / halfArrayWidth;
+    }
+
+    void XYControllerComponent::parameterChanged(const juce::String &parameterID, const float newValue)
+    {
+        if (parameterID == Params::SpeakerSpacing.id) {
+            calculateGridSpacingX(newValue);
+            repaint();
         }
     }
 
@@ -93,6 +144,8 @@ namespace ananas::WFS
     {
         ignoreUnused(event);
         currentDrag.reset();
+        setTooltip("(" + juce::String{value.x, 3} + ", " +
+                   juce::String{value.y, 3} + ")");
     }
 
     void XYControllerComponent::Node::setValueX(const float newX, const juce::NotificationType notification)
@@ -203,6 +256,7 @@ namespace ananas::WFS
         node.addListener(this);
         attachmentX.sendInitialUpdate();
         attachmentY.sendInitialUpdate();
+        node.setTooltip("(" + juce::String{paramX.getValue() * 2.f - 1.f} + ", " + juce::String{paramY.getValue() * 2.f - 1.f} + ")");
     }
 
     XYControllerComponent::ParameterAttachment::~ParameterAttachment()

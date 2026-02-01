@@ -4,6 +4,7 @@
 #include "PluginProcessor.h"
 #include "UI/network/ClientsOverviewComponent.h"
 #include "UI/LookAndFeel.h"
+#include "UI/TabbedView.h"
 #include "UI/network/NetworkOverviewComponent.h"
 #include "UI/wfs/WFSInterfaceComponent.h"
 
@@ -28,12 +29,14 @@ private:
 
     [[nodiscard]] const PluginProcessor &getProcessor() const;
 
-private:
     ananas::LookAndFeel lookAndFeel;
     juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
     ananas::NetworkOverviewComponent networkOverview;
     ananas::WFS::WFSInterfaceComponent wfsInterface;
     juce::TooltipWindow tooltipWindow;
+    juce::ApplicationCommandManager commandManager;
+
+    // ananas::WFS::TabbedView tabbedView;
 };
 
 

@@ -37,6 +37,7 @@ target_compile_definitions(ananasWFS
         JUCE_VST3_CAN_REPLACE_VST2=0
         MAX_CHANNELS_TO_SEND=${maxChannels}
         NUM_MODULES=${numModules}
+#        SHOW_NO_NETWORK_OVERLAY
 )
 
 #file(GLOB_RECURSE SourceFiles CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
@@ -48,6 +49,7 @@ target_sources(ananasWFS
         PluginProcessor.cpp
         WFSMessenger.cpp
         UI/LookAndFeel.cpp
+        UI/TabbedView.cpp
         UI/OverlayableComponent.cpp
         UI/network/AnanasNetworkTable.cpp
         UI/network/NetworkOverviewComponent.cpp

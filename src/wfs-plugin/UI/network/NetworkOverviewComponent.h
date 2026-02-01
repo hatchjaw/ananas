@@ -8,7 +8,12 @@
 
 namespace ananas
 {
-    class NetworkOverviewComponent final : public OverlayableComponent
+    class NetworkOverviewComponent final :
+#ifdef SHOW_NO_NETWORK_OVERLAY
+            public OverlayableComponent
+#else
+            public juce::Component
+#endif
     {
     public:
         NetworkOverviewComponent(juce::ValueTree &dynamicTree, juce::ValueTree &persistentTree);
@@ -16,6 +21,7 @@ namespace ananas
         void paint(juce::Graphics &g) override;
 
         void resized() override;
+
     private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NetworkOverviewComponent)
 

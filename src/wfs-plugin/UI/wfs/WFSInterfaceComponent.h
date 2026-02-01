@@ -8,8 +8,13 @@
 
 namespace ananas::WFS
 {
-    class WFSInterfaceComponent final : public OverlayableComponent,
-                                        public juce::ValueTree::Listener
+    class WFSInterfaceComponent final :
+#ifdef SHOW_NO_NETWORK_OVERLAY
+            public OverlayableComponent,
+#else
+            public juce::Component,
+#endif
+            public juce::ValueTree::Listener
     {
     public:
         WFSInterfaceComponent(uint numSources,

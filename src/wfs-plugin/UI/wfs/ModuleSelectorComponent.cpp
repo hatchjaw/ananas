@@ -9,6 +9,8 @@ namespace ananas::WFS
           index(moduleIndex)
     {
         addAndMakeVisible(comboBox);
+        addAndMakeVisible(speakerIcon1);
+        addAndMakeVisible(speakerIcon2);
 
         comboBox.onChange = [this]
         {
@@ -16,14 +18,23 @@ namespace ananas::WFS
         };
     }
 
-    void ModuleSelectorComponent::paint(juce::Graphics &g)
-    {
-        Component::paint(g);
-    }
-
     void ModuleSelectorComponent::resized()
     {
-        comboBox.setBounds(getLocalBounds());
+        auto bounds{getLocalBounds()};
+        const auto comboBoxBounds{bounds.removeFromTop(Constants::UI::ModuleSelectorComboBoxHeight + 1)};
+        comboBox.setBounds(comboBoxBounds);
+
+        juce::FlexBox flex;
+        flex.flexDirection = juce::FlexBox::Direction::row;
+        flex.justifyContent = juce::FlexBox::JustifyContent::center;
+        flex.items.add(juce::FlexItem(speakerIcon1)
+            .withFlex(1.f)
+            .withHeight(Constants::UI::ModuleSelectorSpeakerHeight));
+        flex.items.add(juce::FlexItem(speakerIcon2)
+            .withFlex(1.f)
+            .withHeight(Constants::UI::ModuleSelectorSpeakerHeight));
+
+        flex.performLayout(bounds);
     }
 
     void ModuleSelectorComponent::setAvailableModules(const juce::StringArray &ips)
@@ -61,5 +72,41 @@ namespace ananas::WFS
         if (var.isString()) {
             comboBox.setText(var.toString(), juce::dontSendNotification);
         }
+    }
+
+    //==========================================================================
+
+    void ModuleSelectorComponent::SpeakerIconComponent::paint(juce::Graphics &g)
+    {
+        const auto speaker = createSpeakerPath();
+
+        const auto targetBounds = juce::Rectangle(0.f, 0.f,
+                                                  getBounds().toFloat().getWidth(),
+                                                  getBounds().toFloat().getHeight() - Constants::UI::SpeakerIconOutlineThickness);
+
+        const juce::RectanglePlacement placement{juce::RectanglePlacement::stretchToFit};
+        const auto transform = placement.getTransformToFit(
+            speaker.getBounds(), targetBounds);
+
+        g.setColour(Constants::UI::SpeakerIconFillColour);
+        g.fillPath(speaker, transform);
+
+        g.setColour(Constants::UI::SpeakerIconOutlineColour);
+        g.strokePath(speaker, juce::PathStrokeType{Constants::UI::SpeakerIconOutlineThickness, juce::PathStrokeType::mitered}, transform);
+    }
+
+    juce::Path ModuleSelectorComponent::SpeakerIconComponent::createSpeakerPath()
+    {
+        juce::Path speaker;
+
+        speaker.startNewSubPath(Constants::UI::SpeakerIconCoilStartX, Constants::UI::SpeakerIconCoilStartY);
+        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX + Constants::UI::SpeakerIconCoilWidth, Constants::UI::SpeakerIconCoilStartY);
+        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX + Constants::UI::SpeakerIconCoilWidth, Constants::UI::SpeakerIconCoilHeight);
+        speaker.lineTo(Constants::UI::SpeakerIconConeRightX, Constants::UI::SpeakerIconConeEndY);
+        speaker.lineTo(Constants::UI::SpeakerIconConeLeftX, Constants::UI::SpeakerIconConeEndY);
+        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX, Constants::UI::SpeakerIconCoilHeight);
+        speaker.closeSubPath();
+
+        return speaker;
     }
 } // ananas::WFS

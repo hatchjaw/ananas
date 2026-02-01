@@ -26,10 +26,10 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     getProcessor().getPersistentTree().addListener(this);
     getProcessor().getDynamicTree().addListener(this);
 
+#ifdef SHOW_NO_NETWORK_OVERLAY
     getProcessor().getServer().addChangeListener(&wfsInterface);
     getProcessor().getServer().addChangeListener(&networkOverview);
-
-    setWantsKeyboardFocus(false);
+#endif
 }
 
 PluginEditor::~PluginEditor()
@@ -39,8 +39,10 @@ PluginEditor::~PluginEditor()
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
 
+#ifdef SHOW_NO_NETWORK_OVERLAY
     getProcessor().getServer().removeChangeListener(&wfsInterface);
     getProcessor().getServer().removeChangeListener(&networkOverview);
+#endif
 }
 
 void PluginEditor::paint(juce::Graphics &g)

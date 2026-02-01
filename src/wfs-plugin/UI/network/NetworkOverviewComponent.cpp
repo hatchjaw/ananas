@@ -23,5 +23,7 @@ void ananas::NetworkOverviewComponent::resized()
     // Client overview gets remaining bounds.
     clientOverview.setBounds(bounds);
 
+#ifdef SHOW_NO_NETWORK_OVERLAY
     OverlayableComponent::resized();
+#endif
 }

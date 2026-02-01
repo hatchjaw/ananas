@@ -10,8 +10,6 @@ namespace ananas::WFS
     public:
         explicit ModuleSelectorComponent(uint moduleIndex, juce::ValueTree &persistentTree);
 
-        void paint(juce::Graphics &g) override;
-
         void resized() override;
 
         void setAvailableModules(const juce::StringArray &ips);
@@ -19,6 +17,15 @@ namespace ananas::WFS
         void setIndexForModule() const;
 
     private:
+        class SpeakerIconComponent final : public Component
+        {
+        public:
+            void paint(juce::Graphics &g) override;
+
+        private:
+            static juce::Path createSpeakerPath();
+        };
+
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(ModuleSelectorComponent)
 
         void setSelectedModule(const juce::var &var);
@@ -26,6 +33,7 @@ namespace ananas::WFS
         juce::ValueTree &tree;
         juce::ComboBox comboBox;
         uint index{0};
+        SpeakerIconComponent speakerIcon1, speakerIcon2;
     };
 } // ananas::WFS
 
