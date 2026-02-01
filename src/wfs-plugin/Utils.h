@@ -251,8 +251,8 @@ namespace ananas::WFS
         inline static const juce::StringRef InputLabel{"Input #"};
         inline static const juce::StringRef OutputLabel{"Output #"};
 
-        inline static const juce::StringRef NetworkTabName{"Network"};
-        inline static const juce::StringRef WfsTabName{"WFS"};
+        inline static const juce::StringRef WfsTabName{"WFS Control"};
+        inline static const juce::StringRef NetworkTabName{"Network Overview"};
 
         inline static const juce::StringRef SwitchesSectionTitle{"SWITCHES"};
         inline static const juce::StringRef AddSwitchButtonName{"Add switch button"};

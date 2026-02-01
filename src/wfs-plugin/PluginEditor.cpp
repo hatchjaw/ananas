@@ -2,24 +2,10 @@
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
-      networkOverview(
-          getProcessor().getDynamicTree(),
-          getProcessor().getPersistentTree()
-      ),
-      wfsInterface(
-          ananas::WFS::Constants::MaxChannelsToSend,
-          ananas::WFS::Constants::NumModules,
-          getProcessor().getParamState(),
-          getProcessor().getPersistentTree()
-      ),
-      tooltipWindow(this, ananas::WFS::Constants::UI::TooltipDelayTimeMs)
+      tooltipWindow(this, ananas::WFS::Constants::UI::TooltipDelayTimeMs),
+      tabbedView(getProcessor())
 {
-    setLookAndFeel(&lookAndFeel);
-
-    addAndMakeVisible(tabbedComponent);
-    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, &wfsInterface, false);
-    tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
-    lookAndFeel.setNumberOfTabs(tabbedComponent.getNumTabs());
+    addAndMakeVisible(tabbedView);
 
     setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);
 
@@ -34,8 +20,6 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 
 PluginEditor::~PluginEditor()
 {
-    setLookAndFeel(nullptr);
-
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
 
@@ -52,9 +36,7 @@ void PluginEditor::paint(juce::Graphics &g)
 
 void PluginEditor::resized()
 {
-    lookAndFeel.setTotalWidth(getWidth());
-    tabbedComponent.setBounds(getLocalBounds());
-    tabbedComponent.setLookAndFeel(&lookAndFeel);
+    tabbedView.setBounds(getLocalBounds());
 }
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)

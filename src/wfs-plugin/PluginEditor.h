@@ -2,11 +2,7 @@
 #define PLUGINEDITOR_H
 
 #include "PluginProcessor.h"
-#include "UI/network/ClientsOverviewComponent.h"
-#include "UI/LookAndFeel.h"
 #include "UI/TabbedView.h"
-#include "UI/network/NetworkOverviewComponent.h"
-#include "UI/wfs/WFSInterfaceComponent.h"
 
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::ValueTree::Listener
@@ -29,14 +25,9 @@ private:
 
     [[nodiscard]] const PluginProcessor &getProcessor() const;
 
-    ananas::LookAndFeel lookAndFeel;
-    juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
-    ananas::NetworkOverviewComponent networkOverview;
-    ananas::WFS::WFSInterfaceComponent wfsInterface;
     juce::TooltipWindow tooltipWindow;
-    juce::ApplicationCommandManager commandManager;
 
-    // ananas::WFS::TabbedView tabbedView;
+    ananas::WFS::TabbedView tabbedView;
 };
 
 
