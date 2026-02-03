@@ -22,6 +22,10 @@ namespace ananas::WFS
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
 
+        void mouseDown(const juce::MouseEvent &event) override;
+
+        void hideAllNodesBesides(uint nodeIdNotToHide);
+
     private:
         class Node final : public Component,
                            public juce::AsyncUpdater,
@@ -35,6 +39,8 @@ namespace ananas::WFS
             void paint(juce::Graphics &g) override;
 
             void mouseDown(const juce::MouseEvent &event) override;
+
+            void hide();
 
             void mouseDrag(const juce::MouseEvent &event) override;
 
@@ -59,6 +65,8 @@ namespace ananas::WFS
             void addListener(Listener *listener);
 
             void removeListener(Listener *listener);
+
+            uint getIndex() const;
 
             class Listener
             {

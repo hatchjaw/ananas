@@ -85,6 +85,51 @@ namespace ananas::WFS
         }
     }
 
+    void XYControllerComponent::mouseDown(const juce::MouseEvent &event)
+    {
+        if (event.mods.isPopupMenu()) {
+            // Show a menu to display a hidden node if any are indeed hidden.
+            juce::PopupMenu m;
+            auto hasInvisibleNodes{false};
+            for (int n{0}; n < nodes.size(); ++n) {
+                if (!nodes[n]->isVisible()) {
+                    if (!hasInvisibleNodes) {
+                        m.addSectionHeader("Show source");
+                        m.addItem(100, "Show all sources");
+                    }
+                    hasInvisibleNodes = true;
+                    m.addItem(nodes[n]->getIndex() + 1, juce::String{nodes[n]->getIndex() + 1});
+                }
+            }
+
+            if (m.containsAnyActiveItems()) {
+                m.showMenuAsync(juce::PopupMenu::Options(), [this](const int result)
+                {
+                    if (result == 100) {
+                        for (const auto &node: nodes) {
+                            node->setVisible(true);
+                        }
+                        return;
+                    }
+                    for (const auto &node: nodes) {
+                        if (node->getIndex() == result - 1) {
+                            node->setVisible(true);
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    void XYControllerComponent::hideAllNodesBesides(const uint nodeIdNotToHide)
+    {
+        for (const auto &node: nodes) {
+            if (node->getIndex() != nodeIdNotToHide) {
+                node->hide();
+            }
+        }
+    }
+
     //==========================================================================
 
     XYControllerComponent::Node::Node(const uint idx) : index(idx)
@@ -109,9 +154,32 @@ namespace ananas::WFS
 
     void XYControllerComponent::Node::mouseDown(const juce::MouseEvent &event)
     {
-        ignoreUnused(event);
-        currentDrag.reset();
-        currentDrag = std::make_unique<ScopedDragNotification>(*this);
+        if (event.mods.isPopupMenu() && event.originalComponent == this) {
+            juce::PopupMenu m;
+            m.addItem(1, "Hide this source");
+            m.addItem(2, "Hide all except this source");
+            m.showMenuAsync(juce::PopupMenu::Options(), [this](const int result)
+            {
+                switch (result) {
+                    case 1:
+                        hide();
+                        break;
+                    case 2:
+                        dynamic_cast<XYControllerComponent *>(getParentComponent())->hideAllNodesBesides(index);
+                        break;
+                    default:
+                        break;
+                }
+            });
+        } else {
+            currentDrag.reset();
+            currentDrag = std::make_unique<ScopedDragNotification>(*this);
+        }
+    }
+
+    void XYControllerComponent::Node::hide()
+    {
+        setVisible(false);
     }
 
     void XYControllerComponent::Node::mouseDrag(const juce::MouseEvent &event)
@@ -267,6 +335,11 @@ namespace ananas::WFS
     void XYControllerComponent::Node::removeListener(Listener *listener)
     {
         listeners.remove(listener);
+    }
+
+    uint XYControllerComponent::Node::getIndex() const
+    {
+        return index;
     }
 
     void XYControllerComponent::Node::triggerChangeMessage(const juce::NotificationType notification)
