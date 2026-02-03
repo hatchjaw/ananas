@@ -88,21 +88,32 @@ void PluginEditor::getAllCommands(juce::Array<int> &commands)
 
 void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::ApplicationCommandInfo &result)
 {
-    // TODO: move strings to Utils
     switch (commandID) {
         case ananas::WFS::SwitchToWfsTab:
-            result.setInfo("WFS Control tab", "Switches to the WFS Control tab", "Tabs", 0);
-            result.addDefaultKeypress('1', juce::ModifierKeys::noModifiers);
+            result.setInfo(
+                ananas::WFS::Strings::SwitchToWfsTabShortName,
+                ananas::WFS::Strings::SwitchToWfsTabDescription,
+                ananas::WFS::Strings::TabsCommandCategoryName,
+                0);
+            result.addDefaultKeypress(ananas::WFS::Constants::UI::SwitchToWfsTabKeycode, juce::ModifierKeys::noModifiers);
             break;
 
         case ananas::WFS::SwitchToNetworkTab:
-            result.setInfo("Network Overview tab", "Switches to the Network Overview tab", "Tabs", 0);
-            result.addDefaultKeypress('2', juce::ModifierKeys::noModifiers);
+            result.setInfo(
+                ananas::WFS::Strings::SwitchToNetworkTabShortName,
+                ananas::WFS::Strings::SwitchToNetworkTabDescription,
+                ananas::WFS::Strings::TabsCommandCategoryName,
+                0);
+            result.addDefaultKeypress(ananas::WFS::Constants::UI::SwitchToNetworkTabKeycode, juce::ModifierKeys::noModifiers);
             break;
 
         case ananas::WFS::ToggleModuleSelectorDisplay:
-            result.setInfo("Toggle module selectors", "Toggle display of module selector lists", "Options", 0);
-            result.addDefaultKeypress('m', juce::ModifierKeys::noModifiers);
+            result.setInfo(
+                ananas::WFS::Strings::ToggleModuleSelectorsShortName,
+                ananas::WFS::Strings::ToggleModuleSelectorsDescription,
+                ananas::WFS::Strings::OptionsCommandCategoryName,
+                0);
+            result.addDefaultKeypress(ananas::WFS::Constants::UI::ToggleModuleSelectorsKeycode, juce::ModifierKeys::noModifiers);
 
         default:
             break;

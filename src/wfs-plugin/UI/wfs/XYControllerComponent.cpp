@@ -1,5 +1,4 @@
 #include "XYControllerComponent.h"
-
 #include "../../Utils.h"
 
 namespace ananas::WFS
@@ -8,21 +7,16 @@ namespace ananas::WFS
         : state(apvts)
     {
         apvts.addParameterListener(Params::SpeakerSpacing.id, this);
-        calculateGridSpacingX(apvts.getRawParameterValue(Params::SpeakerSpacing.id)->load());
+        calculateGridSpacingX();
 
         for (uint n{0}; n < numNodesToCreate; ++n) {
             // Add a node for each sound source
-            const auto node{nodes.add(new Node(n))};
+            const auto node{nodes.add(new Node{n})};
             addAndMakeVisible(node);
             node->setBroughtToFrontOnMouseClick(true);
 
             // Add a parameter attachment
-            attachments.add(new Attachment(
-                apvts,
-                Params::getSourcePositionParamID(n, SourcePositionAxis::X),
-                Params::getSourcePositionParamID(n, SourcePositionAxis::Y),
-                *node
-            ));
+            attachments.add(new Attachment{n, apvts, *node});
         }
     }
 
@@ -31,20 +25,7 @@ namespace ananas::WFS
         g.fillAll(juce::Colour{0.f, 0.f, 0.f, .1f});
 
         g.setColour(Constants::UI::XYControllerGridlineColour);
-        const auto left{getBounds().toFloat().getWidth()};
-        const auto halfHeight{getHeight() / 2};
-
-        // Draw virtual source y grid lines, one per metre.
-        const auto posUnit{halfHeight / Constants::MaxYMetres};
-        for (int y{0}; y < Constants::MaxYMetres; ++y) {
-            g.drawHorizontalLine(halfHeight - y * posUnit, 0.f, left);
-        }
-
-        // Draw focused source y grid lines, one per metre.
-        const auto negUnit{halfHeight / Constants::MinYMetres};
-        for (int y{-1}; y > Constants::MinYMetres; --y) {
-            g.drawHorizontalLine(halfHeight + y * negUnit, 0.f, left);
-        }
+        const auto right{getBounds().toFloat().getWidth()};
 
         if (xGridSpacing > 0) {
             // Draw positive x grid lines, one per metre
@@ -57,6 +38,14 @@ namespace ananas::WFS
                 g.drawVerticalLine(x, 0.f, getHeight());
             }
         }
+
+        const auto yZero{Constants::MaxYMetres * getHeight() / (Constants::MaxYMetres - Constants::MinYMetres)};
+        const auto unit{getHeight() / (Constants::MaxYMetres - Constants::MinYMetres)};
+
+        // y gridlines
+        for (int y{Constants::MinYMetres}; y < Constants::MaxYMetres; ++y) {
+            g.drawHorizontalLine(yZero - y * unit, 0.f, right);
+        }
     }
 
     void XYControllerComponent::resized()
@@ -65,22 +54,33 @@ namespace ananas::WFS
             node->setBounds();
         }
 
-        calculateGridSpacingX(state.getRawParameterValue(Params::SpeakerSpacing.id)->load());
+        calculateGridSpacingX();
     }
 
-    void XYControllerComponent::calculateGridSpacingX(const float newValue)
+    void XYControllerComponent::calculateGridSpacingX()
     {
-        // x grid spacing is speaker spacing times twice the number of
-        // modules...
-        const auto halfArrayWidth{newValue * Constants::NumModules};
+        // x grid spacing is half the width of the XY controller divided by
+        // speaker spacing times the number of modules (i.e. half the number of
+        // speakers).
+        const auto halfArrayWidth{getSpeakerArrayWidth() / 2};
         const auto halfXYWidth{getWidth() / 2};
         xGridSpacing = halfXYWidth / halfArrayWidth;
     }
 
+    float XYControllerComponent::getSpeakerArrayWidth() const
+    {
+        return state.getRawParameterValue(Params::SpeakerSpacing.id)->load() * 2.f * Constants::NumModules;
+    }
+
     void XYControllerComponent::parameterChanged(const juce::String &parameterID, const float newValue)
     {
+        juce::ignoreUnused(newValue);
+
         if (parameterID == Params::SpeakerSpacing.id) {
-            calculateGridSpacingX(newValue);
+            calculateGridSpacingX();
+            for (const auto &node: nodes) {
+                node->updateTooltip();
+            }
             repaint();
         }
     }
@@ -120,10 +120,30 @@ namespace ananas::WFS
 
         const auto parent{getParentComponent()};
         const auto parentBounds{parent->getBounds().toFloat()};
-        const auto parentCentre{juce::Point{parentBounds.getWidth() / 2, parentBounds.getHeight() / 2}};
+        const auto origin{
+            juce::Point{
+                parentBounds.getWidth() / 2,
+                Constants::MaxYMetres * parentBounds.getHeight() /
+                (Constants::MaxYMetres - Constants::MinYMetres)
+            }
+        };
         auto mousePos{event.getEventRelativeTo(parent).position};
-        mousePos.x -= parentBounds.getWidth() / 2;
-        const auto newVal{mousePos / parentCentre};
+
+        mousePos -= origin;
+
+        auto newVal{mousePos};
+
+        // Normalise x to [-1, 1]
+        newVal.x /= (parentBounds.getWidth() / 2.f);
+
+        // Normalize y to [-1, 1]
+        if (mousePos.y <= 0) {
+            // Above zero: map [-yZero, 0] to [1, 0]
+            newVal.y = -mousePos.y / origin.y;
+        } else {
+            // Below zero: map [0, height-yZero] to [0, -1]
+            newVal.y = -mousePos.y / (parentBounds.getHeight() - origin.y);
+        }
 
         // Set node value.
         setValueX(juce::jlimit(
@@ -134,7 +154,7 @@ namespace ananas::WFS
         setValueY(juce::jlimit(
                       Params::SourcePositionRange.start,
                       Params::SourcePositionRange.end,
-                      1 - newVal.y),
+                      newVal.y),
                   juce::sendNotificationSync);
 
         setBounds();
@@ -144,8 +164,7 @@ namespace ananas::WFS
     {
         ignoreUnused(event);
         currentDrag.reset();
-        setTooltip("(" + juce::String{value.x, 3} + ", " +
-                   juce::String{value.y, 3} + ")");
+        updateTooltip();
     }
 
     void XYControllerComponent::Node::setValueX(const float newX, const juce::NotificationType notification)
@@ -164,9 +183,24 @@ namespace ananas::WFS
 
     void XYControllerComponent::Node::setBounds()
     {
-        const auto bounds{getParentComponent()->getBounds().toFloat()};
-        const auto x{bounds.getWidth() * (value.x + 1.f) / 2.f};
-        const auto y{bounds.getHeight() - bounds.getHeight() * (value.y + 1.f) / 2.f};
+        const auto parentBounds{getParentComponent()->getBounds().toFloat()};
+        const auto origin{
+            juce::Point{
+                parentBounds.getWidth() / 2,
+                Constants::MaxYMetres * parentBounds.getHeight() /
+                (Constants::MaxYMetres - Constants::MinYMetres)
+            }
+        };
+
+        const auto x{(value.x + 1.f) * origin.x};
+        auto y{0.f};
+
+        if (value.y >= 0) {
+            y = origin.y - origin.y * value.y;
+        } else {
+            y = origin.y - (parentBounds.getHeight() - origin.y) * value.y;
+        }
+
         Component::setBounds(
             static_cast<int>(x - Constants::UI::NodeHalfDiameter),
             static_cast<int>(y - Constants::UI::NodeHalfDiameter),
@@ -209,6 +243,22 @@ namespace ananas::WFS
         listeners.callChecked(checker, [&](Listener &l) { l.dragEnded(this); });
     }
 
+    void XYControllerComponent::Node::updateTooltip()
+    {
+        const XYControllerComponent *xy{dynamic_cast<XYControllerComponent *>(getParentComponent())};
+        const auto w{xy->getSpeakerArrayWidth()};
+        setTooltip(Utils::normalisedPointToCoordinateMetres(
+            value,
+            juce::Point{
+                -w / 2,
+                static_cast<float>(Constants::MinYMetres)
+            },
+            juce::Point{
+                w / 2,
+                static_cast<float>(Constants::MaxYMetres)
+            }));
+    }
+
     void XYControllerComponent::Node::addListener(Listener *listener)
     {
         listeners.add(listener);
@@ -245,18 +295,26 @@ namespace ananas::WFS
     //==========================================================================
 
     XYControllerComponent::ParameterAttachment::ParameterAttachment(
-        juce::RangedAudioParameter &paramX,
-        juce::RangedAudioParameter &paramY,
+        const uint sourceIndex,
+        const juce::AudioProcessorValueTreeState &state,
         Node &n,
         juce::UndoManager *um
     ) : node(n),
-        attachmentX(paramX, [this](const float f) { setValueX(f); }, um),
-        attachmentY(paramY, [this](const float f) { setValueY(f); }, um)
+        attachmentX(*state.getParameter(Params::getSourcePositionParamID(sourceIndex, SourcePositionAxis::X)), [this](const float f) { setValueX(f); }, um),
+        attachmentY(*state.getParameter(Params::getSourcePositionParamID(sourceIndex, SourcePositionAxis::Y)), [this](const float f) { setValueY(f); }, um)
     {
         node.addListener(this);
         attachmentX.sendInitialUpdate();
         attachmentY.sendInitialUpdate();
-        node.setTooltip("(" + juce::String{paramX.getValue() * 2.f - 1.f} + ", " + juce::String{paramY.getValue() * 2.f - 1.f} + ")");
+        const auto w{state.getRawParameterValue(Params::SpeakerSpacing.id)->load() * 2.f * Constants::NumModules};
+        node.setTooltip(Utils::normalisedPointToCoordinateMetres(
+            juce::Point{
+                state.getRawParameterValue(Params::getSourcePositionParamID(sourceIndex, SourcePositionAxis::X))->load(),
+                state.getRawParameterValue(Params::getSourcePositionParamID(sourceIndex, SourcePositionAxis::Y))->load(),
+            },
+            juce::Point{-w / 2, static_cast<float>(Constants::MinYMetres)},
+            juce::Point{w / 2, static_cast<float>(Constants::MaxYMetres)}
+        ));
     }
 
     XYControllerComponent::ParameterAttachment::~ParameterAttachment()
@@ -302,15 +360,10 @@ namespace ananas::WFS
     //==========================================================================
 
     XYControllerComponent::Attachment::Attachment(
-        const juce::AudioProcessorValueTreeState &state,
-        const juce::String &parameterIDX,
-        const juce::String &parameterIDY,
+        const uint sourceIndex,
+        juce::AudioProcessorValueTreeState &state,
         Node &node
-    ) : attachment(std::make_unique<ParameterAttachment>(
-        *state.getParameter(parameterIDX),
-        *state.getParameter(parameterIDY),
-        node,
-        state.undoManager))
+    ) : attachment(std::make_unique<ParameterAttachment>(sourceIndex, state, node, state.undoManager))
     {
     }
 } // ananas::WFS

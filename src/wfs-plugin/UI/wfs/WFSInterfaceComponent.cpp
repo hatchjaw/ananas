@@ -100,7 +100,8 @@ namespace ananas::WFS
             state.getRawParameterValue(Params::ShowModuleSelectors.id)->load() > 0.5 ? Constants::UI::ModuleHeight : Constants::UI::ModuleSpeakerHeight
         };
 
-        bounds.removeFromTop(bounds.getHeight() / 2 - moduleHeight);
+        const auto yZero{Constants::MaxYMetres * bounds.getHeight() / (Constants::MaxYMetres - Constants::MinYMetres)};
+        bounds.removeFromTop(yZero - moduleHeight);
 
         juce::FlexBox flex;
         flex.flexDirection = juce::FlexBox::Direction::row;

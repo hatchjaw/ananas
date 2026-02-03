@@ -16,7 +16,9 @@ namespace ananas::WFS
 
         void resized() override;
 
-        void calculateGridSpacingX(float newValue);
+        void calculateGridSpacingX();
+
+        float getSpeakerArrayWidth() const;
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
 
@@ -51,6 +53,8 @@ namespace ananas::WFS
             void sendDragStart();
 
             void sendDragEnd();
+
+            void updateTooltip();
 
             void addListener(Listener *listener);
 
@@ -95,8 +99,8 @@ namespace ananas::WFS
         class ParameterAttachment final : Node::Listener
         {
         public:
-            ParameterAttachment(juce::RangedAudioParameter &paramX,
-                                juce::RangedAudioParameter &paramY,
+            ParameterAttachment(uint sourceIndex,
+                                const juce::AudioProcessorValueTreeState &state,
                                 Node &n,
                                 juce::UndoManager *um = nullptr);
 
@@ -121,9 +125,8 @@ namespace ananas::WFS
         class Attachment
         {
         public:
-            Attachment(const juce::AudioProcessorValueTreeState &state,
-                       const juce::String &parameterIDX,
-                       const juce::String &parameterIDY,
+            Attachment(uint sourceIndex,
+                       juce::AudioProcessorValueTreeState &state,
                        Node &node);
 
         private:

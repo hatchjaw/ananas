@@ -79,6 +79,10 @@ namespace ananas::WFS
             constexpr static float OverlayBoxBorderThickness{5.f};
 
             constexpr static int TooltipDelayTimeMs{500};
+
+            constexpr static int SwitchToWfsTabKeycode{'1'};
+            constexpr static int SwitchToNetworkTabKeycode{'2'};
+            constexpr static int ToggleModuleSelectorsKeycode{'m'};
         };
     };
 
@@ -96,6 +100,7 @@ namespace ananas::WFS
             juce::StringRef id;
             juce::StringRef name;
         };
+
         struct RangedParam : Param
         {
             juce::NormalisableRange<float> range;
@@ -273,6 +278,8 @@ namespace ananas::WFS
         inline static const juce::StringRef AddSwitchButtonName{"Add switch button"};
         inline static const juce::StringRef AddSwitchButtonText{"+"};
         inline static const juce::StringRef AddSwitchButtonTooltip{"Click to add a new switch."};
+        inline static const juce::StringRef ResetSwitchButtonText{"Reset"};
+        inline static const juce::StringRef RemoveSwitchButtonText{"Remove"};
 
         inline static const juce::StringRef TimeAuthoritySectionTitle{"TIME AUTHORITY"};
 
@@ -286,6 +293,16 @@ namespace ananas::WFS
 
         inline static const juce::String OverlayInitialText{"Looking for network..."};
         inline static const juce::String OverlayNoNetworkText{"No network connection."};
+
+        inline static const juce::StringRef TabsCommandCategoryName{"Tabs"};
+        inline static const juce::StringRef SwitchToWfsTabShortName{"WFS Control tab"};
+        inline static const juce::StringRef SwitchToWfsTabDescription{"Switches to the WFS Control tab"};
+        inline static const juce::StringRef SwitchToNetworkTabShortName{"Network overview tab"};
+        inline static const juce::StringRef SwitchToNetworkTabDescription{"Switches to the Network Overview tab"};
+
+        inline static const juce::StringRef OptionsCommandCategoryName{"Options"};
+        inline static const juce::StringRef ToggleModuleSelectorsShortName{"Toggle module selectors"};
+        inline static const juce::StringRef ToggleModuleSelectorsDescription{"Toggles display of module selector lists"};
     };
 
     class Identifiers
@@ -313,6 +330,15 @@ namespace ananas::WFS
             ss.imbue(std::locale("en_GB.UTF-8"));
             ss << std::fixed << std::setprecision(decimals) << value;
             return ss.str();
+        }
+
+        static juce::String normalisedPointToCoordinateMetres(const juce::Point<float> p, const juce::Point<float> min, const juce::Point<float> max)
+        {
+            return "(" +
+                   juce::String{p.x * max.x, 3} +
+                   " m, " +
+                   juce::String{p.y < 0 ? -p.y * min.y : p.y * max.y, 3} +
+                   " m)";
         }
     };
 }

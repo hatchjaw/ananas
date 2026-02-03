@@ -129,14 +129,14 @@ namespace ananas
         auto switchesVar{persistentTree.getProperty(Identifiers::SwitchesParamID)};
 
         if (!switchesVar.isObject()) {
-            switchesVar = new juce::DynamicObject();
+            switchesVar = new juce::DynamicObject;
         }
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
         auto rowVar = switchesObject->getProperty(switchID);
         if (!rowVar.isObject()) {
-            rowVar = new juce::DynamicObject();
+            rowVar = new juce::DynamicObject;
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchIpPropertyID, "");
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchUsernamePropertyID, "");
             rowVar.getDynamicObject()->setProperty(Identifiers::SwitchPasswordPropertyID, "");
@@ -264,7 +264,7 @@ namespace ananas
             auto *textEditor = dynamic_cast<juce::TextEditor *>(existingComponentToUpdate);
 
             if (textEditor == nullptr) {
-                textEditor = new juce::TextEditor("Switch editor row " + juce::String{rowNumber} + " col " + juce::String{columnId});
+                textEditor = new juce::TextEditor{"Switch editor row " + juce::String{rowNumber} + " col " + juce::String{columnId}};
                 textEditor->setMultiLine(false);
                 textEditor->setReturnKeyStartsNewLine(false);
                 textEditor->setWantsKeyboardFocus(true);
@@ -321,7 +321,7 @@ namespace ananas
             auto *button{dynamic_cast<juce::Button *>(existingComponentToUpdate)};
 
             if (button == nullptr) {
-                button = new juce::TextButton("Reset");
+                button = new juce::TextButton{WFS::Strings::ResetSwitchButtonText};
                 button->onClick = [this, rowNumber]
                 {
                     handleResetPtpForSwitch(rows[rowNumber].id);
@@ -333,7 +333,7 @@ namespace ananas
             auto *button{dynamic_cast<juce::Button *>(existingComponentToUpdate)};
 
             if (button == nullptr) {
-                button = new juce::TextButton("Remove");
+                button = new juce::TextButton{WFS::Strings::RemoveSwitchButtonText};
                 button->onClick = [this, rowNumber]
                 {
                     handleRemoveSwitch(rows[rowNumber].id);
