@@ -66,6 +66,8 @@ public:
 
     ananas::Server &getServer() const;
 
+    juce::HashMap<int, std::atomic<float> *> &getSourceAmplitudes();
+
 private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 
@@ -83,6 +85,8 @@ private:
     juce::ValueTree dynamicTree;
     // For handling user-entered data that should be storable/retrievable.
     juce::ValueTree persistentTree;
+
+    juce::HashMap<int, std::atomic<float>*> sourceAmplitudes;
 };
 
 

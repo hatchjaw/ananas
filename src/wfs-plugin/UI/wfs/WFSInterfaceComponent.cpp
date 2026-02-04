@@ -10,9 +10,10 @@ namespace ananas::WFS
         const uint numSources,
         const uint numModules,
         juce::AudioProcessorValueTreeState &apvts,
-        juce::ValueTree &persistentTreeToListenTo
+        juce::ValueTree &persistentTreeToListenTo,
+        juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes
     ) : state(apvts),
-        xyController(numSources, apvts),
+        xyController(numSources, apvts, sourceAmplitudes),
         persistentTree(persistentTreeToListenTo)
     {
         addAndMakeVisible(xyController);

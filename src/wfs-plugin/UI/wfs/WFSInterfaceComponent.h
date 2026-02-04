@@ -21,11 +21,11 @@ namespace ananas::WFS
             public juce::AudioProcessorValueTreeState::Listener
     {
     public:
-
         WFSInterfaceComponent(uint numSources,
                               uint numModules,
                               juce::AudioProcessorValueTreeState &apvts,
-                              juce::ValueTree &persistentTreeToListenTo);
+                              juce::ValueTree &persistentTreeToListenTo,
+                              juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes);
 
         ~WFSInterfaceComponent() override;
 
@@ -38,6 +38,7 @@ namespace ananas::WFS
         void valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property) override;
 
         void parameterChanged(const juce::String &parameterID, float newValue) override;
+
     private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WFSInterfaceComponent)
 

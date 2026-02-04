@@ -3,8 +3,12 @@
 
 namespace ananas::WFS
 {
-    XYControllerComponent::XYControllerComponent(const uint numNodesToCreate, juce::AudioProcessorValueTreeState &apvts)
-        : state(apvts)
+    XYControllerComponent::XYControllerComponent(
+        const uint numNodesToCreate,
+        juce::AudioProcessorValueTreeState &apvts,
+        juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes
+    ) : state(apvts),
+        nodeIntensities(sourceAmplitudes)
     {
         apvts.addParameterListener(Params::SpeakerSpacing.id, this);
         calculateGridSpacingX();
@@ -18,6 +22,8 @@ namespace ananas::WFS
             // Add a parameter attachment
             attachments.add(new Attachment{n, apvts, *node});
         }
+
+        startTimerHz(15);
     }
 
     void XYControllerComponent::paint(juce::Graphics &g)
@@ -103,7 +109,7 @@ namespace ananas::WFS
             }
 
             if (m.containsAnyActiveItems()) {
-                m.showMenuAsync(juce::PopupMenu::Options(), [this](const int result)
+                m.showMenuAsync(juce::PopupMenu::Options(), [this](const uint result)
                 {
                     if (result == 100) {
                         for (const auto &node: nodes) {
@@ -130,6 +136,13 @@ namespace ananas::WFS
         }
     }
 
+    void XYControllerComponent::timerCallback()
+    {
+        for (auto n{0}; n < nodeIntensities.size(); ++n) {
+            nodes[n]->setIntensity(nodeIntensities[n]->load());
+        }
+    }
+
     //==========================================================================
 
     XYControllerComponent::Node::Node(const uint idx) : index(idx)
@@ -145,8 +158,8 @@ namespace ananas::WFS
         };
         g.setColour(colour);
         g.fillEllipse(getLocalBounds().toFloat());
-        g.setColour(colour.darker(.25));
-        g.drawEllipse(getLocalBounds().withSizeKeepingCentre(getWidth() - 2, getHeight() - 2).toFloat(), 2.f);
+        g.setColour(colour.withSaturation(1.f).withAlpha(.75f).darker(.25).brighter((100.f + intensity) * .025f));
+        g.drawEllipse(getLocalBounds().withSizeKeepingCentre(getWidth() - 3.25, getHeight() - 3.25).toFloat(), 3.f);
         g.setColour(juce::Colours::white);
         g.setFont(20);
         g.drawText(juce::String(index + 1), getLocalBounds(), juce::Justification::centred);
@@ -340,6 +353,15 @@ namespace ananas::WFS
     uint XYControllerComponent::Node::getIndex() const
     {
         return index;
+    }
+
+    void XYControllerComponent::Node::setIntensity(float newIntensity)
+    {
+        // Avoid unnecessary repaints
+        if (isVisible() && std::abs(newIntensity - intensity) > 0.01f) {
+            intensity = newIntensity;
+            repaint();
+        }
     }
 
     void XYControllerComponent::Node::triggerChangeMessage(const juce::NotificationType notification)

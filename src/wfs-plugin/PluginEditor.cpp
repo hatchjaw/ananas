@@ -11,7 +11,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
           ananas::WFS::Constants::MaxChannelsToSend,
           ananas::WFS::Constants::NumModules,
           getProcessor().getParamState(),
-          getProcessor().getPersistentTree()
+          getProcessor().getPersistentTree(),
+          getProcessor().getSourceAmplitudes()
       )
 {
     setLookAndFeel(&lookAndFeel);

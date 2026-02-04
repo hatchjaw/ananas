@@ -7,10 +7,13 @@
 namespace ananas::WFS
 {
     class XYControllerComponent final : public juce::Component,
-                                        public juce::AudioProcessorValueTreeState::Listener
+                                        public juce::AudioProcessorValueTreeState::Listener,
+                                        public juce::Timer
     {
     public:
-        XYControllerComponent(uint numNodesToCreate, juce::AudioProcessorValueTreeState &apvts);
+        XYControllerComponent(uint numNodesToCreate,
+                              juce::AudioProcessorValueTreeState &apvts,
+                              juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes);
 
         void paint(juce::Graphics &g) override;
 
@@ -25,6 +28,8 @@ namespace ananas::WFS
         void mouseDown(const juce::MouseEvent &event) override;
 
         void hideAllNodesBesides(uint nodeIdNotToHide);
+
+        void timerCallback() override;
 
     private:
         class Node final : public Component,
@@ -68,6 +73,8 @@ namespace ananas::WFS
 
             uint getIndex() const;
 
+            void setIntensity(float newIntensity);
+
             class Listener
             {
             public:
@@ -102,6 +109,7 @@ namespace ananas::WFS
             juce::Point<float> value{};
             juce::ListenerList<Listener> listeners;
             std::unique_ptr<ScopedDragNotification> currentDrag;
+            float intensity{0.f};
         };
 
         class ParameterAttachment final : Node::Listener
@@ -148,6 +156,7 @@ namespace ananas::WFS
         juce::OwnedArray<Attachment> attachments;
         int xGridSpacing{};
         juce::AudioProcessorValueTreeState &state;
+        juce::HashMap<int, std::atomic<float> *> &nodeIntensities;
     };
 } // ananas::WFS
 

@@ -18,6 +18,9 @@ PluginProcessor::PluginProcessor()
     for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X), &wfsMessenger);
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y), &wfsMessenger);
+
+        // Set up source amplitudes for visualisation...
+        sourceAmplitudes.set(static_cast<int>(n), new std::atomic{0.f});
     }
 }
 
@@ -58,6 +61,11 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
     const juce::AudioSourceChannelInfo block{buffer};
 
     server->getNextAudioBlock(block);
+
+    // Store the RMS level for each channel for the current buffer.
+    for (auto ch{0}; ch < buffer.getNumChannels(); ++ch) {
+        sourceAmplitudes[ch]->store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(ch, 0, buffer.getNumSamples())));
+    }
 }
 
 void PluginProcessor::processBlock(juce::AudioBuffer<double> &buffer, juce::MidiBuffer &midiMessages)
@@ -236,6 +244,11 @@ const juce::ValueTree &PluginProcessor::getPersistentTree() const
 ananas::Server &PluginProcessor::getServer() const
 {
     return *server;
+}
+
+juce::HashMap<int, std::atomic<float> *> &PluginProcessor::getSourceAmplitudes()
+{
+    return sourceAmplitudes;
 }
 
 juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
