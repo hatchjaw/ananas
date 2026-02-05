@@ -4,7 +4,7 @@
 namespace ananas::WFS
 {
     XYControllerComponent::XYControllerComponent(
-        const uint numNodesToCreate,
+        const int numNodesToCreate,
         juce::AudioProcessorValueTreeState &apvts,
         juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes
     ) : state(apvts),
@@ -13,7 +13,7 @@ namespace ananas::WFS
         apvts.addParameterListener(Params::SpeakerSpacing.id, this);
         calculateGridSpacingX();
 
-        for (uint n{0}; n < numNodesToCreate; ++n) {
+        for (int n{0}; n < numNodesToCreate; ++n) {
             // Add a node for each sound source
             const auto node{nodes.add(new Node{n})};
             addAndMakeVisible(node);
@@ -100,23 +100,25 @@ namespace ananas::WFS
             for (int n{0}; n < nodes.size(); ++n) {
                 if (!nodes[n]->isVisible()) {
                     if (!hasInvisibleNodes) {
-                        m.addSectionHeader("Show source");
-                        m.addItem(100, "Show all sources");
+                        m.addSectionHeader(MenuItems::ShowSourceHeader);
+                        m.addItem(MenuItems::ShowAllSources.id, MenuItems::ShowAllSources.text);
                     }
                     hasInvisibleNodes = true;
-                    m.addItem(nodes[n]->getIndex() + 1, juce::String{nodes[n]->getIndex() + 1});
+                    const auto nodeID{static_cast<int>(nodes[n]->getIndex() + 1)};
+                    m.addItem(nodeID, juce::String{nodeID});
                 }
             }
 
             if (m.containsAnyActiveItems()) {
-                m.showMenuAsync(juce::PopupMenu::Options(), [this](const uint result)
+                m.showMenuAsync(juce::PopupMenu::Options(), [this](const int result)
                 {
-                    if (result == 100) {
+                    if (result == MenuItems::ShowAllSourcesMenuID) {
                         for (const auto &node: nodes) {
                             node->setVisible(true);
                         }
                         return;
                     }
+
                     for (const auto &node: nodes) {
                         if (node->getIndex() == result - 1) {
                             node->setVisible(true);
@@ -127,7 +129,7 @@ namespace ananas::WFS
         }
     }
 
-    void XYControllerComponent::hideAllNodesBesides(const uint nodeIdNotToHide)
+    void XYControllerComponent::hideAllNodesBesides(const int nodeIdNotToHide)
     {
         for (const auto &node: nodes) {
             if (node->getIndex() != nodeIdNotToHide) {
@@ -145,23 +147,32 @@ namespace ananas::WFS
 
     //==========================================================================
 
-    XYControllerComponent::Node::Node(const uint idx) : index(idx)
+    XYControllerComponent::Node::Node(const int idx) : index(idx)
     {
     }
 
     void XYControllerComponent::Node::paint(juce::Graphics &g)
     {
-        const auto colour{
-            juce::Colours::black
-            .withSaturation(.5f)
-            .withAlpha(.5f)
-        };
-        g.setColour(colour);
+        g.setColour(Constants::UI::NodeBgColour);
         g.fillEllipse(getLocalBounds().toFloat());
-        g.setColour(colour.withSaturation(1.f).withAlpha(.75f).darker(.25).brighter((100.f + intensity) * .025f));
-        g.drawEllipse(getLocalBounds().withSizeKeepingCentre(getWidth() - 3.25, getHeight() - 3.25).toFloat(), 3.f);
-        g.setColour(juce::Colours::white);
-        g.setFont(20);
+        const auto level{(100.f + intensity) * .01f};
+        const auto saturation{1.0f - level * Constants::UI::NodeBorderSaturationRange};
+        const auto brightness{
+            Constants::UI::NodeBorderBrightnessMin +
+            level * Constants::UI::NodeBorderBrightnessMax
+        };
+        g.setColour(juce::Colour::fromHSV(
+            Constants::UI::NodeBorderColour.getHue(),
+            saturation,
+            brightness,
+            Constants::UI::NodeBorderAlpha));
+        const auto bounds{getBounds().toFloat()};
+        g.drawEllipse(getLocalBounds().toFloat().withSizeKeepingCentre(
+                          bounds.getWidth() - Constants::UI::NodeBorderThickness,
+                          bounds.getHeight() - Constants::UI::NodeBorderThickness),
+                      Constants::UI::NodeBorderThickness);
+        g.setColour(Constants::UI::NodeIndexColour);
+        g.setFont(Constants::UI::NodeIndexFontSize);
         g.drawText(juce::String(index + 1), getLocalBounds(), juce::Justification::centred);
     }
 
@@ -169,15 +180,15 @@ namespace ananas::WFS
     {
         if (event.mods.isPopupMenu() && event.originalComponent == this) {
             juce::PopupMenu m;
-            m.addItem(1, "Hide this source");
-            m.addItem(2, "Hide all except this source");
+            m.addItem(MenuItems::HideSource.id, MenuItems::HideSource.text);
+            m.addItem(MenuItems::HideOtherSources.id, MenuItems::HideOtherSources.text);
             m.showMenuAsync(juce::PopupMenu::Options(), [this](const int result)
             {
                 switch (result) {
-                    case 1:
+                    case MenuItems::HideSourceMenuID:
                         hide();
                         break;
-                    case 2:
+                    case MenuItems::HideOtherSourcesMenuID:
                         dynamic_cast<XYControllerComponent *>(getParentComponent())->hideAllNodesBesides(index);
                         break;
                     default:
@@ -350,7 +361,7 @@ namespace ananas::WFS
         listeners.remove(listener);
     }
 
-    uint XYControllerComponent::Node::getIndex() const
+    int XYControllerComponent::Node::getIndex() const
     {
         return index;
     }
@@ -455,7 +466,7 @@ namespace ananas::WFS
     //==========================================================================
 
     XYControllerComponent::Attachment::Attachment(
-        const uint sourceIndex,
+        const int sourceIndex,
         juce::AudioProcessorValueTreeState &state,
         Node &node
     ) : attachment(std::make_unique<ParameterAttachment>(sourceIndex, state, node, state.undoManager))

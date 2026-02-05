@@ -21,8 +21,8 @@ namespace ananas::WFS
             public juce::AudioProcessorValueTreeState::Listener
     {
     public:
-        WFSInterfaceComponent(uint numSources,
-                              uint numModules,
+        WFSInterfaceComponent(int numSources,
+                              int numModules,
                               juce::AudioProcessorValueTreeState &apvts,
                               juce::ValueTree &persistentTreeToListenTo,
                               juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes);

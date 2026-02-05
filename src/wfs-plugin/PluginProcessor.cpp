@@ -62,9 +62,9 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float> &buffer, juce::MidiB
 
     server->getNextAudioBlock(block);
 
-    // Store the RMS level for each channel for the current buffer.
+    // Store the max dB level for each channel for the current buffer.
     for (auto ch{0}; ch < buffer.getNumChannels(); ++ch) {
-        sourceAmplitudes[ch]->store(juce::Decibels::gainToDecibels(buffer.getRMSLevel(ch, 0, buffer.getNumSamples())));
+        sourceAmplitudes[ch]->store(juce::Decibels::gainToDecibels(buffer.getMagnitude(ch, 0, buffer.getNumSamples())));
     }
 }
 

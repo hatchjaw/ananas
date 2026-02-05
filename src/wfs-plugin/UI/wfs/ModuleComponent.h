@@ -8,7 +8,7 @@ namespace ananas::WFS
     class ModuleComponent final : public juce::Component
     {
     public:
-        explicit ModuleComponent(uint moduleIndex, juce::ValueTree &persistentTree);
+        explicit ModuleComponent(int moduleIndex, juce::ValueTree &persistentTree);
 
         void resized() override;
 
@@ -35,7 +35,7 @@ namespace ananas::WFS
         juce::ValueTree &tree;
         bool showModuleSelector{false};
         juce::ComboBox moduleSelector;
-        uint index{0};
+        int index{0};
         SpeakerIconComponent speakerIcon1, speakerIcon2;
     };
 } // ananas::WFS

@@ -4,7 +4,7 @@
 
 namespace ananas::WFS
 {
-    ModuleComponent::ModuleComponent(const uint moduleIndex, juce::ValueTree &persistentTree)
+    ModuleComponent::ModuleComponent(const int moduleIndex, juce::ValueTree &persistentTree)
         : tree(persistentTree),
           index(moduleIndex)
     {

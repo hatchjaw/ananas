@@ -7,8 +7,8 @@
 namespace ananas::WFS
 {
     WFSInterfaceComponent::WFSInterfaceComponent(
-        const uint numSources,
-        const uint numModules,
+        const int numSources,
+        const int numModules,
         juce::AudioProcessorValueTreeState &apvts,
         juce::ValueTree &persistentTreeToListenTo,
         juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes
@@ -53,7 +53,7 @@ namespace ananas::WFS
             showModuleSelectorsButton
         );
 
-        for (uint n{0}; n < numModules; ++n) {
+        for (int n{0}; n < numModules; ++n) {
             const auto m{modules.add(new ModuleComponent(n, persistentTree))};
             addAndMakeVisible(m);
             m->setBroughtToFrontOnMouseClick(true);

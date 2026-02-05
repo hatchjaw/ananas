@@ -1,6 +1,7 @@
 #ifndef WFSUTILS_H
 #define WFSUTILS_H
 
+#include <limits.h>
 #include <juce_core/juce_core.h>
 #include <juce_graphics/juce_graphics.h>
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -50,8 +51,22 @@ namespace ananas::WFS
             inline static const juce::Colour XYControllerGridlineColour{juce::Colours::lightgrey};
 
             constexpr static int SpeakerSpacingSectionHeight{50};
+
             constexpr static float NodeDiameter{40.f};
             constexpr static float NodeHalfDiameter{NodeDiameter / 2.f};
+            inline static const juce::Colour NodeBgColour{
+                juce::Colours::black
+                .withSaturation(.5f)
+                .withAlpha(.5f)
+            };
+            inline static const juce::Colour NodeBorderColour{juce::Colours::lightseagreen};
+            constexpr static float NodeBorderSaturationRange{.9f};
+            constexpr static float NodeBorderBrightnessMin{.2f};
+            constexpr static float NodeBorderBrightnessMax{.9f};
+            constexpr static float NodeBorderAlpha{.75f};
+            constexpr static float NodeBorderThickness{3.f};
+            constexpr static float NodeIndexFontSize{20.f};
+            inline static const juce::Colour NodeIndexColour{juce::Colours::white};
 
             constexpr static int ModuleSelectorHeight{25};
             constexpr static int ModuleSpeakerHeight{25};
@@ -303,6 +318,9 @@ namespace ananas::WFS
         inline static const juce::StringRef OptionsCommandCategoryName{"Options"};
         inline static const juce::StringRef ToggleModuleSelectorsShortName{"Toggle module selectors"};
         inline static const juce::StringRef ToggleModuleSelectorsDescription{"Toggles display of module selector lists"};
+
+        inline static const juce::StringRef HideSourceText{"Hide this source"};
+        inline static const juce::StringRef HideAllOtherSourcesText{"Hide all except this source"};
     };
 
     class Identifiers
@@ -311,6 +329,25 @@ namespace ananas::WFS
         inline static const juce::Identifier StaticTreeType{"WfsParameters"};
         inline static const juce::Identifier DynamicTreeType{"EphemeralData"};
         inline static const juce::Identifier PersistentTreeType{"PersistentData"};
+    };
+
+    class MenuItems
+    {
+    public:
+        struct MenuItem{
+            int id{0};
+            juce::StringRef text;
+        };
+
+        constexpr static int HideSourceMenuID{1};
+        constexpr static int HideOtherSourcesMenuID{2};
+        constexpr static int ShowAllSourcesMenuID{INT_MAX};
+
+        inline static const MenuItem HideSource{HideSourceMenuID, "Hide this Source"};
+        inline static const MenuItem HideOtherSources{HideOtherSourcesMenuID, "Hide all except this Source"};
+
+        inline static const juce::StringRef ShowSourceHeader{"Show source"};
+        inline static const MenuItem ShowAllSources{ShowAllSourcesMenuID, "Show all sources"};
     };
 
     class Utils

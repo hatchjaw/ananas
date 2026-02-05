@@ -11,7 +11,7 @@ namespace ananas::WFS
                                         public juce::Timer
     {
     public:
-        XYControllerComponent(uint numNodesToCreate,
+        XYControllerComponent(int numNodesToCreate,
                               juce::AudioProcessorValueTreeState &apvts,
                               juce::HashMap<int, std::atomic<float> *> &sourceAmplitudes);
 
@@ -27,7 +27,7 @@ namespace ananas::WFS
 
         void mouseDown(const juce::MouseEvent &event) override;
 
-        void hideAllNodesBesides(uint nodeIdNotToHide);
+        void hideAllNodesBesides(int nodeIdNotToHide);
 
         void timerCallback() override;
 
@@ -39,7 +39,7 @@ namespace ananas::WFS
         public:
             class Listener;
 
-            explicit Node(uint idx);
+            explicit Node(int idx);
 
             void paint(juce::Graphics &g) override;
 
@@ -71,7 +71,7 @@ namespace ananas::WFS
 
             void removeListener(Listener *listener);
 
-            uint getIndex() const;
+            int getIndex() const;
 
             void setIntensity(float newIntensity);
 
@@ -105,7 +105,7 @@ namespace ananas::WFS
         private:
             void triggerChangeMessage(juce::NotificationType notification);
 
-            uint index{};
+            int index{};
             juce::Point<float> value{};
             juce::ListenerList<Listener> listeners;
             std::unique_ptr<ScopedDragNotification> currentDrag;
@@ -141,7 +141,7 @@ namespace ananas::WFS
         class Attachment
         {
         public:
-            Attachment(uint sourceIndex,
+            Attachment(int sourceIndex,
                        juce::AudioProcessorValueTreeState &state,
                        Node &node);
 
