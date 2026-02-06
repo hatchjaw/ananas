@@ -1,6 +1,6 @@
 #include "WFSMessenger.h"
 #include <AnanasUtils.h>
-#include "Utils.h"
+#include "WFSUtils.h"
 
 namespace ananas::WFS
 {

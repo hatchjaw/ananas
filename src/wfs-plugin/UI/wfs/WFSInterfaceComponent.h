@@ -5,15 +5,15 @@
 #include "ModuleComponent.h"
 #include "XYControllerComponent.h"
 #include "../LookAndFeel.h"
-#ifdef SHOW_NO_NETWORK_OVERLAY
-#include "../OverlayableComponent.h"
+#if SHOW_NO_NETWORK_OVERLAY
+#include <OverlayableComponent.h>
 #endif
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     class WFSInterfaceComponent final :
-#ifdef SHOW_NO_NETWORK_OVERLAY
-            public OverlayableComponent,
+#if SHOW_NO_NETWORK_OVERLAY
+            public ananas::UI::OverlayableComponent,
 #else
             public juce::Component,
 #endif

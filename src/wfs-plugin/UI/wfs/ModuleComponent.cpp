@@ -1,8 +1,8 @@
 #include "ModuleComponent.h"
 #include <AnanasUtils.h>
-#include "../../Utils.h"
+#include "../../WFSUtils.h"
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     ModuleComponent::ModuleComponent(const int moduleIndex, juce::ValueTree &persistentTree)
         : tree(persistentTree),
@@ -23,7 +23,7 @@ namespace ananas::WFS
         auto bounds{getLocalBounds()};
 
         if (showModuleSelector) {
-            const auto comboBoxBounds{bounds.removeFromTop(Constants::UI::ModuleSelectorHeight)};
+            const auto comboBoxBounds{bounds.removeFromTop(Dimensions::ModuleSelectorHeight)};
             moduleSelector.setBounds(comboBoxBounds);
         } else {
             moduleSelector.setBounds(0, 0, 0, 0);
@@ -34,10 +34,10 @@ namespace ananas::WFS
         flex.justifyContent = juce::FlexBox::JustifyContent::center;
         flex.items.add(juce::FlexItem(speakerIcon1)
             .withFlex(1.f)
-            .withHeight(Constants::UI::ModuleSpeakerHeight));
+            .withHeight(Dimensions::ModuleSpeakerHeight));
         flex.items.add(juce::FlexItem(speakerIcon2)
             .withFlex(1.f)
-            .withHeight(Constants::UI::ModuleSpeakerHeight));
+            .withHeight(Dimensions::ModuleSpeakerHeight));
 
         flex.performLayout(bounds);
     }
@@ -93,29 +93,29 @@ namespace ananas::WFS
 
         const auto targetBounds = juce::Rectangle(0.f, 0.f,
                                                   getBounds().toFloat().getWidth(),
-                                                  getBounds().toFloat().getHeight() - Constants::UI::SpeakerIconOutlineThickness);
+                                                  getBounds().toFloat().getHeight() - Dimensions::SpeakerIconOutlineThickness);
 
         const juce::RectanglePlacement placement{juce::RectanglePlacement::stretchToFit};
         const auto transform = placement.getTransformToFit(
             speaker.getBounds(), targetBounds);
 
-        g.setColour(Constants::UI::SpeakerIconFillColour);
+        g.setColour(Colours::SpeakerIconFillColour);
         g.fillPath(speaker, transform);
 
-        g.setColour(Constants::UI::SpeakerIconOutlineColour);
-        g.strokePath(speaker, juce::PathStrokeType{Constants::UI::SpeakerIconOutlineThickness, juce::PathStrokeType::mitered}, transform);
+        g.setColour(Colours::SpeakerIconOutlineColour);
+        g.strokePath(speaker, juce::PathStrokeType{Dimensions::SpeakerIconOutlineThickness, juce::PathStrokeType::mitered}, transform);
     }
 
     juce::Path ModuleComponent::SpeakerIconComponent::createSpeakerPath()
     {
         juce::Path speaker;
 
-        speaker.startNewSubPath(Constants::UI::SpeakerIconCoilStartX, Constants::UI::SpeakerIconCoilStartY);
-        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX + Constants::UI::SpeakerIconCoilWidth, Constants::UI::SpeakerIconCoilStartY);
-        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX + Constants::UI::SpeakerIconCoilWidth, Constants::UI::SpeakerIconCoilHeight);
-        speaker.lineTo(Constants::UI::SpeakerIconConeRightX, Constants::UI::SpeakerIconConeEndY);
-        speaker.lineTo(Constants::UI::SpeakerIconConeLeftX, Constants::UI::SpeakerIconConeEndY);
-        speaker.lineTo(Constants::UI::SpeakerIconCoilStartX, Constants::UI::SpeakerIconCoilHeight);
+        speaker.startNewSubPath(Dimensions::SpeakerIconCoilStartX, Dimensions::SpeakerIconCoilStartY);
+        speaker.lineTo(Dimensions::SpeakerIconCoilStartX + Dimensions::SpeakerIconCoilWidth, Dimensions::SpeakerIconCoilStartY);
+        speaker.lineTo(Dimensions::SpeakerIconCoilStartX + Dimensions::SpeakerIconCoilWidth, Dimensions::SpeakerIconCoilHeight);
+        speaker.lineTo(Dimensions::SpeakerIconConeRightX, Dimensions::SpeakerIconConeEndY);
+        speaker.lineTo(Dimensions::SpeakerIconConeLeftX, Dimensions::SpeakerIconConeEndY);
+        speaker.lineTo(Dimensions::SpeakerIconCoilStartX, Dimensions::SpeakerIconCoilHeight);
         speaker.closeSubPath();
 
         return speaker;

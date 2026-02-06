@@ -1,13 +1,13 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "Utils.h"
+#include "WFSUtils.h"
 
 PluginProcessor::PluginProcessor()
     : AudioProcessor(getBusesProperties()),
       server(std::make_unique<ananas::Server>(ananas::WFS::Constants::MaxChannelsToSend)),
       apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
-      dynamicTree(ananas::WFS::Identifiers::DynamicTreeType),
-      persistentTree(ananas::WFS::Identifiers::PersistentTreeType)
+      dynamicTree(ananas::Identifiers::DynamicTreeType),
+      persistentTree(ananas::Identifiers::PersistentTreeType)
 {
     server->getClientList()->addChangeListener(this);
     server->getModuleList()->addChangeListener(this);
@@ -255,9 +255,9 @@ juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
 {
     BusesProperties buses;
 
-    for (uint i{0}; i < ananas::WFS::Constants::MaxChannelsToSend; ++i) {
-        buses.addBus(true, ananas::WFS::Strings::InputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
-        buses.addBus(false, ananas::WFS::Strings::OutputLabel + juce::String{i + 1}, juce::AudioChannelSet::mono());
+    for (size_t i{1}; i <= ananas::Constants::MaxChannelsToSend; ++i) {
+        buses.addBus(true, ananas::Strings::getInputLabel(i), juce::AudioChannelSet::mono());
+        buses.addBus(false, ananas::Strings::getOutputLabel(i), juce::AudioChannelSet::mono());
     }
 
     return buses;

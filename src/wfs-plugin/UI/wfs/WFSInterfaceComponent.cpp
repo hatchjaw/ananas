@@ -2,9 +2,9 @@
 #include <AnanasUtils.h>
 #include <Server.h>
 
-#include "../../Utils.h"
+#include "../../WFSUtils.h"
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     WFSInterfaceComponent::WFSInterfaceComponent(
         const int numSources,
@@ -88,7 +88,7 @@ namespace ananas::WFS
     {
         auto bounds{getLocalBounds()};
         auto optionsRow{
-            bounds.removeFromTop(Constants::UI::SpeakerSpacingSectionHeight)
+            bounds.removeFromTop(Dimensions::SpeakerSpacingSectionHeight)
             .reduced(6, 0)
         };
         speakerSpacingSlider.setBounds(optionsRow.removeFromRight(100).reduced(1, 3));
@@ -98,7 +98,7 @@ namespace ananas::WFS
         xyController.setBounds(bounds);
 
         const auto moduleHeight{
-            state.getRawParameterValue(Params::ShowModuleSelectors.id)->load() > 0.5 ? Constants::UI::ModuleHeight : Constants::UI::ModuleSpeakerHeight
+            state.getRawParameterValue(Params::ShowModuleSelectors.id)->load() > 0.5 ? Dimensions::ModuleHeight : Dimensions::ModuleSpeakerHeight
         };
 
         const auto yZero{Constants::MaxYMetres * bounds.getHeight() / (Constants::MaxYMetres - Constants::MinYMetres)};
@@ -115,7 +115,7 @@ namespace ananas::WFS
 
         flex.performLayout(bounds);
 
-#ifdef SHOW_NO_NETWORK_OVERLAY
+#if SHOW_NO_NETWORK_OVERLAY
         OverlayableComponent::resized();
 #endif
     }

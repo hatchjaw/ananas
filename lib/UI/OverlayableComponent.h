@@ -3,7 +3,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace ananas
+namespace ananas::UI
 {
     class OverlayableComponent : public juce::Component,
                                  public juce::ChangeListener

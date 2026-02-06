@@ -1,7 +1,7 @@
 #include "XYControllerComponent.h"
-#include "../../Utils.h"
+#include "../../WFSUtils.h"
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     XYControllerComponent::XYControllerComponent(
         const int numNodesToCreate,
@@ -30,7 +30,7 @@ namespace ananas::WFS
     {
         g.fillAll(juce::Colour{0.f, 0.f, 0.f, .1f});
 
-        g.setColour(Constants::UI::XYControllerGridlineColour);
+        g.setColour(Colours::XYControllerGridlineColour);
         const auto right{getBounds().toFloat().getWidth()};
 
         if (xGridSpacing > 0) {
@@ -153,26 +153,26 @@ namespace ananas::WFS
 
     void XYControllerComponent::Node::paint(juce::Graphics &g)
     {
-        g.setColour(Constants::UI::NodeBgColour);
+        g.setColour(Colours::NodeBgColour);
         g.fillEllipse(getLocalBounds().toFloat());
         const auto level{(100.f + intensity) * .01f};
-        const auto saturation{1.0f - level * Constants::UI::NodeBorderSaturationRange};
+        const auto saturation{1.0f - level * Colours::NodeBorderSaturationRange};
         const auto brightness{
-            Constants::UI::NodeBorderBrightnessMin +
-            level * Constants::UI::NodeBorderBrightnessMax
+            Colours::NodeBorderBrightnessMin +
+            level * Colours::NodeBorderBrightnessMax
         };
         g.setColour(juce::Colour::fromHSV(
-            Constants::UI::NodeBorderColour.getHue(),
+            Colours::NodeBorderColour.getHue(),
             saturation,
             brightness,
-            Constants::UI::NodeBorderAlpha));
+            Colours::NodeBorderAlpha));
         const auto bounds{getBounds().toFloat()};
         g.drawEllipse(getLocalBounds().toFloat().withSizeKeepingCentre(
-                          bounds.getWidth() - Constants::UI::NodeBorderThickness,
-                          bounds.getHeight() - Constants::UI::NodeBorderThickness),
-                      Constants::UI::NodeBorderThickness);
-        g.setColour(Constants::UI::NodeIndexColour);
-        g.setFont(Constants::UI::NodeIndexFontSize);
+                          bounds.getWidth() - Dimensions::NodeBorderThickness,
+                          bounds.getHeight() - Dimensions::NodeBorderThickness),
+                      Dimensions::NodeBorderThickness);
+        g.setColour(Colours::NodeIndexColour);
+        g.setFont(Dimensions::NodeIndexFontSize);
         g.drawText(juce::String(index + 1), getLocalBounds(), juce::Justification::centred);
     }
 
@@ -294,10 +294,10 @@ namespace ananas::WFS
         }
 
         Component::setBounds(
-            static_cast<int>(x - Constants::UI::NodeHalfDiameter),
-            static_cast<int>(y - Constants::UI::NodeHalfDiameter),
-            Constants::UI::NodeDiameter,
-            Constants::UI::NodeDiameter
+            static_cast<int>(x - Dimensions::NodeHalfDiameter),
+            static_cast<int>(y - Dimensions::NodeHalfDiameter),
+            Dimensions::NodeDiameter,
+            Dimensions::NodeDiameter
         );
     }
 
@@ -472,4 +472,4 @@ namespace ananas::WFS
     ) : attachment(std::make_unique<ParameterAttachment>(sourceIndex, state, node, state.undoManager))
     {
     }
-} // ananas::WFS
+}

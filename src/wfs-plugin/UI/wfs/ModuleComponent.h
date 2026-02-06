@@ -3,7 +3,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     class ModuleComponent final : public juce::Component
     {

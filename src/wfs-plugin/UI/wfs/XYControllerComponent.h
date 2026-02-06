@@ -4,7 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
-namespace ananas::WFS
+namespace ananas::WFS::UI
 {
     class XYControllerComponent final : public juce::Component,
                                         public juce::AudioProcessorValueTreeState::Listener,
@@ -109,7 +109,7 @@ namespace ananas::WFS
             juce::Point<float> value{};
             juce::ListenerList<Listener> listeners;
             std::unique_ptr<ScopedDragNotification> currentDrag;
-            float intensity{0.f};
+            float intensity{-100.f};
         };
 
         class ParameterAttachment final : Node::Listener

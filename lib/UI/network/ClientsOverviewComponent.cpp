@@ -1,8 +1,7 @@
 #include "ClientsOverviewComponent.h"
-
 #include <AnanasUtils.h>
 
-namespace ananas
+namespace ananas::UI
 {
     ClientsOverviewComponent::ClientsOverviewComponent(juce::ValueTree &treeToListenTo)
         : tree(treeToListenTo)
@@ -15,10 +14,10 @@ namespace ananas
         title.setColour(juce::Label::textColourId, juce::Colours::black);
         title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
         title.setJustificationType(juce::Justification::centredLeft);
-        title.setText(WFS::Strings::ClientsSectionTitle, juce::dontSendNotification);
+        title.setText(Strings::ClientsSectionTitle, juce::dontSendNotification);
 
-        rebootAllClientsButton.setButtonText(WFS::Strings::RebootAllClientsButtonText);
-        rebootAllClientsButton.setTooltip(WFS::Strings::RebootAllClientsButtonTooltip);
+        rebootAllClientsButton.setButtonText(Strings::RebootAllClientsButtonText);
+        rebootAllClientsButton.setTooltip(Strings::RebootAllClientsButtonTooltip);
         rebootAllClientsButton.onClick = [this]
         {
             triggerClientReboot();
@@ -49,7 +48,7 @@ namespace ananas
     {
         auto bounds{getLocalBounds()};
         auto titleRow{
-            bounds.removeFromTop(WFS::Constants::UI::NetworkSectionTitleHeight)
+            bounds.removeFromTop(Dimensions::NetworkSectionTitleHeight)
             .reduced(6, 0)
         };
         title.setBounds(titleRow.removeFromLeft(85));
@@ -62,7 +61,7 @@ namespace ananas
     {
         if (!isVisible()) return;
 
-        if (property == Identifiers::ConnectedClientsParamID) {
+        if (property == ananas::Identifiers::ConnectedClientsParamID) {
             update(treeWhosePropertyHasChanged[property]);
             handleAsyncUpdate();
         }
@@ -75,7 +74,7 @@ namespace ananas
 
     void ClientsOverviewComponent::triggerClientReboot() const
     {
-        tree.setProperty(Identifiers::ClientsShouldRebootParamID, true, nullptr);
+        tree.setProperty(ananas::Identifiers::ClientsShouldRebootParamID, true, nullptr);
     }
 
     //==========================================================================
@@ -93,8 +92,8 @@ namespace ananas
         presentationTimeIntervalLabel.setColour(juce::Label::textColourId, juce::Colours::black);
         presentationTimeIntervalValue.setColour(juce::Label::textColourId, juce::Colours::black);
 
-        totalClientsLabel.setText(WFS::Strings::TotalClientsLabel, juce::dontSendNotification);
-        presentationTimeIntervalLabel.setText(WFS::Strings::PresentationTimeIntervalLabel, juce::dontSendNotification);
+        totalClientsLabel.setText(Strings::TotalClientsLabel, juce::dontSendNotification);
+        presentationTimeIntervalLabel.setText(Strings::PresentationTimeIntervalLabel, juce::dontSendNotification);
     }
 
     void ClientsOverviewComponent::OverviewPanel::update(const juce::var &var)
@@ -109,10 +108,10 @@ namespace ananas
             for (const auto &prop: props) {
                 if (const auto *client = prop.value.getDynamicObject()) {
                     const juce::int32 presentationTimeOffset{
-                                client->getProperty(Identifiers::ClientPresentationTimeOffsetNsPropertyID)
+                                client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetNsPropertyID)
                             },
                             audioPTPOffset{
-                                client->getProperty(Identifiers::ClientAudioPTPOffsetPropertyID)
+                                client->getProperty(ananas::Identifiers::ClientAudioPTPOffsetPropertyID)
                             };
                     const auto offsetTime{presentationTimeOffset + audioPTPOffset};
                     if (offsetTime < minOffsetTime) {
@@ -161,14 +160,14 @@ namespace ananas
     {
         addAndMakeVisible(table);
 
-        addColumn(WFS::TableColumns::ClientTableIpAddress);
-        addColumn(WFS::TableColumns::ClientTableSerialNumber);
-        addColumn(WFS::TableColumns::ClientTablePTPLock);
-        addColumn(WFS::TableColumns::ClientTablePresentationTimeOffset);
-        addColumn(WFS::TableColumns::ClientTableBufferFillPercent);
-        addColumn(WFS::TableColumns::ClientTableSamplingRate);
-        addColumn(WFS::TableColumns::ClientTablePercentCPU);
-        addColumn(WFS::TableColumns::ClientTableModuleID);
+        addColumn(TableColumns::ClientTableIpAddress);
+        addColumn(TableColumns::ClientTableSerialNumber);
+        addColumn(TableColumns::ClientTablePTPLock);
+        addColumn(TableColumns::ClientTablePresentationTimeOffset);
+        addColumn(TableColumns::ClientTableBufferFillPercent);
+        addColumn(TableColumns::ClientTableSamplingRate);
+        addColumn(TableColumns::ClientTablePercentCPU);
+        addColumn(TableColumns::ClientTableModuleID);
 
         table.getHeader().setLookAndFeel(&lookAndFeel);
 
@@ -195,15 +194,15 @@ namespace ananas
                 row.ip = prop.name.toString();
 
                 if (const auto *client = prop.value.getDynamicObject()) {
-                    row.serialNumber = client->getProperty(Identifiers::ClientSerialNumberPropertyID).toString();
-                    row.ptpLock = client->getProperty(Identifiers::ClientPTPLockPropertyID);
-                    row.presentationTimeOffsetNs = client->getProperty(Identifiers::ClientPresentationTimeOffsetNsPropertyID);
-                    row.presentationTimeOffsetFrame = client->getProperty(Identifiers::ClientPresentationTimeOffsetFramePropertyID);
-                    row.audioPTPOffsetNs = client->getProperty(Identifiers::ClientAudioPTPOffsetPropertyID);
-                    row.bufferFillPercent = client->getProperty(Identifiers::ClientBufferFillPercentPropertyID);
-                    row.samplingRate = client->getProperty(Identifiers::ClientSamplingRatePropertyID);
-                    row.percentCPU = client->getProperty(Identifiers::ClientPercentCPUPropertyID);
-                    row.moduleID = client->getProperty(Identifiers::ClientModuleIDPropertyID);
+                    row.serialNumber = client->getProperty(ananas::Identifiers::ClientSerialNumberPropertyID).toString();
+                    row.ptpLock = client->getProperty(ananas::Identifiers::ClientPTPLockPropertyID);
+                    row.presentationTimeOffsetNs = client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetNsPropertyID);
+                    row.presentationTimeOffsetFrame = client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetFramePropertyID);
+                    row.audioPTPOffsetNs = client->getProperty(ananas::Identifiers::ClientAudioPTPOffsetPropertyID);
+                    row.bufferFillPercent = client->getProperty(ananas::Identifiers::ClientBufferFillPercentPropertyID);
+                    row.samplingRate = client->getProperty(ananas::Identifiers::ClientSamplingRatePropertyID);
+                    row.percentCPU = client->getProperty(ananas::Identifiers::ClientPercentCPUPropertyID);
+                    row.moduleID = client->getProperty(ananas::Identifiers::ClientModuleIDPropertyID);
                 }
 
                 rows.add(row);
@@ -253,34 +252,34 @@ namespace ananas
 
             switch (columnId) {
                 case 1: text = ip;
-                    justification = WFS::TableColumns::ClientTableIpAddress.justification;
+                    justification = TableColumns::ClientTableIpAddress.justification;
                     break;
                 case 2: text = serialNumber;
-                    justification = WFS::TableColumns::ClientTableSerialNumber.justification;
+                    justification = TableColumns::ClientTableSerialNumber.justification;
                     break;
                 case 3: text = ptpLock ? "Yes" : "No";
-                    justification = WFS::TableColumns::ClientTablePTPLock.justification;
+                    justification = TableColumns::ClientTablePTPLock.justification;
                     g.setColour(ptpLock ? juce::Colours::lightseagreen : juce::Colours::palevioletred);
                     g.fillRect(2, 2, width - 4, height - 4);
                     break;
-                case 4: text = WFS::Utils::formatWithThousandsSeparator(offsetTime + audioPTPOffset) +
+                case 4: text = Strings::formatWithThousandsSeparator(offsetTime + audioPTPOffset) +
                                " (" + juce::String(offsetFrame) +
                                (offsetFrame == 1 ? " frame)" : " frames)");
-                    justification = WFS::TableColumns::ClientTablePresentationTimeOffset.justification;
+                    justification = TableColumns::ClientTablePresentationTimeOffset.justification;
                     break;
                 case 5: text = juce::String(bufferFillPercent) + " %";
-                    justification = WFS::TableColumns::ClientTableBufferFillPercent.justification;
+                    justification = TableColumns::ClientTableBufferFillPercent.justification;
                     g.setColour(bufferFillPercent > 80 || bufferFillPercent < 20 ? juce::Colours::palevioletred : juce::Colours::lightseagreen);
                     g.fillRect(2, 2, static_cast<int>((width - 4) * (bufferFillPercent / 100.f)), height - 4);
                     break;
-                case 6: text = WFS::Utils::formatWithThousandsSeparator(samplingRate, 6);
-                    justification = WFS::TableColumns::ClientTableSamplingRate.justification;
+                case 6: text = Strings::formatWithThousandsSeparator(samplingRate, 6);
+                    justification = TableColumns::ClientTableSamplingRate.justification;
                     break;
                 case 7: text = juce::String(percentCPU, 3);
-                    justification = WFS::TableColumns::ClientTablePercentCPU.justification;
+                    justification = TableColumns::ClientTablePercentCPU.justification;
                     break;
                 case 8: text = juce::String{moduleID};
-                    justification = WFS::TableColumns::ClientTableModuleID.justification;
+                    justification = TableColumns::ClientTableModuleID.justification;
                 default: break;
             }
 
@@ -326,21 +325,21 @@ namespace ananas
         g.setFont(withDefaultMetrics(juce::FontOptions((float) height * 0.5f, juce::Font::bold)));
         auto justification{juce::Justification::centredLeft};
         switch (columnId) {
-            case 1: justification = WFS::TableColumns::ClientTableIpAddress.justification;
+            case 1: justification = TableColumns::ClientTableIpAddress.justification;
                 break;
-            case 2: justification = WFS::TableColumns::ClientTableSerialNumber.justification;
+            case 2: justification = TableColumns::ClientTableSerialNumber.justification;
                 break;
-            case 3: justification = WFS::TableColumns::ClientTablePTPLock.justification;
+            case 3: justification = TableColumns::ClientTablePTPLock.justification;
                 break;
-            case 4: justification = WFS::TableColumns::ClientTablePresentationTimeOffset.justification;
+            case 4: justification = TableColumns::ClientTablePresentationTimeOffset.justification;
                 break;
-            case 5: justification = WFS::TableColumns::ClientTableBufferFillPercent.justification;
+            case 5: justification = TableColumns::ClientTableBufferFillPercent.justification;
                 break;
-            case 6: justification = WFS::TableColumns::ClientTableSamplingRate.justification;
+            case 6: justification = TableColumns::ClientTableSamplingRate.justification;
                 break;
-            case 7: justification = WFS::TableColumns::ClientTablePercentCPU.justification;
+            case 7: justification = TableColumns::ClientTablePercentCPU.justification;
                 break;
-            case 8: justification = WFS::TableColumns::ClientTableModuleID.justification;
+            case 8: justification = TableColumns::ClientTableModuleID.justification;
             default:
                 break;
         }

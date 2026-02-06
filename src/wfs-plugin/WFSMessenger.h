@@ -4,7 +4,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_osc/juce_osc.h>
 
-#include "Utils.h"
+#include "WFSUtils.h"
 
 namespace ananas::WFS
 {

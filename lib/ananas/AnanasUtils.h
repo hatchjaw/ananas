@@ -3,12 +3,17 @@
 
 #include <juce_core/juce_core.h>
 
+#ifndef MAX_CHANNELS_TO_SEND
+#define MAX_CHANNELS_TO_SEND 2
+#endif
+
 namespace ananas
 {
     class Constants
     {
     public:
         constexpr static int64_t NSPS{1'000'000'000};
+
         constexpr static size_t FramesPerPacket{32};
         /**
          * Tweak this value such that clients stay in the middle of their
@@ -22,6 +27,9 @@ namespace ananas
         constexpr static uint16_t FifoCapacityFrames{(1 << 10)};
         constexpr static int FifoReportIntervalMs{2000};
 
+        constexpr static size_t MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
+
+        // TODO: make the local interface IP an option?
         inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
 
         inline const static juce::StringRef AudioSenderThreadName{"Ananas Audio Sender"};
@@ -63,8 +71,8 @@ namespace ananas
         constexpr static int RebootSenderSocketTimeoutMs{500};
 
         inline static const juce::StringRef SwitchInspectorThreadName{"Ananas Switch Inspector"};
-        constexpr static int SwitchInspectorThreadTimeoutMs{1000};
-        constexpr static juce::uint32 SwitchInspectorRequestTimeoutMs{1500};
+        constexpr static int SwitchInspectorThreadTimeoutMs{1100};
+        constexpr static int SwitchInspectorRequestTimeoutS{1};
         inline static const juce::StringRef SwitchMonitorPtpPath{"/rest/system/ptp/monitor"};
         inline static const juce::StringRef SwitchDisablePtpPath{"/rest/system/ptp/disable"};
         inline static const juce::StringRef SwitchEnablePtpPath{"/rest/system/ptp/enable"};
@@ -74,9 +82,29 @@ namespace ananas
         constexpr static uint ThreadConnectWaitIntervalMs{ThreadConnectSleepIntervalMs / ThreadConnectWaitIterations};
     };
 
+    class Strings
+    {
+    public:
+        static juce::String getInputLabel(const size_t channel)
+        {
+            return InputLabel + juce::String{channel};
+        }
+
+        static juce::String getOutputLabel(const size_t channel)
+        {
+            return OutputLabel + juce::String{channel};
+        }
+    private:
+        inline static const juce::StringRef InputLabel{"Input #"};
+        inline static const juce::StringRef OutputLabel{"Output #"};
+    };
+
     class Identifiers
     {
     public:
+        inline static const juce::Identifier DynamicTreeType{"EphemeralData"};
+        inline static const juce::Identifier PersistentTreeType{"PersistentData"};
+
         inline static const juce::Identifier ConnectedClientsParamID{"ConnectedClients"};
 
         inline const static juce::Identifier ClientSerialNumberPropertyID{"serialNumber"};

@@ -3,9 +3,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "AnanasNetworkTable.h"
-#include "../../Utils.h"
 
-namespace ananas
+namespace ananas::UI
 {
     class ClientsOverviewComponent final : public juce::Component,
                                            public juce::ValueTree::Listener,

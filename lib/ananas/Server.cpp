@@ -478,7 +478,8 @@ namespace ananas
     //==========================================================================
 
     Server::SwitchInspector::SwitchInspector(SwitchList &switches)
-        : AnanasThread(Constants::SwitchInspectorThreadName, Constants::SwitchInspectorThreadTimeoutMs), switches(switches)
+        : AnanasThread(Constants::SwitchInspectorThreadName, Constants::SwitchInspectorThreadTimeoutMs),
+          switches(switches)
     {
     }
 
@@ -543,7 +544,7 @@ namespace ananas
         juce::StringArray args;
         args.add("curl");
         args.add("-s"); // Silent, no stats
-        args.add("-m" + juce::String{getTimeout() / 1000}); // Max request time 1 second
+        args.add("-m" + juce::String{Constants::SwitchInspectorRequestTimeoutS});
         args.add("-k"); // Insecure (no TLS)
         args.add("-u"); // Specify username and password
         args.add(username + ":" + password);

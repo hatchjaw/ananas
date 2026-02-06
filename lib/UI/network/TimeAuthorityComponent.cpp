@@ -2,7 +2,8 @@
 
 #include <AnanasUtils.h>
 
-ananas::TimeAuthorityComponent::TimeAuthorityComponent(juce::ValueTree &treeToListenTo)
+namespace ananas::UI {
+TimeAuthorityComponent::TimeAuthorityComponent(juce::ValueTree &treeToListenTo)
     : tree(treeToListenTo)
 {
     addAndMakeVisible(title);
@@ -11,61 +12,61 @@ ananas::TimeAuthorityComponent::TimeAuthorityComponent(juce::ValueTree &treeToLi
     title.setColour(juce::Label::textColourId, juce::Colours::black);
     title.setFont(juce::Font(juce::FontOptions(15.f, juce::Font::bold)));
     title.setJustificationType(juce::Justification::centredLeft);
-    title.setText(WFS::Strings::TimeAuthoritySectionTitle, juce::dontSendNotification);
+    title.setText(Strings::TimeAuthoritySectionTitle, juce::dontSendNotification);
 
     tree.addListener(this);
 }
 
-ananas::TimeAuthorityComponent::~TimeAuthorityComponent()
+TimeAuthorityComponent::~TimeAuthorityComponent()
 {
     tree.removeListener(this);
 }
 
-void ananas::TimeAuthorityComponent::update(juce::var var)
+void TimeAuthorityComponent::update(juce::var var)
 {
     authorityTable.update(var);
 }
 
-void ananas::TimeAuthorityComponent::paint(juce::Graphics &g)
+void TimeAuthorityComponent::paint(juce::Graphics &g)
 {
     g.fillAll(juce::Colours::transparentWhite);
 }
 
-void ananas::TimeAuthorityComponent::resized()
+void TimeAuthorityComponent::resized()
 {
     auto bounds{getLocalBounds()};
     title.setBounds(
-        bounds.removeFromTop(WFS::Constants::UI::NetworkSectionTitleHeight)
+        bounds.removeFromTop(Dimensions::NetworkSectionTitleHeight)
         .reduced(6, 0)
     );
     authorityTable.setBounds(bounds);
 }
 
-void ananas::TimeAuthorityComponent::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
+void TimeAuthorityComponent::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
 {
     if (!isVisible()) return;
 
-    if (property == Identifiers::TimeAuthorityParamID) {
+    if (property == ananas::Identifiers::TimeAuthorityParamID) {
         update(treeWhosePropertyHasChanged[property]);
         handleAsyncUpdate();
     }
 }
 
-void ananas::TimeAuthorityComponent::handleAsyncUpdate()
+void TimeAuthorityComponent::handleAsyncUpdate()
 {
     repaint();
 }
 
 //==============================================================================
 
-ananas::TimeAuthorityComponent::TimeAuthorityTable::TimeAuthorityTable()
+TimeAuthorityComponent::TimeAuthorityTable::TimeAuthorityTable()
 {
     addAndMakeVisible(table);
 
-    addColumn(WFS::TableColumns::AuthorityTableIpAddress);
-    addColumn(WFS::TableColumns::AuthorityTableSerialNumber);
-    addColumn(WFS::TableColumns::AuthorityTableFeedbackAccumulator);
-    addColumn(WFS::TableColumns::AuthorityTableSamplingRate);
+    addColumn(TableColumns::AuthorityTableIpAddress);
+    addColumn(TableColumns::AuthorityTableSerialNumber);
+    addColumn(TableColumns::AuthorityTableFeedbackAccumulator);
+    addColumn(TableColumns::AuthorityTableSamplingRate);
 
     table.setModel(this);
     table.setColour(juce::ListBox::outlineColourId, juce::Colours::black);
@@ -73,21 +74,21 @@ ananas::TimeAuthorityComponent::TimeAuthorityTable::TimeAuthorityTable()
     table.setOutlineThickness(1);
 }
 
-void ananas::TimeAuthorityComponent::TimeAuthorityTable::update(const juce::var &var)
+void TimeAuthorityComponent::TimeAuthorityTable::update(const juce::var &var)
 {
     if (!isVisible()) return;
 
     const auto object{var.getDynamicObject()};
 
-    row.ip = object->getProperty(Identifiers::AuthorityIpPropertyID);
-    row.serialNumber = object->getProperty(Identifiers::AuthoritySerialNumberPropertyID);
+    row.ip = object->getProperty(ananas::Identifiers::AuthorityIpPropertyID);
+    row.serialNumber = object->getProperty(ananas::Identifiers::AuthoritySerialNumberPropertyID);
 
-    const auto feedbackAccumulator{static_cast<int>(object->getProperty(Identifiers::AuthorityFeedbackAccumulatorPropertyID))},
+    const auto feedbackAccumulator{static_cast<int>(object->getProperty(ananas::Identifiers::AuthorityFeedbackAccumulatorPropertyID))},
             feedbackAccumulatorDiff{feedbackAccumulator - Constants::AuthorityInitialUSBFeedbackAccumulator};
 
     row.feedbackAccumulator = juce::String{feedbackAccumulator} + (feedbackAccumulatorDiff >= 0 ? " (+" : " (") + juce::String{feedbackAccumulatorDiff} + ")";
 
-    row.samplingRate = WFS::Utils::formatWithThousandsSeparator(1000 * static_cast<float>(feedbackAccumulator >> 12) / static_cast<float>(1 << 13)) +
+    row.samplingRate = Strings::formatWithThousandsSeparator(1000 * static_cast<float>(feedbackAccumulator >> 12) / static_cast<float>(1 << 13)) +
                        " (0x" + juce::String{feedbackAccumulator >> 28} + "." +
                        juce::String::toHexString(feedbackAccumulator >> 12 & 0xFFFF).paddedLeft('0', 4) + ")";
 
@@ -95,19 +96,19 @@ void ananas::TimeAuthorityComponent::TimeAuthorityTable::update(const juce::var 
     repaint();
 }
 
-int ananas::TimeAuthorityComponent::TimeAuthorityTable::getNumRows()
+int TimeAuthorityComponent::TimeAuthorityTable::getNumRows()
 {
     return 1;
 }
 
-void ananas::TimeAuthorityComponent::TimeAuthorityTable::paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
+void TimeAuthorityComponent::TimeAuthorityTable::paintRowBackground(juce::Graphics &g, int rowNumber, int width, int height, bool rowIsSelected)
 {
     juce::ignoreUnused(width, height, rowNumber, rowIsSelected);
 
     g.fillAll(juce::Colours::white);
 }
 
-void ananas::TimeAuthorityComponent::TimeAuthorityTable::paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
+void TimeAuthorityComponent::TimeAuthorityTable::paintCell(juce::Graphics &g, int rowNumber, int columnId, int width, int height, bool rowIsSelected)
 {
     juce::ignoreUnused(rowIsSelected, rowNumber);
 
@@ -117,16 +118,16 @@ void ananas::TimeAuthorityComponent::TimeAuthorityTable::paintCell(juce::Graphic
 
     switch (columnId) {
         case 1: text = ip;
-            justification = WFS::TableColumns::AuthorityTableIpAddress.justification;
+            justification = TableColumns::AuthorityTableIpAddress.justification;
             break;
         case 2: text = serialNumber;
-            justification = WFS::TableColumns::AuthorityTableSerialNumber.justification;
+            justification = TableColumns::AuthorityTableSerialNumber.justification;
             break;
         case 3: text = feedbackAccumulator;
-            justification = WFS::TableColumns::AuthorityTableFeedbackAccumulator.justification;
+            justification = TableColumns::AuthorityTableFeedbackAccumulator.justification;
             break;
         case 4: text = samplingRate;
-            justification = WFS::TableColumns::AuthorityTableSamplingRate.justification;
+            justification = TableColumns::AuthorityTableSamplingRate.justification;
             break;
         default: break;
     }
@@ -136,7 +137,8 @@ void ananas::TimeAuthorityComponent::TimeAuthorityTable::paintCell(juce::Graphic
     g.drawText(text, 2, 0, width - 4, height, justification, true);
 }
 
-void ananas::TimeAuthorityComponent::TimeAuthorityTable::resized()
+void TimeAuthorityComponent::TimeAuthorityTable::resized()
 {
     table.setBounds(getLocalBounds().reduced(10));
+}
 }

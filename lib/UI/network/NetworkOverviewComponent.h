@@ -4,14 +4,14 @@
 #include "SwitchesComponent.h"
 #include "TimeAuthorityComponent.h"
 #include "ClientsOverviewComponent.h"
-#ifdef SHOW_NO_NETWORK_OVERLAY
+#if SHOW_NO_NETWORK_OVERLAY
 #include "../OverlayableComponent.h"
 #endif
 
-namespace ananas
+namespace ananas::UI
 {
     class NetworkOverviewComponent final :
-#ifdef SHOW_NO_NETWORK_OVERLAY
+#if SHOW_NO_NETWORK_OVERLAY
             public OverlayableComponent
 #else
             public juce::Component

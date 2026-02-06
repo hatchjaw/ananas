@@ -2,18 +2,18 @@
 #define ANANASNETWORKTABLE_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "../../Utils.h"
+#include "../AnanasUIUtils.h"
 
-namespace ananas
+namespace ananas::UI
 {
     class AnanasNetworkTable : public juce::Component,
                                public juce::TableListBoxModel
     {
     protected:
-        void addColumn(const WFS::TableColumns::ColumnHeader &h) const;
+        void addColumn(const TableColumns::ColumnHeader &h) const;
 
         juce::TableListBox table;
     };
-} // ananas
+}
 
 #endif //ANANASNETWORKTABLE_H

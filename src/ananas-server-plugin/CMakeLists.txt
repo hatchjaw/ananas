@@ -2,60 +2,49 @@ set(companyName "Emeraude")
 
 set(companyCode "EMRD")
 
-set(pluginCode Awfs)
+set(pluginCode Asrv)
 
-set(bundleID "org.emeraude.ananas-wfs")
+set(bundleID "org.emeraude.ananas-server")
 
 set(juceFormats Standalone)
 
-# Up to 22 channels @ 32 frames
-# Up to 44 channels @ 16 frames
-set(maxChannels 16)
+set(maxChannels 2)
 
-set(numModules 8)
-
-juce_add_plugin(ananasWFS
+juce_add_plugin(ananasServer
         COMPANY_NAME "${companyName}"
         IS_SYNTH FALSE
         NEEDS_MIDI_INPUT FALSE
         COPY_PLUGIN_AFTER_BUILD TRUE
         PLUGIN_MANUFACTURER_CODE "${companyCode}"
-        PLUGIN_CODE ${pluginCode}
+        PLUGIN_CODE ${PluginCode}
         FORMATS ${juceFormats}
-        PRODUCT_NAME "AnanasWFS"
+        PRODUCT_NAME "AnanasServer"
 )
 
 clap_juce_extensions_plugin(
-        TARGET ananasWFS
+        TARGET ananasServer
         CLAP_ID "${bundleID}"
         CLAP_FEATURES utility
 )
 
-target_compile_definitions(ananasWFS
+target_compile_definitions(ananasServer
         PRIVATE
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
         MAX_CHANNELS_TO_SEND=${maxChannels}
-        NUM_MODULES=${numModules}
         SHOW_NO_NETWORK_OVERLAY=$<BOOL:${SHOW_NO_NETWORK_OVERLAY}>
 )
 
-target_sources(ananasWFS
+target_sources(ananasServer
         PRIVATE
         PluginEditor.cpp
         PluginProcessor.cpp
-        WFSMessenger.cpp
-        UI/LookAndFeel.cpp
-        UI/wfs/WFSInterfaceComponent.cpp
-        UI/wfs/XYControllerComponent.cpp
-        UI/wfs/ModuleComponent.cpp
 )
 
-target_link_libraries(ananasWFS
+target_link_libraries(ananasServer
         PRIVATE
         juce::juce_core
-        juce::juce_osc
         juce::juce_audio_devices
         juce::juce_audio_utils
         clap_juce_extensions

@@ -2,7 +2,7 @@
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
-      tooltipWindow(this, ananas::WFS::Constants::UI::TooltipDelayTimeMs),
+      tooltipWindow(this, ananas::UI::Timing::TooltipDelayTimeMs),
       networkOverview(
           getProcessor().getDynamicTree(),
           getProcessor().getPersistentTree()
@@ -18,16 +18,16 @@ PluginEditor::PluginEditor(PluginProcessor &p)
     setLookAndFeel(&lookAndFeel);
 
     addAndMakeVisible(tabbedComponent);
-    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, juce::Colours::lightgrey, &wfsInterface, false);
-    tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, juce::Colours::lightgrey, &networkOverview, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::WfsTabName, ananas::WFS::UI::Colours::TabBackgroundColour, &wfsInterface, false);
+    tabbedComponent.addTab(ananas::WFS::Strings::NetworkTabName, ananas::WFS::UI::Colours::TabBackgroundColour, &networkOverview, false);
     lookAndFeel.setNumberOfTabs(tabbedComponent.getNumTabs());
 
-    setSize(ananas::WFS::Constants::UI::UiWidth, ananas::WFS::Constants::UI::UiHeight);
+    setSize(ananas::UI::Dimensions::UiWidth, ananas::UI::Dimensions::UiHeight);
 
     getProcessor().getPersistentTree().addListener(this);
     getProcessor().getDynamicTree().addListener(this);
 
-#ifdef SHOW_NO_NETWORK_OVERLAY
+#if SHOW_NO_NETWORK_OVERLAY
     getProcessor().getServer().addChangeListener(&wfsInterface);
     getProcessor().getServer().addChangeListener(&networkOverview);
 #endif
@@ -45,7 +45,7 @@ PluginEditor::~PluginEditor()
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
 
-#ifdef SHOW_NO_NETWORK_OVERLAY
+#if SHOW_NO_NETWORK_OVERLAY
     getProcessor().getServer().removeChangeListener(&wfsInterface);
     getProcessor().getServer().removeChangeListener(&networkOverview);
 #endif
@@ -96,7 +96,7 @@ void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::Applica
                 ananas::WFS::Strings::SwitchToWfsTabDescription,
                 ananas::WFS::Strings::TabsCommandCategoryName,
                 0);
-            result.addDefaultKeypress(ananas::WFS::Constants::UI::SwitchToWfsTabKeycode, juce::ModifierKeys::noModifiers);
+            result.addDefaultKeypress(ananas::WFS::UI::Shortcuts::SwitchToWfsTabKeycode, juce::ModifierKeys::noModifiers);
             break;
 
         case ananas::WFS::SwitchToNetworkTab:
@@ -105,7 +105,7 @@ void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::Applica
                 ananas::WFS::Strings::SwitchToNetworkTabDescription,
                 ananas::WFS::Strings::TabsCommandCategoryName,
                 0);
-            result.addDefaultKeypress(ananas::WFS::Constants::UI::SwitchToNetworkTabKeycode, juce::ModifierKeys::noModifiers);
+            result.addDefaultKeypress(ananas::WFS::UI::Shortcuts::SwitchToNetworkTabKeycode, juce::ModifierKeys::noModifiers);
             break;
 
         case ananas::WFS::ToggleModuleSelectorDisplay:
@@ -114,7 +114,7 @@ void PluginEditor::getCommandInfo(const juce::CommandID commandID, juce::Applica
                 ananas::WFS::Strings::ToggleModuleSelectorsDescription,
                 ananas::WFS::Strings::OptionsCommandCategoryName,
                 0);
-            result.addDefaultKeypress(ananas::WFS::Constants::UI::ToggleModuleSelectorsKeycode, juce::ModifierKeys::noModifiers);
+            result.addDefaultKeypress(ananas::WFS::UI::Shortcuts::ToggleModuleSelectorsKeycode, juce::ModifierKeys::noModifiers);
 
         default:
             break;

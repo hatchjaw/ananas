@@ -3,9 +3,8 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "AnanasNetworkTable.h"
-#include "../../Utils.h"
 
-namespace ananas
+namespace ananas::UI
 {
     class SwitchesComponent final : public juce::Component,
                                     public juce::ValueTree::Listener,
@@ -85,6 +84,6 @@ namespace ananas
         juce::ValueTree &dynamicTree;
         juce::ValueTree &persistentTree;
     };
-} // ananas
+} // ananas::UI
 
 #endif //SWITCHESCOMPONENT_H
