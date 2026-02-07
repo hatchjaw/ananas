@@ -47,11 +47,11 @@ namespace ananas::WFS::UI
         moduleSelector.clear(juce::dontSendNotification);
         moduleSelector.addItemList(ips, 1);
 
-        auto modules{tree.getProperty(ananas::Identifiers::ModulesParamID)};
-        auto varIntN{juce::var{static_cast<int>(index)}};
+        const auto modules{tree.getProperty(ananas::Utils::Identifiers::ModulesParamID)};
+        const auto varIntN{juce::var{index}};
         if (auto *obj = modules.getDynamicObject()) {
             for (const auto &prop: obj->getProperties()) {
-                if (prop.value.getProperty(ananas::Identifiers::ModuleIDPropertyID, 0) == varIntN) {
+                if (prop.value.getProperty(ananas::Utils::Identifiers::ModuleIDPropertyID, 0) == varIntN) {
                     setSelectedModule(prop.name.toString());
                 }
             }
@@ -60,13 +60,13 @@ namespace ananas::WFS::UI
 
     void ModuleComponent::setIndexForModule() const
     {
-        auto modules{tree.getProperty(ananas::Identifiers::ModulesParamID)};
+        auto modules{tree.getProperty(ananas::Utils::Identifiers::ModulesParamID)};
         if (auto *obj = modules.getDynamicObject()) {
             for (const auto &prop: obj->getProperties()) {
                 if (prop.name.toString() == moduleSelector.getText()) {
                     auto module{obj->getProperty(prop.name).getDynamicObject()};
-                    module->setProperty(ananas::Identifiers::ModuleIDPropertyID, static_cast<int>(index));
-                    tree.sendPropertyChangeMessage(ananas::Identifiers::ModulesParamID);
+                    module->setProperty(ananas::Utils::Identifiers::ModuleIDPropertyID, static_cast<int>(index));
+                    tree.sendPropertyChangeMessage(ananas::Utils::Identifiers::ModulesParamID);
                 }
             }
         }

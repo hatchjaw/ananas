@@ -1,5 +1,4 @@
 #include "TimeAuthorityComponent.h"
-
 #include <AnanasUtils.h>
 
 namespace ananas::UI {
@@ -46,7 +45,7 @@ void TimeAuthorityComponent::valueTreePropertyChanged(juce::ValueTree &treeWhose
 {
     if (!isVisible()) return;
 
-    if (property == ananas::Identifiers::TimeAuthorityParamID) {
+    if (property == Utils::Identifiers::TimeAuthorityParamID) {
         update(treeWhosePropertyHasChanged[property]);
         handleAsyncUpdate();
     }
@@ -80,11 +79,11 @@ void TimeAuthorityComponent::TimeAuthorityTable::update(const juce::var &var)
 
     const auto object{var.getDynamicObject()};
 
-    row.ip = object->getProperty(ananas::Identifiers::AuthorityIpPropertyID);
-    row.serialNumber = object->getProperty(ananas::Identifiers::AuthoritySerialNumberPropertyID);
+    row.ip = object->getProperty(Utils::Identifiers::AuthorityIpPropertyID);
+    row.serialNumber = object->getProperty(Utils::Identifiers::AuthoritySerialNumberPropertyID);
 
-    const auto feedbackAccumulator{static_cast<int>(object->getProperty(ananas::Identifiers::AuthorityFeedbackAccumulatorPropertyID))},
-            feedbackAccumulatorDiff{feedbackAccumulator - Constants::AuthorityInitialUSBFeedbackAccumulator};
+    const auto feedbackAccumulator{static_cast<int>(object->getProperty(Utils::Identifiers::AuthorityFeedbackAccumulatorPropertyID))},
+            feedbackAccumulatorDiff{feedbackAccumulator - Utils::Constants::AuthorityInitialUSBFeedbackAccumulator};
 
     row.feedbackAccumulator = juce::String{feedbackAccumulator} + (feedbackAccumulatorDiff >= 0 ? " (+" : " (") + juce::String{feedbackAccumulatorDiff} + ")";
 

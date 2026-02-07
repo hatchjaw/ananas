@@ -2,7 +2,7 @@
 #define PLUGINEDITOR_H
 
 #include "PluginProcessor.h"
-#include <network/NetworkOverviewComponent.h>
+#include <NetworkOverviewComponent.h>
 
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::ValueTree::Listener

@@ -47,7 +47,8 @@ git clone --recurse-submodules https://github.com/hatchjaw/ananas
 
 ## Configure & build
 
-Most straightforward is to use CLion or VSCode with the _CMake Tools_ extension.
+Most straightforward is to use CLion, or VSCode with the _CMake Tools_ 
+extension.
 
 However, from the commandline, configure with:
 

@@ -1,5 +1,6 @@
 #include "ClientInfo.h"
-#include "AnanasUtils.h"
+#include <AnanasUtils.h>
+#include "ServerUtils.h"
 
 namespace ananas
 {
@@ -11,7 +12,7 @@ namespace ananas
 
     bool ClientInfo::isConnected() const
     {
-        return juce::Time::getMillisecondCounter() - lastReceiveTime < Constants::ClientDisconnectedThresholdMs;
+        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocket.disconnectionThresholdMs;
     }
 
     ClientAnnouncePacket ClientInfo::getInfo() const
@@ -39,13 +40,13 @@ namespace ananas
     juce::ValueTree ModuleInfo::toValueTree() const
     {
         juce::ValueTree tree{"Module"};
-        tree.setProperty(Identifiers::ModuleIDPropertyID, static_cast<int>(id), nullptr);
+        tree.setProperty(Utils::Identifiers::ModuleIDPropertyID, static_cast<int>(id), nullptr);
         return tree;
     }
 
     bool ModuleInfo::isConnected() const
     {
-        return juce::Time::getMillisecondCounter() - lastReceiveTime < Constants::ClientDisconnectedThresholdMs;
+        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocket.disconnectionThresholdMs;
     }
 
     bool ModuleInfo::justDisconnected()
@@ -73,7 +74,7 @@ namespace ananas
     ModuleInfo ModuleInfo::fromValueTree(const juce::ValueTree &tree)
     {
         ModuleInfo info;
-        if (const auto &prop{tree.getProperty(Identifiers::ModuleIDPropertyID)}; prop.isInt()) {
+        if (const auto &prop{tree.getProperty(Utils::Identifiers::ModuleIDPropertyID)}; prop.isInt()) {
             const int val{prop};
             info.id = static_cast<uint>(val);
         }
@@ -85,7 +86,7 @@ namespace ananas
     void ClientList::handlePacket(const juce::String &clientIP, const ClientAnnouncePacket *packet)
     {
         if (clients.empty()) {
-            startTimer(Constants::ClientConnectednessCheckIntervalMs);
+            startTimer(Server::Constants::ClientConnectednessCheckIntervalMs);
         }
 
         auto iter{clients.find(clientIP)};
@@ -111,15 +112,15 @@ namespace ananas
         for (const auto &[ip, clientInfo]: clients) {
             auto *client{new juce::DynamicObject()};
             const auto &info{clientInfo.getInfo()};
-            client->setProperty(Identifiers::ClientSerialNumberPropertyID, static_cast<int>(info.serial));
-            client->setProperty(Identifiers::ClientPTPLockPropertyID, info.ptpLock);
-            client->setProperty(Identifiers::ClientPresentationTimeOffsetNsPropertyID, info.presentationOffsetNs);
-            client->setProperty(Identifiers::ClientPresentationTimeOffsetFramePropertyID, info.presentationOffsetFrame);
-            client->setProperty(Identifiers::ClientAudioPTPOffsetPropertyID, info.audioPTPOffsetNs);
-            client->setProperty(Identifiers::ClientBufferFillPercentPropertyID, info.bufferFillPercent);
-            client->setProperty(Identifiers::ClientSamplingRatePropertyID, info.samplingRate);
-            client->setProperty(Identifiers::ClientPercentCPUPropertyID, info.percentCPU);
-            client->setProperty(Identifiers::ClientModuleIDPropertyID, info.moduleID);
+            client->setProperty(Utils::Identifiers::ClientSerialNumberPropertyID, static_cast<int>(info.serial));
+            client->setProperty(Utils::Identifiers::ClientPTPLockPropertyID, info.ptpLock);
+            client->setProperty(Utils::Identifiers::ClientPresentationTimeOffsetNsPropertyID, info.presentationOffsetNs);
+            client->setProperty(Utils::Identifiers::ClientPresentationTimeOffsetFramePropertyID, info.presentationOffsetFrame);
+            client->setProperty(Utils::Identifiers::ClientAudioPTPOffsetPropertyID, info.audioPTPOffsetNs);
+            client->setProperty(Utils::Identifiers::ClientBufferFillPercentPropertyID, info.bufferFillPercent);
+            client->setProperty(Utils::Identifiers::ClientSamplingRatePropertyID, info.samplingRate);
+            client->setProperty(Utils::Identifiers::ClientPercentCPUPropertyID, info.percentCPU);
+            client->setProperty(Utils::Identifiers::ClientModuleIDPropertyID, info.moduleID);
             object->setProperty(ip, client);
         }
 
@@ -143,7 +144,7 @@ namespace ananas
 
     juce::ValueTree ClientList::toValueTree()
     {
-        juce::ValueTree tree(Identifiers::ConnectedClientsParamID);
+        juce::ValueTree tree(Utils::Identifiers::ConnectedClientsParamID);
 
         for (const auto &[ip, _]: clients) {
             juce::ValueTree subTree("Client");
@@ -171,7 +172,7 @@ namespace ananas
     void ModuleList::handlePacket(const juce::String &moduleIP)
     {
         if (modules.empty()) {
-            startTimer(Constants::ClientConnectednessCheckIntervalMs);
+            startTimer(Server::Constants::ClientConnectednessCheckIntervalMs);
         }
 
         auto iter{modules.find(moduleIP)};
@@ -196,8 +197,8 @@ namespace ananas
 
         for (const auto &[ip, m]: modules) {
             auto *module{new juce::DynamicObject()};
-            module->setProperty(Identifiers::ModuleIDPropertyID, static_cast<int>(m.getModuleId()));
-            module->setProperty(Identifiers::ModuleIsConnectedPropertyID, m.isConnected());
+            module->setProperty(Utils::Identifiers::ModuleIDPropertyID, static_cast<int>(m.getModuleId()));
+            module->setProperty(Utils::Identifiers::ModuleIsConnectedPropertyID, m.isConnected());
             object->setProperty(ip, module);
         }
 
@@ -206,7 +207,7 @@ namespace ananas
 
     juce::ValueTree ModuleList::toValueTree() const
     {
-        juce::ValueTree tree(Identifiers::SwitchesParamID);
+        juce::ValueTree tree(Utils::Identifiers::SwitchesParamID);
 
         for (const auto &[ip, m]: modules) {
             auto moduleTree{m.toValueTree()};

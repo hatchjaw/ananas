@@ -9,11 +9,7 @@ namespace ananas
     class AuthorityInfo final : public juce::ChangeBroadcaster
     {
     public:
-        void update();
-
-        juce::String &getIP();
-
-        AuthorityAnnouncePacket &getInfo();
+        void handlePacket(const juce::String &senderIP, AuthorityAnnouncePacket *packet);
 
         juce::var toVar() const;
 

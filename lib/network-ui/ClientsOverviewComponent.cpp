@@ -61,7 +61,7 @@ namespace ananas::UI
     {
         if (!isVisible()) return;
 
-        if (property == ananas::Identifiers::ConnectedClientsParamID) {
+        if (property == Utils::Identifiers::ConnectedClientsParamID) {
             update(treeWhosePropertyHasChanged[property]);
             handleAsyncUpdate();
         }
@@ -74,7 +74,7 @@ namespace ananas::UI
 
     void ClientsOverviewComponent::triggerClientReboot() const
     {
-        tree.setProperty(ananas::Identifiers::ClientsShouldRebootParamID, true, nullptr);
+        tree.setProperty(Utils::Identifiers::ClientsShouldRebootParamID, true, nullptr);
     }
 
     //==========================================================================
@@ -108,10 +108,10 @@ namespace ananas::UI
             for (const auto &prop: props) {
                 if (const auto *client = prop.value.getDynamicObject()) {
                     const juce::int32 presentationTimeOffset{
-                                client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetNsPropertyID)
+                                client->getProperty(Utils::Identifiers::ClientPresentationTimeOffsetNsPropertyID)
                             },
                             audioPTPOffset{
-                                client->getProperty(ananas::Identifiers::ClientAudioPTPOffsetPropertyID)
+                                client->getProperty(Utils::Identifiers::ClientAudioPTPOffsetPropertyID)
                             };
                     const auto offsetTime{presentationTimeOffset + audioPTPOffset};
                     if (offsetTime < minOffsetTime) {
@@ -194,15 +194,15 @@ namespace ananas::UI
                 row.ip = prop.name.toString();
 
                 if (const auto *client = prop.value.getDynamicObject()) {
-                    row.serialNumber = client->getProperty(ananas::Identifiers::ClientSerialNumberPropertyID).toString();
-                    row.ptpLock = client->getProperty(ananas::Identifiers::ClientPTPLockPropertyID);
-                    row.presentationTimeOffsetNs = client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetNsPropertyID);
-                    row.presentationTimeOffsetFrame = client->getProperty(ananas::Identifiers::ClientPresentationTimeOffsetFramePropertyID);
-                    row.audioPTPOffsetNs = client->getProperty(ananas::Identifiers::ClientAudioPTPOffsetPropertyID);
-                    row.bufferFillPercent = client->getProperty(ananas::Identifiers::ClientBufferFillPercentPropertyID);
-                    row.samplingRate = client->getProperty(ananas::Identifiers::ClientSamplingRatePropertyID);
-                    row.percentCPU = client->getProperty(ananas::Identifiers::ClientPercentCPUPropertyID);
-                    row.moduleID = client->getProperty(ananas::Identifiers::ClientModuleIDPropertyID);
+                    row.serialNumber = client->getProperty(Utils::Identifiers::ClientSerialNumberPropertyID).toString();
+                    row.ptpLock = client->getProperty(Utils::Identifiers::ClientPTPLockPropertyID);
+                    row.presentationTimeOffsetNs = client->getProperty(Utils::Identifiers::ClientPresentationTimeOffsetNsPropertyID);
+                    row.presentationTimeOffsetFrame = client->getProperty(Utils::Identifiers::ClientPresentationTimeOffsetFramePropertyID);
+                    row.audioPTPOffsetNs = client->getProperty(Utils::Identifiers::ClientAudioPTPOffsetPropertyID);
+                    row.bufferFillPercent = client->getProperty(Utils::Identifiers::ClientBufferFillPercentPropertyID);
+                    row.samplingRate = client->getProperty(Utils::Identifiers::ClientSamplingRatePropertyID);
+                    row.percentCPU = client->getProperty(Utils::Identifiers::ClientPercentCPUPropertyID);
+                    row.moduleID = client->getProperty(Utils::Identifiers::ClientModuleIDPropertyID);
                 }
 
                 rows.add(row);

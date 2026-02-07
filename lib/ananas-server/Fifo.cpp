@@ -2,10 +2,11 @@
 
 namespace ananas
 {
-    Fifo::Fifo(uint8_t numChannels) : buffer(std::make_unique<juce::AudioBuffer<float> >(numChannels, Constants::FifoCapacityFrames)),
-                                              converter(std::make_unique<FormatConverter>(numChannels, numChannels))
+    Fifo::Fifo(uint8_t numChannels)
+        : buffer(std::make_unique<juce::AudioBuffer<float> >(numChannels, Server::Constants::FifoCapacityFrames)),
+          converter(std::make_unique<FormatConverter>(numChannels, numChannels))
     {
-        startTimer(Constants::FifoReportIntervalMs);
+        startTimer(Server::Constants::FifoReportIntervalMs);
     }
 
     bool Fifo::isReady(const int framesRequested) const

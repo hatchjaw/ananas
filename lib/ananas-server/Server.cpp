@@ -1,12 +1,13 @@
 #include <arpa/inet.h>
 #include "Server.h"
+#include <AnanasUtils.h>
 #include <AuthorityInfo.h>
-#include "AnanasUtils.h"
+#include "ServerUtils.h"
 
-namespace ananas
+namespace ananas::Server
 {
-    Server::Server(const uint8_t numChannelsToSend) : numChannels(numChannelsToSend),
-                                                      fifo(numChannelsToSend)
+    Server::Server(const uint numChannelsToSend) : numChannels(numChannelsToSend),
+                                                   fifo(numChannelsToSend)
     {
         threads.add(new AudioSender(fifo));
         threads.add(new TimestampListener());
@@ -90,8 +91,8 @@ namespace ananas
 
     //==========================================================================
 
-    Server::AnanasThread::AnanasThread(const juce::String &threadName, const int timeoutMs)
-        : Thread(threadName), timeoutMs(timeoutMs)
+    Server::AnanasThread::AnanasThread(const ThreadParams &p)
+        : Thread(p.name), timeoutMs(p.timeoutMs)
     {
     }
 
@@ -120,8 +121,10 @@ namespace ananas
 
     //==========================================================================
 
-    Server::UDPMulticastThread::UDPMulticastThread(const juce::String &threadName, juce::String multicastIP, int timeoutMs)
-        : AnanasThread(threadName, timeoutMs), ip(std::move(multicastIP))
+    Server::UDPMulticastThread::UDPMulticastThread(const ThreadSocket &s)
+        : AnanasThread(s),
+          ip(s.ip),
+          localPort(s.localPort)
     {
     }
 
@@ -141,14 +144,14 @@ namespace ananas
                 return false;
             }
 
-            if (!socket.bindToPort(Constants::AudioSenderSocketLocalPort, Constants::LocalInterfaceIP)) {
+            if (!socket.bindToPort(localPort, Constants::LocalInterfaceIP)) {
                 std::cerr << getThreadName() << " failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
                 sendChangeMessage();
                 return false;
             }
 
-            if (!socket.joinMulticast(Constants::AudioMulticastIP)) {
+            if (!socket.joinMulticast(ip)) {
                 std::cerr << getThreadName() << " failed to join multicast group: " << strerror(errno) << std::endl;
                 sendChangeMessage();
                 socket.shutdown();
@@ -166,11 +169,7 @@ namespace ananas
     //==========================================================================
 
     Server::AudioSender::AudioSender(Fifo &fifo)
-        : UDPMulticastThread(
-              Constants::AudioSenderThreadName,
-              Constants::AudioMulticastIP,
-              Constants::AudioSenderSocketTimeoutMs
-          ),
+        : UDPMulticastThread(Sockets::AudioSenderSocket),
           fifo(fifo)
     {
     }
@@ -221,8 +220,8 @@ namespace ananas
             packet.writeHeader();
             // Write the packet to the socket.
             socket.write(
-                Constants::AudioMulticastIP,
-                Constants::AudioSenderSocketRemotePort,
+                ip,
+                Sockets::AudioSenderSocket.remotePort,
                 packet.getData(),
                 static_cast<int>(packet.getSize())
             );
@@ -236,12 +235,9 @@ namespace ananas
 
     //==========================================================================
 
-    Server::AnnouncementListenerThread::AnnouncementListenerThread(
-        const juce::String &threadName,
-        const juce::String &multicastIP,
-        const int timeoutMs,
-        const int portToListenOn
-    ) : UDPMulticastThread(threadName, multicastIP, timeoutMs), port(portToListenOn)
+    Server::AnnouncementListenerThread::AnnouncementListenerThread(const ListenerThreadSocket &s)
+        : UDPMulticastThread(s),
+          port(s.localPort)
     {
     }
 
@@ -293,13 +289,31 @@ namespace ananas
         return true;
     }
 
+    void Server::AnnouncementListenerThread::runImpl()
+    {
+        std::cout << getThreadName() << " listening..." << std::endl;
+
+        while (!threadShouldExit()) {
+            if (socket.waitUntilReady(true, timeoutMs)) {
+                if (threadShouldExit()) break;
+
+                if (const auto bytesRead{
+                    socket.read(buffer, Constants::ListenerBufferSize, false, senderIP, senderPort)
+                }; bytesRead > 0) {
+                    handlePacket();
+                } else if (bytesRead < 0) {
+                    std::cerr << getThreadName() << ": error reading from socket: " << strerror(errno) << std::endl;
+                }
+            }
+        }
+
+        std::cout << getThreadName() << "stopping." << std::endl;
+    }
+
     //==============================================================================
 
     Server::TimestampListener::TimestampListener()
-        : AnnouncementListenerThread(Constants::TimestampListenerThreadName,
-                                     Constants::PTPMulticastIP,
-                                     Constants::TimestampListenerSocketTimeoutMs,
-                                     Constants::TimestampListenerLocalPort)
+        : AnnouncementListenerThread(Sockets::TimestampListenerSocket)
     {
     }
 
@@ -313,145 +327,67 @@ namespace ananas
         return timestampChanged;
     }
 
-    void Server::TimestampListener::runImpl()
+    void Server::TimestampListener::handlePacket()
     {
-        DBG("Listening for PTP timestamps...");
+        // DBG("Received " << bytesRead << " bytes from " << senderIP << ":" << senderPort);
 
-        while (!threadShouldExit()) {
-            if (socket.waitUntilReady(true, Constants::TimestampListenerSocketTimeoutMs)) {
-                if (threadShouldExit()) break;
+        // Check for Follow_Up message (0x08)
+        if ((buffer[0] & 0x0f) == Constants::PTPFollowUpMessageType) {
+            // DBG("PTP follow-up message received from " << senderIP << ":" << senderPort);
 
-                uint8_t buffer[Constants::TimestampListenerBufferSize];
-                juce::String senderIP;
-                int senderPort;
+            timespec ts{};
 
-                if (const auto bytesRead{
-                        socket.read(buffer, Constants::TimestampListenerBufferSize, false, senderIP, senderPort)
-                    };
-                    bytesRead > 0
-                ) {
-                    // DBG("Received " << bytesRead << " bytes from " << senderIP << ":" << senderPort);
-
-                    // Check for Follow_Up message (0x08)
-                    if ((buffer[0] & 0x0f) == Constants::FollowUpMessageType) {
-                        // DBG("PTP follow-up message received from " << senderIP << ":" << senderPort);
-
-                        timespec ts{};
-
-                        // Extract seconds (6 bytes)
-                        for (int i = 0; i < 6; i++) {
-                            ts.tv_sec = ts.tv_sec << 8 | buffer[34 + i];
-                        }
-
-                        // Extract nanoseconds (4 bytes)
-                        for (int i = 0; i < 4; i++) {
-                            ts.tv_nsec = ts.tv_nsec << 8 | buffer[40 + i];
-                        }
-
-                        // DBG("Timestamp: " << ts.tv_sec << "." << ts.tv_nsec << " --- " << ctime(&ts.tv_sec));
-
-                        timestamp = ts;
-                        timestampChanged = true;
-                        sendSynchronousChangeMessage();
-                        timestampChanged = false;
-                    }
-                } else if (bytesRead < 0) {
-                    DBG("Error receiving data: " << strerror(errno));
-                }
+            // Extract seconds (6 bytes)
+            for (int i = 0; i < 6; i++) {
+                ts.tv_sec = ts.tv_sec << 8 | buffer[34 + i];
             }
-        }
 
-        DBG("Stopping timestamp listener thread");
+            // Extract nanoseconds (4 bytes)
+            for (int i = 0; i < 4; i++) {
+                ts.tv_nsec = ts.tv_nsec << 8 | buffer[40 + i];
+            }
+
+            // DBG("Timestamp: " << ts.tv_sec << "." << ts.tv_nsec << " --- " << ctime(&ts.tv_sec));
+
+            timestamp = ts;
+            timestampChanged = true;
+            sendSynchronousChangeMessage();
+            timestampChanged = false;
+        }
     }
 
     //==============================================================================
 
     Server::ClientListener::ClientListener(ClientList &clients, ModuleList &modules)
-        : AnnouncementListenerThread(
-              Constants::ClientListenerThreadName,
-              Constants::ClientAnnounceMulticastIP,
-              Constants::ClientListenerSocketTimeoutMs,
-              Constants::ClientListenerLocalPort
-          ),
+        : AnnouncementListenerThread(Sockets::ClientListenerSocket),
           clients(clients),
           modules(modules)
     {
     }
 
-    void Server::ClientListener::runImpl()
+    void Server::ClientListener::handlePacket()
     {
-        DBG("Listening for clients...");
-
-        while (!threadShouldExit()) {
-            if (socket.waitUntilReady(true, Constants::ClientListenerSocketTimeoutMs)) {
-                if (threadShouldExit()) break;
-
-                uint8_t buffer[Constants::ClientListenerBufferSize];
-                juce::String senderIP;
-                int senderPort;
-
-                if (const auto bytesRead{
-                        socket.read(buffer, Constants::ClientListenerBufferSize, false, senderIP, senderPort)
-                    };
-                    bytesRead > 0
-                ) {
-                    clients.handlePacket(senderIP, reinterpret_cast<const ClientAnnouncePacket *>(buffer));
-                    modules.handlePacket(senderIP);
-                } else if (bytesRead < 0) {
-                    DBG("Error receiving data: " << strerror(errno));
-                }
-            }
-        }
-
-        DBG("Stopping client listener thread");
+        clients.handlePacket(senderIP, reinterpret_cast<const ClientAnnouncePacket *>(buffer));
+        modules.handlePacket(senderIP);
     }
 
     //==============================================================================
 
     Server::AuthorityListener::AuthorityListener(AuthorityInfo &authority)
-        : AnnouncementListenerThread(
-              Constants::AuthorityListenerThreadName,
-              Constants::AuthorityAnnounceMulticastIP,
-              Constants::AuthorityListenerSocketTimeoutMs,
-              Constants::AuthorityListenerLocalPort
-          ),
+        : AnnouncementListenerThread(Sockets::AuthorityListenerSocket),
           authority(authority)
     {
     }
 
-    void Server::AuthorityListener::runImpl()
+    void Server::AuthorityListener::handlePacket()
     {
-        DBG("Listening for timing authority...");
-
-        while (!threadShouldExit()) {
-            if (socket.waitUntilReady(true, Constants::AuthorityListenerSocketTimeoutMs)) {
-                if (threadShouldExit()) break;
-
-                int senderPort;
-
-                if (const auto bytesRead{
-                        socket.read(&authority.getInfo(), sizeof(AuthorityAnnouncePacket), false, authority.getIP(), senderPort)
-                    };
-                    bytesRead == -1
-                ) {
-                    DBG("Error receiving data: " << strerror(errno));
-                } else {
-                    authority.update();
-                }
-            }
-        }
-
-        DBG("Stopping timing authority listener thread");
+        authority.handlePacket(senderIP, reinterpret_cast<AuthorityAnnouncePacket *>(buffer));
     }
 
     //==========================================================================
 
     Server::RebootSender::RebootSender(ClientList &clients)
-        : UDPMulticastThread(
-              Constants::RebootSenderThreadName,
-              Constants::RebootMulticastIP,
-              Constants::RebootSenderSocketTimeoutMs
-          ),
+        : UDPMulticastThread(Sockets::RebootSenderSocket),
           clients(clients)
     {
     }
@@ -462,8 +398,8 @@ namespace ananas
             if (clients.getShouldReboot()) {
                 clients.setShouldReboot(false);
                 socket.write(
-                    Constants::RebootMulticastIP,
-                    Constants::RebootSenderSocketRemotePort,
+                    ip,
+                    Sockets::RebootSenderSocket.remotePort,
                     nullptr,
                     0
                 );
@@ -478,7 +414,7 @@ namespace ananas
     //==========================================================================
 
     Server::SwitchInspector::SwitchInspector(SwitchList &switches)
-        : AnanasThread(Constants::SwitchInspectorThreadName, Constants::SwitchInspectorThreadTimeoutMs),
+        : AnanasThread(Threads::SwitchInspectorParams),
           switches(switches)
     {
     }
@@ -493,10 +429,10 @@ namespace ananas
             if (auto *obj = switchesVar.getDynamicObject()) {
                 for (const auto &prop: obj->getProperties()) {
                     if (const auto *s = prop.value.getDynamicObject()) {
-                        auto ip{s->getProperty(Identifiers::SwitchIpPropertyID).toString()};
-                        auto username{s->getProperty(Identifiers::SwitchUsernamePropertyID).toString()};
-                        auto password{s->getProperty(Identifiers::SwitchPasswordPropertyID).toString()};
-                        bool shouldResetPtp{s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)};
+                        auto ip{s->getProperty(Utils::Identifiers::SwitchIpPropertyID).toString()};
+                        auto username{s->getProperty(Utils::Identifiers::SwitchUsernamePropertyID).toString()};
+                        auto password{s->getProperty(Utils::Identifiers::SwitchPasswordPropertyID).toString()};
+                        const bool shouldResetPtp{s->getProperty(Utils::Identifiers::SwitchShouldResetPtpPropertyID)};
 
                         if (ip.isEmpty() || username.isEmpty() || password.isEmpty()) break;
 

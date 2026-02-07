@@ -5,7 +5,7 @@
 #include "TimeAuthorityComponent.h"
 #include "ClientsOverviewComponent.h"
 #if SHOW_NO_NETWORK_OVERLAY
-#include "../OverlayableComponent.h"
+#include "OverlayableComponent.h"
 #endif
 
 namespace ananas::UI

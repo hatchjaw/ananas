@@ -1,13 +1,14 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "WFSUtils.h"
+#include <AnanasUtils.h>
 
 PluginProcessor::PluginProcessor()
     : AudioProcessor(getBusesProperties()),
-      server(std::make_unique<ananas::Server>(ananas::WFS::Constants::MaxChannelsToSend)),
+      server(std::make_unique<ananas::Server::Server>(ananas::WFS::Constants::NumSources)),
       apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
-      dynamicTree(ananas::Identifiers::DynamicTreeType),
-      persistentTree(ananas::Identifiers::PersistentTreeType)
+      dynamicTree(ananas::Utils::Identifiers::DynamicTreeType),
+      persistentTree(ananas::Utils::Identifiers::PersistentTreeType)
 {
     server->getClientList()->addChangeListener(this);
     server->getModuleList()->addChangeListener(this);
@@ -15,7 +16,7 @@ PluginProcessor::PluginProcessor()
     server->getSwitches()->addChangeListener(this);
     persistentTree.addListener(&wfsMessenger);
     apvts.addParameterListener(ananas::WFS::Params::SpeakerSpacing.id, &wfsMessenger);
-    for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
+    for (uint n{0}; n < ananas::WFS::Constants::NumSources; ++n) {
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X), &wfsMessenger);
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y), &wfsMessenger);
 
@@ -32,7 +33,7 @@ PluginProcessor::~PluginProcessor()
     server->getSwitches()->removeChangeListener(this);
     persistentTree.removeListener(&wfsMessenger);
     apvts.removeParameterListener(ananas::WFS::Params::SpeakerSpacing.id, &wfsMessenger);
-    for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
+    for (uint n{0}; n < ananas::WFS::Constants::NumSources; ++n) {
         apvts.removeParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X), &wfsMessenger);
         apvts.removeParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y), &wfsMessenger);
     }
@@ -172,12 +173,12 @@ void PluginProcessor::setStateInformation(const void *data, int size)
         if (tree.isValid()) {
             apvts.replaceState(tree);
 
-            const auto switchListTree{tree.getChildWithName(ananas::Identifiers::SwitchesParamID)};
+            const auto switchListTree{tree.getChildWithName(ananas::Utils::Identifiers::SwitchesParamID)};
             if (switchListTree.isValid()) {
                 getServer().getSwitches()->fromValueTree(switchListTree);
             }
 
-            const auto moduleListTree{tree.getChildWithName(ananas::Identifiers::ModulesParamID)};
+            const auto moduleListTree{tree.getChildWithName(ananas::Utils::Identifiers::ModulesParamID)};
             if (moduleListTree.isValid()) {
                 getServer().getModuleList()->fromValueTree(moduleListTree);
             }
@@ -188,26 +189,26 @@ void PluginProcessor::setStateInformation(const void *data, int size)
 void PluginProcessor::changeListenerCallback(juce::ChangeBroadcaster *source)
 {
     if (const auto *clients = dynamic_cast<ananas::ClientList *>(source)) {
-        dynamicTree.setProperty(ananas::Identifiers::ConnectedClientsParamID, clients->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Utils::Identifiers::ConnectedClientsParamID, clients->toVar(), nullptr);
     } else if (const auto *modules = dynamic_cast<ananas::ModuleList *>(source)) {
-        persistentTree.setProperty(ananas::Identifiers::ModulesParamID, modules->toVar(), nullptr);
+        persistentTree.setProperty(ananas::Utils::Identifiers::ModulesParamID, modules->toVar(), nullptr);
 
         wfsMessenger.parameterChanged(
             ananas::WFS::Params::SpeakerSpacing.id,
             apvts.getRawParameterValue(ananas::WFS::Params::SpeakerSpacing.id)->load()
         );
 
-        for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
+        for (uint n{0}; n < ananas::WFS::Constants::NumSources; ++n) {
             auto idX{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X)},
                     idY{ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y)};
             wfsMessenger.parameterChanged(idX, apvts.getRawParameterValue(idX)->load());
             wfsMessenger.parameterChanged(idY, apvts.getRawParameterValue(idY)->load());
         }
     } else if (const auto *authority = dynamic_cast<ananas::AuthorityInfo *>(source)) {
-        dynamicTree.setProperty(ananas::Identifiers::TimeAuthorityParamID, authority->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Utils::Identifiers::TimeAuthorityParamID, authority->toVar(), nullptr);
     } else if (const auto *switches = dynamic_cast<ananas::SwitchList *>(source)) {
-        persistentTree.setProperty(ananas::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
-        dynamicTree.setProperty(ananas::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
+        persistentTree.setProperty(ananas::Utils::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
+        dynamicTree.setProperty(ananas::Utils::Identifiers::SwitchesParamID, switches->toVar(), nullptr);
     }
 }
 
@@ -241,7 +242,7 @@ const juce::ValueTree &PluginProcessor::getPersistentTree() const
     return persistentTree;
 }
 
-ananas::Server &PluginProcessor::getServer() const
+ananas::Server::Server &PluginProcessor::getServer() const
 {
     return *server;
 }
@@ -255,9 +256,9 @@ juce::AudioProcessor::BusesProperties PluginProcessor::getBusesProperties()
 {
     BusesProperties buses;
 
-    for (size_t i{1}; i <= ananas::Constants::MaxChannelsToSend; ++i) {
-        buses.addBus(true, ananas::Strings::getInputLabel(i), juce::AudioChannelSet::mono());
-        buses.addBus(false, ananas::Strings::getOutputLabel(i), juce::AudioChannelSet::mono());
+    for (size_t i{1}; i <= ananas::WFS::Constants::NumSources; ++i) {
+        buses.addBus(true, ananas::Utils::Strings::getInputLabel(i), juce::AudioChannelSet::mono());
+        buses.addBus(false, ananas::Utils::Strings::getOutputLabel(i), juce::AudioChannelSet::mono());
     }
 
     return buses;
@@ -280,7 +281,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createParam
         ananas::WFS::Params::ShowModuleSelectors.defaultValue
     ));
 
-    for (uint n{0}; n < ananas::WFS::Constants::MaxChannelsToSend; ++n) {
+    for (uint n{0}; n < ananas::WFS::Constants::NumSources; ++n) {
         params.add(std::make_unique<juce::AudioParameterFloat>(
             ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X),
             ananas::WFS::Params::getSourcePositionParamName(n, ananas::WFS::SourcePositionAxis::X),

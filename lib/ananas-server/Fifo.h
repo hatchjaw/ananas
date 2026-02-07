@@ -3,7 +3,7 @@
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_events/juce_events.h>
-#include "AnanasUtils.h"
+#include "ServerUtils.h"
 
 using FormatConverter = juce::AudioData::ConverterInstance<
     juce::AudioData::Pointer<
@@ -52,7 +52,7 @@ namespace ananas
         void abortRead();
 
     private:
-        juce::AbstractFifo fifo{Constants::FifoCapacityFrames};
+        juce::AbstractFifo fifo{Server::Constants::FifoCapacityFrames};
         std::unique_ptr<juce::AudioBuffer<float>> buffer;
         std::unique_ptr<FormatConverter> converter;
         std::mutex mutex;

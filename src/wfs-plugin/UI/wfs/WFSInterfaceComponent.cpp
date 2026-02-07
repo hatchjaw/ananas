@@ -69,7 +69,7 @@ namespace ananas::WFS::UI
         persistentTree.addListener(this);
 
         // Set initial moduleIDs from the persistent tree... todo: needs to be fixed
-        updateModuleLists(persistentTree[ananas::Identifiers::ModulesParamID]);
+        updateModuleLists(persistentTree[ananas::Utils::Identifiers::ModulesParamID]);
     }
 
     WFSInterfaceComponent::~WFSInterfaceComponent()
@@ -126,7 +126,7 @@ namespace ananas::WFS::UI
         if (auto *obj = var.getDynamicObject()) {
             for (const auto &prop: obj->getProperties()) {
                 auto module{obj->getProperty(prop.name)};
-                if (module.getProperty(ananas::Identifiers::ModuleIsConnectedPropertyID, false)) {
+                if (module.getProperty(ananas::Utils::Identifiers::ModuleIsConnectedPropertyID, false)) {
                     ips.add(prop.name.toString());
                 }
             }
@@ -140,7 +140,7 @@ namespace ananas::WFS::UI
     {
         if (!isVisible()) return;
 
-        if (property == ananas::Identifiers::ModulesParamID) {
+        if (property == ananas::Utils::Identifiers::ModulesParamID) {
             updateModuleLists(treeWhosePropertyHasChanged[property]);
         }
     }

@@ -3,7 +3,7 @@
 
 #include "PluginProcessor.h"
 #include "UI/LookAndFeel.h"
-#include <network/NetworkOverviewComponent.h>
+#include <NetworkOverviewComponent.h>
 #include "UI/wfs/WFSInterfaceComponent.h"
 
 class PluginEditor final : public juce::AudioProcessorEditor,

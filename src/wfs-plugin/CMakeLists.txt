@@ -8,9 +8,9 @@ set(bundleID "org.emeraude.ananas-wfs")
 
 set(juceFormats Standalone)
 
-# Up to 22 channels @ 32 frames
-# Up to 44 channels @ 16 frames
-set(maxChannels 16)
+# Up to 22 sources @ 32 frames
+# Up to 44 sources @ 16 frames
+set(numSources 16)
 
 set(numModules 8)
 
@@ -36,7 +36,7 @@ target_compile_definitions(ananasWFS
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
-        MAX_CHANNELS_TO_SEND=${maxChannels}
+        NUM_SOURCES=${numSources}
         NUM_MODULES=${numModules}
         SHOW_NO_NETWORK_OVERLAY=$<BOOL:${SHOW_NO_NETWORK_OVERLAY}>
 )
@@ -52,6 +52,11 @@ target_sources(ananasWFS
         UI/wfs/ModuleComponent.cpp
 )
 
+target_include_directories(ananasWFS
+        PRIVATE
+        ${CMAKE_SOURCE_DIR}/lib/ananas-utilities
+)
+
 target_link_libraries(ananasWFS
         PRIVATE
         juce::juce_core
@@ -59,6 +64,7 @@ target_link_libraries(ananasWFS
         juce::juce_audio_devices
         juce::juce_audio_utils
         clap_juce_extensions
+        ananas_utilities
         ananas_server
         ananas_network_overview
         PUBLIC

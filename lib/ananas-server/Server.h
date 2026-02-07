@@ -8,14 +8,14 @@
 #include "Fifo.h"
 #include "Packet.h"
 
-namespace ananas
+namespace ananas::Server
 {
     class Server final : public juce::AudioSource,
                          public juce::ChangeListener,
                          public juce::ChangeBroadcaster
     {
     public:
-        explicit Server(uint8_t numChannelsToSend);
+        explicit Server(uint numChannelsToSend);
 
         ~Server() override;
 
@@ -44,7 +44,7 @@ namespace ananas
                              public ChangeBroadcaster
         {
         public:
-            AnanasThread(const juce::String &threadName, int timeoutMs);
+            explicit AnanasThread(const ThreadParams &p);
 
             virtual bool connect() = 0;
 
@@ -66,7 +66,7 @@ namespace ananas
         class UDPMulticastThread : public AnanasThread
         {
         public:
-            UDPMulticastThread(const juce::String &threadName, juce::String multicastIP, int timeoutMs);
+            explicit UDPMulticastThread(const ThreadSocket &s);
 
             ~UDPMulticastThread() override;
 
@@ -77,6 +77,7 @@ namespace ananas
 
             juce::DatagramSocket socket;
             juce::String ip;
+            juce::uint16 localPort;
         };
 
         //======================================================================
@@ -113,14 +114,19 @@ namespace ananas
         class AnnouncementListenerThread : public UDPMulticastThread
         {
         public:
-            AnnouncementListenerThread(const juce::String &threadName, const juce::String &multicastIP, int timeoutMs, int portToListenOn);
+            explicit AnnouncementListenerThread(const ListenerThreadSocket &s);
 
             bool connect() override;
 
         protected:
-            void runImpl() override = 0;
+            void runImpl() override;
 
-            int port;
+            virtual void handlePacket() = 0;
+
+            juce::uint16 port;
+            uint8_t buffer[Constants::ListenerBufferSize]{};
+            juce::String senderIP{};
+            int senderPort{0};
         };
 
         //======================================================================
@@ -138,7 +144,7 @@ namespace ananas
             bool getTimestampChanged() const;
 
         protected:
-            void runImpl() override;
+            void handlePacket() override;
 
         private:
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TimestampListener);
@@ -154,7 +160,7 @@ namespace ananas
             ClientListener(ClientList &clients, ModuleList &modules);
 
         protected:
-            void runImpl() override;
+            void handlePacket() override;
 
         private:
             ClientList &clients;
@@ -171,7 +177,7 @@ namespace ananas
             explicit AuthorityListener(AuthorityInfo &authority);
 
         protected:
-            void runImpl() override;
+            void handlePacket() override;
 
         private:
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AuthorityListener);
@@ -204,9 +210,10 @@ namespace ananas
         public:
             explicit SwitchInspector(SwitchList &switches);
 
-            void runImpl() override;
-
             bool connect() override;
+
+        protected:
+            void runImpl() override;
 
         private:
             SwitchList &switches;
@@ -235,7 +242,7 @@ namespace ananas
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Server)
 
-        uint8_t numChannels;
+        uint numChannels;
         Fifo fifo;
         SwitchList switches;
         ClientList clients;

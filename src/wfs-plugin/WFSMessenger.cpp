@@ -35,11 +35,11 @@ namespace ananas::WFS
     {
         if (!connected) { return; }
 
-        if (property == ananas::Identifiers::ModulesParamID) {
+        if (property == ananas::Utils::Identifiers::ModulesParamID) {
             if (auto *obj = treeWhosePropertyHasChanged[property].getDynamicObject()) {
                 for (const auto &prop: obj->getProperties()) {
                     auto module{obj->getProperty(prop.name)};
-                    auto id{module.getProperty(ananas::Identifiers::ModuleIDPropertyID, 0)};
+                    auto id{module.getProperty(ananas::Utils::Identifiers::ModuleIDPropertyID, 0)};
                     auto path{Params::getModuleIndexParamID(id)};
                     juce::OSCBundle bundle;
                     DBG("Sending OSC: " << path << " " << prop.name);

@@ -5,10 +5,6 @@
 #include <juce_core/juce_core.h>
 #include <juce_graphics/juce_graphics.h>
 
-#ifndef MAX_CHANNELS_TO_SEND
-#define MAX_CHANNELS_TO_SEND 16
-#endif
-
 #ifndef NUM_MODULES
 #define NUM_MODULES 8
 #endif
@@ -26,7 +22,7 @@ namespace ananas::WFS
     {
     public:
         // For the following, see ananas-client wfsParams.lib
-        constexpr static uint MaxChannelsToSend{MAX_CHANNELS_TO_SEND};
+        constexpr static uint NumSources{NUM_SOURCES};
         constexpr static uint NumModules{NUM_MODULES};
         // TODO: receive min/max y-coordinates from clients?
         constexpr static int MaxYMetres{10};
@@ -96,7 +92,7 @@ namespace ananas::WFS
 
         static float getSourcePositionDefaultX(const uint sourceIndex)
         {
-            return -1.f + (2.f * (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::MaxChannelsToSend);
+            return -1.f + (2.f * (static_cast<float>(sourceIndex) + SourcePositionDefaultX) / Constants::NumSources);
         }
 
         static juce::String getModuleIndexParamID(const int index)

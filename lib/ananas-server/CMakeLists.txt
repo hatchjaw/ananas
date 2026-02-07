@@ -19,6 +19,7 @@ target_include_directories(ananas_server
 )
 
 target_link_libraries(ananas_server
-        PRIVATE
+        PUBLIC
         juce::juce_audio_basics
+        ananas_utilities
 )

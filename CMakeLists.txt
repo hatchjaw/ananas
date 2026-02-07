@@ -7,9 +7,11 @@ add_subdirectory(JUCE)
 
 add_subdirectory(clap-juce-extensions EXCLUDE_FROM_ALL)
 
-add_subdirectory(lib/ananas)
+add_subdirectory(lib/ananas-utilities)
 
-add_subdirectory(lib/UI)
+add_subdirectory(lib/ananas-server)
+
+add_subdirectory(lib/network-ui)
 
 add_subdirectory(src/console-app)
 

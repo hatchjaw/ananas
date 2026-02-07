@@ -59,7 +59,7 @@ public:
 
     const juce::ValueTree &getPersistentTree() const;
 
-    ananas::Server &getServer() const;
+    ananas::Server::Server &getServer() const;
 
     juce::HashMap<int, std::atomic<float> *> &getSourceAmplitudes();
 
@@ -68,7 +68,9 @@ private:
 
     static BusesProperties getBusesProperties();
 
-    std::unique_ptr<ananas::Server> server;
+    constexpr static uint NumChannelsToSend{NUM_CHANNELS_TO_SEND};
+
+    std::unique_ptr<ananas::Server::Server> server;
 
     // For handling data that is not known until runtime.
     juce::ValueTree dynamicTree;

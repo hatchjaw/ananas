@@ -64,7 +64,7 @@ public:
 
     const juce::ValueTree &getPersistentTree() const;
 
-    ananas::Server &getServer() const;
+    ananas::Server::Server &getServer() const;
 
     juce::HashMap<int, std::atomic<float> *> &getSourceAmplitudes();
 
@@ -75,7 +75,7 @@ private:
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-    std::unique_ptr<ananas::Server> server;
+    std::unique_ptr<ananas::Server::Server> server;
 
     ananas::WFS::WFSMessenger wfsMessenger;
 

@@ -75,7 +75,7 @@ namespace ananas::UI
     {
         if (!isVisible()) return;
 
-        if (property == ananas::Identifiers::SwitchesParamID) {
+        if (property == Utils::Identifiers::SwitchesParamID) {
             update(treeWhosePropertyHasChanged[property]);
             handleAsyncUpdate();
         }
@@ -90,42 +90,42 @@ namespace ananas::UI
     {
         juce::Random r;
 
-        const auto switchID{juce::Identifier{ananas::Identifiers::SwitchIdentifierBase + juce::String{abs(r.nextInt())}}};
+        const auto switchID{juce::Identifier{Utils::Identifiers::SwitchIdentifierBase + juce::String{abs(r.nextInt())}}};
 
         updateSwitch(switchID, 0, "");
     }
 
     void SwitchesComponent::removeSwitch(const juce::Identifier &switchID) const
     {
-        const auto switchesVar{persistentTree.getProperty(ananas::Identifiers::SwitchesParamID)};
+        const auto switchesVar{persistentTree.getProperty(Utils::Identifiers::SwitchesParamID)};
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
         const auto switchVar = switchesObject->getProperty(switchID);
-        switchVar.getDynamicObject()->setProperty(ananas::Identifiers::SwitchShouldRemovePropertyID, true);
+        switchVar.getDynamicObject()->setProperty(Utils::Identifiers::SwitchShouldRemovePropertyID, true);
         switchesObject->setProperty(switchID, switchVar);
 
-        persistentTree.setProperty(ananas::Identifiers::SwitchesParamID, switchesVar, nullptr);
-        persistentTree.sendPropertyChangeMessage(ananas::Identifiers::SwitchesParamID);
+        persistentTree.setProperty(Utils::Identifiers::SwitchesParamID, switchesVar, nullptr);
+        persistentTree.sendPropertyChangeMessage(Utils::Identifiers::SwitchesParamID);
     }
 
     void SwitchesComponent::resetPtpForSwitch(const juce::Identifier &switchID) const
     {
-        const auto switchesVar{dynamicTree.getProperty(ananas::Identifiers::SwitchesParamID)};
+        const auto switchesVar{dynamicTree.getProperty(Utils::Identifiers::SwitchesParamID)};
 
         const auto switchesObject{switchesVar.getDynamicObject()};
 
         const auto switchVar = switchesObject->getProperty(switchID);
-        switchVar.getDynamicObject()->setProperty(ananas::Identifiers::SwitchShouldResetPtpPropertyID, true);
+        switchVar.getDynamicObject()->setProperty(Utils::Identifiers::SwitchShouldResetPtpPropertyID, true);
         switchesObject->setProperty(switchID, switchVar);
 
-        dynamicTree.setProperty(ananas::Identifiers::SwitchesParamID, switchesVar, nullptr);
-        dynamicTree.sendPropertyChangeMessage(ananas::Identifiers::SwitchesParamID);
+        dynamicTree.setProperty(Utils::Identifiers::SwitchesParamID, switchesVar, nullptr);
+        dynamicTree.sendPropertyChangeMessage(Utils::Identifiers::SwitchesParamID);
     }
 
     void SwitchesComponent::updateSwitch(const juce::Identifier &switchID, const int col, const juce::String &content) const
     {
-        auto switchesVar{persistentTree.getProperty(ananas::Identifiers::SwitchesParamID)};
+        auto switchesVar{persistentTree.getProperty(Utils::Identifiers::SwitchesParamID)};
 
         if (!switchesVar.isObject()) {
             switchesVar = new juce::DynamicObject;
@@ -136,9 +136,9 @@ namespace ananas::UI
         auto rowVar = switchesObject->getProperty(switchID);
         if (!rowVar.isObject()) {
             rowVar = new juce::DynamicObject;
-            rowVar.getDynamicObject()->setProperty(ananas::Identifiers::SwitchIpPropertyID, "");
-            rowVar.getDynamicObject()->setProperty(ananas::Identifiers::SwitchUsernamePropertyID, "");
-            rowVar.getDynamicObject()->setProperty(ananas::Identifiers::SwitchPasswordPropertyID, "");
+            rowVar.getDynamicObject()->setProperty(Utils::Identifiers::SwitchIpPropertyID, "");
+            rowVar.getDynamicObject()->setProperty(Utils::Identifiers::SwitchUsernamePropertyID, "");
+            rowVar.getDynamicObject()->setProperty(Utils::Identifiers::SwitchPasswordPropertyID, "");
             switchesObject->setProperty(switchID, rowVar);
         }
 
@@ -146,18 +146,18 @@ namespace ananas::UI
 
         // Update the appropriate property based on column ID
         switch (col) {
-            case 1: rowObject->setProperty(ananas::Identifiers::SwitchIpPropertyID, content);
+            case 1: rowObject->setProperty(Utils::Identifiers::SwitchIpPropertyID, content);
                 break;
-            case 2: rowObject->setProperty(ananas::Identifiers::SwitchUsernamePropertyID, content);
+            case 2: rowObject->setProperty(Utils::Identifiers::SwitchUsernamePropertyID, content);
                 break;
-            case 3: rowObject->setProperty(ananas::Identifiers::SwitchPasswordPropertyID, content);
+            case 3: rowObject->setProperty(Utils::Identifiers::SwitchPasswordPropertyID, content);
                 break;
             default: break;
         }
 
         // Write back to trigger change notification
-        persistentTree.setProperty(ananas::Identifiers::SwitchesParamID, switchesVar, nullptr);
-        persistentTree.sendPropertyChangeMessage(ananas::Identifiers::SwitchesParamID);
+        persistentTree.setProperty(Utils::Identifiers::SwitchesParamID, switchesVar, nullptr);
+        persistentTree.sendPropertyChangeMessage(Utils::Identifiers::SwitchesParamID);
     }
 
     //==========================================================================
@@ -192,11 +192,11 @@ namespace ananas::UI
 
                 if (const auto *theSwitch = prop.value.getDynamicObject()) {
                     row.id = prop.name;
-                    row.ip = theSwitch->getProperty(ananas::Identifiers::SwitchIpPropertyID);
-                    row.username = theSwitch->getProperty(ananas::Identifiers::SwitchUsernamePropertyID);
-                    row.password = theSwitch->getProperty(ananas::Identifiers::SwitchPasswordPropertyID);
-                    row.freqDriftPPB = theSwitch->getProperty(ananas::Identifiers::SwitchFreqDriftPropertyId);
-                    row.offsetNS = theSwitch->getProperty(ananas::Identifiers::SwitchOffsetPropertyId);
+                    row.ip = theSwitch->getProperty(Utils::Identifiers::SwitchIpPropertyID);
+                    row.username = theSwitch->getProperty(Utils::Identifiers::SwitchUsernamePropertyID);
+                    row.password = theSwitch->getProperty(Utils::Identifiers::SwitchPasswordPropertyID);
+                    row.freqDriftPPB = theSwitch->getProperty(Utils::Identifiers::SwitchFreqDriftPropertyId);
+                    row.offsetNS = theSwitch->getProperty(Utils::Identifiers::SwitchOffsetPropertyId);
                 }
 
                 rows.add(row);

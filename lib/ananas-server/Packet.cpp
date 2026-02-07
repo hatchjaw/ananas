@@ -1,5 +1,5 @@
 #include "Packet.h"
-#include "AnanasUtils.h"
+#include "ServerUtils.h"
 
 namespace ananas
 {
@@ -13,8 +13,8 @@ namespace ananas
         // Compute the nanosecond packet timestamp interval. This may not be an
         // integer, so calculate the remainder too, so this can be accumulated
         // (somewhat) accurately.
-        nsPerPacket = Constants::NSPS * framesPerPacket / static_cast<int>(sampleRate);
-        nsPerPacketRemainder = static_cast<double>(Constants::NSPS) * framesPerPacket / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
+        nsPerPacket = Server::Constants::NSPS * framesPerPacket / static_cast<int>(sampleRate);
+        nsPerPacketRemainder = static_cast<double>(Server::Constants::NSPS) * framesPerPacket / static_cast<int>(sampleRate) - static_cast<double>(nsPerPacket);
         // Audio packets will be transmitted in bursts according to the number
         // of frames available in the FIFO. E.g., for a host buffer size of 128
         // frames, and a framesPerPacket value of 32, four packets will be
@@ -23,7 +23,7 @@ namespace ananas
         // disruptive to reception of PTP packets, client-side.
         nsSleepInterval = nsPerPacket * 1 / 62;
 
-        clientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * Constants::ClientPacketBufferSize;
+        clientBufferDuration = (static_cast<double>(nsPerPacket) + nsPerPacketRemainder) * Server::Constants::ClientPacketBufferSize;
 
         std::cout << framesPerPacket << "/" << sampleRate << " = " <<
                 nsPerPacket << " + " << nsPerPacketRemainder << " ns per block. " <<
@@ -51,7 +51,7 @@ namespace ananas
         // Set the time a little ahead; a reproduction offset, and something to
         // compensate for the fact that it took a little while for the follow-up
         // message to arrive.
-        const auto newTime{ts.tv_sec * Constants::NSPS + ts.tv_nsec + Constants::PacketOffsetNs};
+        const auto newTime{ts.tv_sec * Server::Constants::NSPS + ts.tv_nsec + Server::Constants::PacketOffsetNs};
 
         // If the difference between the new time and the current packet
         // timestamp exceeds what can possibly be available at the client,

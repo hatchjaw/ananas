@@ -2,7 +2,7 @@
 #define ANANASNETWORKTABLE_H
 
 #include <juce_gui_basics/juce_gui_basics.h>
-#include "../AnanasUIUtils.h"
+#include "AnanasUIUtils.h"
 
 namespace ananas::UI
 {

@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 #include <AnanasUIUtils.h>
+#include <AnanasUtils.h>
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
@@ -43,9 +44,9 @@ void PluginEditor::resized()
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
 {
-    if (property == ananas::Identifiers::SwitchesParamID) {
+    if (property == ananas::Utils::Identifiers::SwitchesParamID) {
         getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
-    } else if (property == ananas::Identifiers::ClientsShouldRebootParamID) {
+    } else if (property == ananas::Utils::Identifiers::ClientsShouldRebootParamID) {
         getProcessor().getServer().getClientList()->setShouldReboot(treeWhosePropertyHasChanged[property]);
         treeWhosePropertyHasChanged.setPropertyExcludingListener(this, property, false, nullptr);
     }

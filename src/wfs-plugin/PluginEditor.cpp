@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include <AnanasUtils.h>
 
 PluginEditor::PluginEditor(PluginProcessor &p)
     : AudioProcessorEditor(&p),
@@ -8,7 +9,7 @@ PluginEditor::PluginEditor(PluginProcessor &p)
           getProcessor().getPersistentTree()
       ),
       wfsInterface(
-          ananas::WFS::Constants::MaxChannelsToSend,
+          ananas::WFS::Constants::NumSources,
           ananas::WFS::Constants::NumModules,
           getProcessor().getParamState(),
           getProcessor().getPersistentTree(),
@@ -65,9 +66,9 @@ void PluginEditor::resized()
 
 void PluginEditor::valueTreePropertyChanged(juce::ValueTree &treeWhosePropertyHasChanged, const juce::Identifier &property)
 {
-    if (property == ananas::Identifiers::SwitchesParamID) {
+    if (property == ananas::Utils::Identifiers::SwitchesParamID) {
         getProcessor().getServer().getSwitches()->handleEdit(treeWhosePropertyHasChanged[property]);
-    } else if (property == ananas::Identifiers::ClientsShouldRebootParamID) {
+    } else if (property == ananas::Utils::Identifiers::ClientsShouldRebootParamID) {
         getProcessor().getServer().getClientList()->setShouldReboot(treeWhosePropertyHasChanged[property]);
         treeWhosePropertyHasChanged.setPropertyExcludingListener(this, property, false, nullptr);
     }

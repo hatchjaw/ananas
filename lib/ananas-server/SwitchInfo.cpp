@@ -1,4 +1,5 @@
 #include "SwitchInfo.h"
+#include "ServerUtils.h"
 #include <AnanasUtils.h>
 
 namespace ananas
@@ -7,14 +8,14 @@ namespace ananas
     {
         info = *response;
         const auto *obj{response->getDynamicObject()};
-        if (obj->hasProperty(Identifiers::SwitchClockIdPropertyId)) {
-            clockID = obj->getProperty(Identifiers::SwitchClockIdPropertyId);
+        if (obj->hasProperty(Utils::Identifiers::SwitchClockIdPropertyId)) {
+            clockID = obj->getProperty(Utils::Identifiers::SwitchClockIdPropertyId);
         }
-        if (obj->hasProperty(Identifiers::SwitchFreqDriftPropertyId)) {
-            freqDrift = obj->getProperty(Identifiers::SwitchFreqDriftPropertyId);
+        if (obj->hasProperty(Utils::Identifiers::SwitchFreqDriftPropertyId)) {
+            freqDrift = obj->getProperty(Utils::Identifiers::SwitchFreqDriftPropertyId);
         }
-        if (obj->hasProperty(Identifiers::SwitchOffsetPropertyId)) {
-            offset = obj->getProperty(Identifiers::SwitchOffsetPropertyId);
+        if (obj->hasProperty(Utils::Identifiers::SwitchOffsetPropertyId)) {
+            offset = obj->getProperty(Utils::Identifiers::SwitchOffsetPropertyId);
         }
     }
 
@@ -22,12 +23,12 @@ namespace ananas
     {
         const auto object{new juce::DynamicObject()};
 
-        object->setProperty(Identifiers::SwitchIpPropertyID, ip);
-        object->setProperty(Identifiers::SwitchUsernamePropertyID, username);
-        object->setProperty(Identifiers::SwitchPasswordPropertyID, password);
-        object->setProperty(Identifiers::SwitchFreqDriftPropertyId, static_cast<int>(freqDrift));
-        object->setProperty(Identifiers::SwitchOffsetPropertyId, static_cast<int>(offset));
-        object->setProperty(Identifiers::SwitchShouldResetPtpPropertyID, shouldResetPtp);
+        object->setProperty(Utils::Identifiers::SwitchIpPropertyID, ip);
+        object->setProperty(Utils::Identifiers::SwitchUsernamePropertyID, username);
+        object->setProperty(Utils::Identifiers::SwitchPasswordPropertyID, password);
+        object->setProperty(Utils::Identifiers::SwitchFreqDriftPropertyId, static_cast<int>(freqDrift));
+        object->setProperty(Utils::Identifiers::SwitchOffsetPropertyId, static_cast<int>(offset));
+        object->setProperty(Utils::Identifiers::SwitchShouldResetPtpPropertyID, shouldResetPtp);
 
         return object;
     }
@@ -35,18 +36,18 @@ namespace ananas
     juce::ValueTree SwitchInfo::toValueTree() const
     {
         juce::ValueTree tree("Switch");
-        tree.setProperty(Identifiers::SwitchIpPropertyID, ip, nullptr);
-        tree.setProperty(Identifiers::SwitchUsernamePropertyID, username, nullptr);
-        tree.setProperty(Identifiers::SwitchPasswordPropertyID, password, nullptr);
+        tree.setProperty(Utils::Identifiers::SwitchIpPropertyID, ip, nullptr);
+        tree.setProperty(Utils::Identifiers::SwitchUsernamePropertyID, username, nullptr);
+        tree.setProperty(Utils::Identifiers::SwitchPasswordPropertyID, password, nullptr);
         return tree;
     }
 
     SwitchInfo SwitchInfo::fromValueTree(const juce::ValueTree &tree)
     {
         SwitchInfo info;
-        info.ip = tree.getProperty(Identifiers::SwitchIpPropertyID);
-        info.username = tree.getProperty(Identifiers::SwitchUsernamePropertyID);
-        info.password = tree.getProperty(Identifiers::SwitchPasswordPropertyID);
+        info.ip = tree.getProperty(Utils::Identifiers::SwitchIpPropertyID);
+        info.username = tree.getProperty(Utils::Identifiers::SwitchUsernamePropertyID);
+        info.password = tree.getProperty(Utils::Identifiers::SwitchPasswordPropertyID);
         return info;
     }
 
@@ -57,14 +58,14 @@ namespace ananas
         const auto obj{data.getDynamicObject()};
         for (const auto &prop: obj->getProperties()) {
             if (const auto *s = prop.value.getDynamicObject()) {
-                if (s->getProperty(Identifiers::SwitchShouldRemovePropertyID)) {
+                if (s->getProperty(Utils::Identifiers::SwitchShouldRemovePropertyID)) {
                     std::cout << "Removing " << prop.name.toString() << std::endl;
                     switches.erase(prop.name);//(index);
                     sendChangeMessage();
                     return;
                 }
 
-                if (s->getProperty(Identifiers::SwitchShouldResetPtpPropertyID)) {
+                if (s->getProperty(Utils::Identifiers::SwitchShouldResetPtpPropertyID)) {
                     switches.at(prop.name).shouldResetPtp = true;//(index).shouldResetPtp = true;
                     sendChangeMessage();
                     return;
@@ -77,9 +78,9 @@ namespace ananas
                     std::cout << "Adding " << iter->first.toString() << std::endl;
                 }
 
-                iter->second.ip = s->getProperty(Identifiers::SwitchIpPropertyID).toString();
-                iter->second.username = s->getProperty(Identifiers::SwitchUsernamePropertyID).toString();
-                iter->second.password = s->getProperty(Identifiers::SwitchPasswordPropertyID).toString();
+                iter->second.ip = s->getProperty(Utils::Identifiers::SwitchIpPropertyID).toString();
+                iter->second.username = s->getProperty(Utils::Identifiers::SwitchUsernamePropertyID).toString();
+                iter->second.password = s->getProperty(Utils::Identifiers::SwitchPasswordPropertyID).toString();
             }
         }
     }
@@ -123,7 +124,7 @@ namespace ananas
 
     juce::ValueTree SwitchList::toValueTree() const
     {
-        juce::ValueTree tree(Identifiers::SwitchesParamID);
+        juce::ValueTree tree(Utils::Identifiers::SwitchesParamID);
 
         for (const auto &[identifier, switchInfo]: switches) {
             auto switchTree{switchInfo.toValueTree()};

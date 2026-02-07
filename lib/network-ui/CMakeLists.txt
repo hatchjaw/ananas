@@ -1,10 +1,10 @@
 add_library(ananas_network_overview
         OverlayableComponent.cpp
-        network/AnanasNetworkTable.cpp
-        network/NetworkOverviewComponent.cpp
-        network/SwitchesComponent.cpp
-        network/TimeAuthorityComponent.cpp
-        network/ClientsOverviewComponent.cpp
+        AnanasNetworkTable.cpp
+        NetworkOverviewComponent.cpp
+        SwitchesComponent.cpp
+        TimeAuthorityComponent.cpp
+        ClientsOverviewComponent.cpp
 )
 
 set_target_properties(ananas_network_overview PROPERTIES
@@ -14,6 +14,8 @@ set_target_properties(ananas_network_overview PROPERTIES
 )
 
 target_include_directories(ananas_network_overview
+        PRIVATE
+        ${CMAKE_SOURCE_DIR}/lib/ananas-utilities
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -26,5 +28,6 @@ target_compile_definitions(ananas_network_overview
 target_link_libraries(ananas_network_overview
         PRIVATE
         juce::juce_core
+        ananas_utilities
         ananas_server
 )
