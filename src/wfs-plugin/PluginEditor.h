@@ -1,10 +1,10 @@
 #ifndef PLUGINEDITOR_H
 #define PLUGINEDITOR_H
 
+#include <LookAndFeel.h>
 #include "PluginProcessor.h"
-#include "UI/LookAndFeel.h"
 #include <NetworkOverviewComponent.h>
-#include "UI/wfs/WFSInterfaceComponent.h"
+#include "UI/WFSInterfaceComponent.h"
 
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::ValueTree::Listener,
@@ -37,7 +37,7 @@ private:
     [[nodiscard]] const PluginProcessor &getProcessor() const;
 
     juce::TooltipWindow tooltipWindow;
-    ananas::LookAndFeel lookAndFeel;
+    ananas::UI::LookAndFeel lookAndFeel;
     juce::TabbedComponent tabbedComponent{juce::TabbedButtonBar::TabsAtTop};
     ananas::UI::NetworkOverviewComponent networkOverview;
     ananas::WFS::UI::WFSInterfaceComponent wfsInterface;

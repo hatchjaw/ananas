@@ -1,6 +1,7 @@
 #ifndef SERVERUTILS_H
 #define SERVERUTILS_H
 
+#include <AnanasUtils.h>
 #include <juce_core/juce_core.h>
 
 namespace ananas::Server
@@ -23,11 +24,6 @@ namespace ananas::Server
         constexpr static uint16_t FifoCapacityFrames{(1 << 10)};
         constexpr static int FifoReportIntervalMs{2000};
 
-        // TODO: make the local interface IP an option?
-        inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
-
-        inline const static juce::StringRef ControlMulticastIP{"224.4.224.5"};
-
         constexpr static size_t ListenerBufferSize{1500};
 
         constexpr static int PTPFollowUpMessageType{0x08};
@@ -46,32 +42,10 @@ namespace ananas::Server
         constexpr static uint ThreadConnectWaitIntervalMs{ThreadConnectSleepIntervalMs / ThreadConnectWaitIterations};
     };
 
-    struct ThreadParams
-    {
-        juce::StringRef name;
-        int timeoutMs{};
-    };
-
-    struct ThreadSocket : ThreadParams
-    {
-        juce::StringRef ip;
-        juce::uint16 localPort{};
-    };
-
-    struct SenderThreadSocket : ThreadSocket
-    {
-        juce::uint16 remotePort{};
-    };
-
-    struct ListenerThreadSocket : ThreadSocket
-    {
-        int disconnectionThresholdMs{};
-    };
-
     class Threads
     {
     public:
-        inline static const ThreadParams SwitchInspectorParams{
+        inline static const Utils::ThreadParams SwitchInspectorThreadParams{
             "Ananas Switch Inspector",
             1100
         };
@@ -80,7 +54,7 @@ namespace ananas::Server
     class Sockets
     {
     public:
-        inline static const SenderThreadSocket AudioSenderSocket{
+        inline static const Utils::SenderThreadSocketParams AudioSenderSocketParams{
             "Ananas Audio Sender",
             500,
             "224.4.224.4",
@@ -88,14 +62,14 @@ namespace ananas::Server
             49152
         };
 
-        inline static const ListenerThreadSocket TimestampListenerSocket{
+        inline static const Utils::ListenerThreadSocketParams TimestampListenerSocketParams{
             "Ananas Timestamp Listener",
             1500,
             "224.0.1.129",
             320
         };
 
-        inline static const ListenerThreadSocket ClientListenerSocket{
+        inline static const Utils::ListenerThreadSocketParams ClientListenerSocketParams{
             "Ananas Client Listener",
             500,
             "224.4.224.6",
@@ -103,7 +77,7 @@ namespace ananas::Server
             1250
         };
 
-        inline static const ListenerThreadSocket AuthorityListenerSocket{
+        inline static const Utils::ListenerThreadSocketParams AuthorityListenerSocketParams{
             "Ananas Authority Listener",
             500,
             "224.4.224.7",
@@ -111,7 +85,7 @@ namespace ananas::Server
             1000
         };
 
-        inline static const SenderThreadSocket RebootSenderSocket{
+        inline static const Utils::SenderThreadSocketParams RebootSenderSocketParams{
             "Ananas Reboot Sender",
             500,
             "224.4.224.8",

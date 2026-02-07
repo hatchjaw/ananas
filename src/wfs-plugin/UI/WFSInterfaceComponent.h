@@ -4,7 +4,6 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "ModuleComponent.h"
 #include "XYControllerComponent.h"
-#include "../LookAndFeel.h"
 #if SHOW_NO_NETWORK_OVERLAY
 #include <OverlayableComponent.h>
 #endif
@@ -42,7 +41,6 @@ namespace ananas::WFS::UI
     private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WFSInterfaceComponent)
 
-        LookAndFeel lookAndFeel;
         juce::AudioProcessorValueTreeState &state;
         XYControllerComponent xyController;
         juce::OwnedArray<ModuleComponent> modules;

@@ -1,13 +1,11 @@
 #include "LookAndFeel.h"
 
-namespace ananas
-{
+namespace ananas::UI {
     LookAndFeel::LookAndFeel()
     {
-        auto bg{juce::Colours::ghostwhite};
-        auto fg{bg.contrasting(.75f)};
+        setColour(juce::ResizableWindow::backgroundColourId, juce::Colours::ghostwhite);
 
-        setColour(juce::ResizableWindow::backgroundColourId, bg);
+        setColour(juce::TextButton::ColourIds::buttonColourId, juce::Colours::mediumvioletred);
     }
 
     int LookAndFeel::getTabButtonBestWidth(juce::TabBarButton &tabBarButton, const int tabDepth)
@@ -15,12 +13,12 @@ namespace ananas
         return totalNumTabs > 0 ? totalWidth / totalNumTabs : LookAndFeel_V4::getTabButtonBestWidth(tabBarButton, tabDepth);
     }
 
-    void LookAndFeel::setTotalWidth(int width)
+    void LookAndFeel::setTotalWidth(const int width)
     {
         totalWidth = width;
     }
 
-    void LookAndFeel::setNumberOfTabs(int numTabs)
+    void LookAndFeel::setNumberOfTabs(const int numTabs)
     {
         totalNumTabs = numTabs;
     }

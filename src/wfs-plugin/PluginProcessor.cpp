@@ -6,6 +6,7 @@
 PluginProcessor::PluginProcessor()
     : AudioProcessor(getBusesProperties()),
       server(std::make_unique<ananas::Server::Server>(ananas::WFS::Constants::NumSources)),
+      wfsMessenger(ananas::WFS::Sockets::WfsMessengerSocketParams),
       apvts(*this, nullptr, ananas::WFS::Identifiers::StaticTreeType, createParameterLayout()),
       dynamicTree(ananas::Utils::Identifiers::DynamicTreeType),
       persistentTree(ananas::Utils::Identifiers::PersistentTreeType)
@@ -20,7 +21,7 @@ PluginProcessor::PluginProcessor()
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::X), &wfsMessenger);
         apvts.addParameterListener(ananas::WFS::Params::getSourcePositionParamID(n, ananas::WFS::SourcePositionAxis::Y), &wfsMessenger);
 
-        // Set up source amplitudes for visualisation...
+        // Set up source amplitudes for visualisation.
         sourceAmplitudes.set(static_cast<int>(n), new std::atomic{0.f});
     }
 }

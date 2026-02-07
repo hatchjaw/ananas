@@ -44,7 +44,7 @@ namespace ananas::Server
                              public ChangeBroadcaster
         {
         public:
-            explicit AnanasThread(const ThreadParams &p);
+            explicit AnanasThread(const Utils::ThreadParams &p);
 
             virtual bool connect() = 0;
 
@@ -66,7 +66,7 @@ namespace ananas::Server
         class UDPMulticastThread : public AnanasThread
         {
         public:
-            explicit UDPMulticastThread(const ThreadSocket &s);
+            explicit UDPMulticastThread(const Utils::ThreadSocketParams &p);
 
             ~UDPMulticastThread() override;
 
@@ -82,11 +82,22 @@ namespace ananas::Server
 
         //======================================================================
 
-        class AudioSender final : public UDPMulticastThread,
+        class SenderThread : public UDPMulticastThread
+        {
+        public:
+            explicit SenderThread(const Utils::SenderThreadSocketParams &p);
+
+        protected:
+            juce::uint16 remotePort;
+        };
+
+        //======================================================================
+
+        class AudioSender final : public SenderThread,
                                   public ChangeListener
         {
         public:
-            explicit AudioSender(Fifo &fifo);
+            AudioSender(const Utils::SenderThreadSocketParams &p, Fifo &fifo);
 
             bool prepare(int numChannels, int samplesPerBlockExpected, double sampleRate);
 
@@ -114,7 +125,7 @@ namespace ananas::Server
         class AnnouncementListenerThread : public UDPMulticastThread
         {
         public:
-            explicit AnnouncementListenerThread(const ListenerThreadSocket &s);
+            explicit AnnouncementListenerThread(const Utils::ListenerThreadSocketParams &p);
 
             bool connect() override;
 
@@ -123,7 +134,6 @@ namespace ananas::Server
 
             virtual void handlePacket() = 0;
 
-            juce::uint16 port;
             uint8_t buffer[Constants::ListenerBufferSize]{};
             juce::String senderIP{};
             int senderPort{0};
@@ -137,7 +147,7 @@ namespace ananas::Server
         class TimestampListener final : public AnnouncementListenerThread
         {
         public:
-            TimestampListener();
+            explicit TimestampListener(const Utils::ListenerThreadSocketParams &p);
 
             timespec getPacketTime() const;
 
@@ -157,7 +167,7 @@ namespace ananas::Server
         class ClientListener final : public AnnouncementListenerThread
         {
         public:
-            ClientListener(ClientList &clients, ModuleList &modules);
+            ClientListener(const Utils::ListenerThreadSocketParams &p, ClientList &clients, ModuleList &modules);
 
         protected:
             void handlePacket() override;
@@ -174,7 +184,7 @@ namespace ananas::Server
         class AuthorityListener final : public AnnouncementListenerThread
         {
         public:
-            explicit AuthorityListener(AuthorityInfo &authority);
+            AuthorityListener(const Utils::ListenerThreadSocketParams &p, AuthorityInfo &authority);
 
         protected:
             void handlePacket() override;
@@ -187,10 +197,10 @@ namespace ananas::Server
 
         //======================================================================
 
-        class RebootSender final : public UDPMulticastThread
+        class RebootSender final : public SenderThread
         {
         public:
-            explicit RebootSender(ClientList &clients);
+            RebootSender(const Utils::SenderThreadSocketParams &p, ClientList &clients);
 
             bool prepare();
 
@@ -208,7 +218,7 @@ namespace ananas::Server
         class SwitchInspector final : public AnanasThread
         {
         public:
-            explicit SwitchInspector(SwitchList &switches);
+            SwitchInspector(const Utils::ThreadParams &p, SwitchList &switches);
 
             bool connect() override;
 

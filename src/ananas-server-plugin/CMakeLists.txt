@@ -42,11 +42,6 @@ target_sources(ananasServer
         PluginProcessor.cpp
 )
 
-target_include_directories(ananasServer
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/lib/ananas-utilities
-)
-
 target_link_libraries(ananasServer
         PRIVATE
         juce::juce_core
@@ -54,6 +49,7 @@ target_link_libraries(ananasServer
         juce::juce_audio_utils
         clap_juce_extensions
         ananas_utilities
+        ananas_ui
         ananas_server
         ananas_network_overview
         PUBLIC

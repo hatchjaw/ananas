@@ -11,11 +11,15 @@ add_subdirectory(lib/ananas-utilities)
 
 add_subdirectory(lib/ananas-server)
 
-add_subdirectory(lib/network-ui)
-
 add_subdirectory(src/console-app)
 
-option(SHOW_NO_NETWORK_OVERLAY "Show UI overlay if a network connection cannot be established" ON)
+option(SHOW_NO_NETWORK_OVERLAY
+        "Show UI overlay if a network connection cannot be established"
+        OFF)
+
+add_subdirectory(lib/ananas-ui)
+
+add_subdirectory(lib/network-ui)
 
 add_subdirectory(src/ananas-server-plugin)
 

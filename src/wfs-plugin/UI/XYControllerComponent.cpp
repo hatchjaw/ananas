@@ -1,5 +1,5 @@
 #include "XYControllerComponent.h"
-#include "../../WFSUtils.h"
+#include "../WFSUtils.h"
 
 namespace ananas::WFS::UI
 {

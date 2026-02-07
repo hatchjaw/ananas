@@ -1,6 +1,6 @@
 #include "ModuleComponent.h"
 #include <AnanasUtils.h>
-#include "../../WFSUtils.h"
+#include "../WFSUtils.h"
 
 namespace ananas::WFS::UI
 {

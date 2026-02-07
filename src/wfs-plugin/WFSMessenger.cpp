@@ -4,14 +4,22 @@
 
 namespace ananas::WFS
 {
+    WFSMessenger::WFSMessenger(const ananas::Utils::SenderThreadSocketParams &p)
+        : Thread(p.name),
+          ip(p.ip),
+          localPort(p.localPort),
+          remotePort(p.remotePort)
+    {
+    }
+
     bool WFSMessenger::connect()
     {
-        if (!socket.bindToPort(Constants::WFSMessengerSocketLocalPort, Constants::LocalInterfaceIP)) {
+        if (!socket.bindToPort(localPort, ananas::Utils::Strings::LocalInterfaceIP)) {
             std::cerr << "WFS Messenger failed to bind to port: " << std::strerror(errno) << std::endl;
             return false;
         }
 
-        if (!connectToSocket(socket, Constants::WFSControlMulticastIP, Constants::WFSMessengerSocketRemotePort)) {
+        if (!connectToSocket(socket, ip, remotePort)) {
             std::cerr << "WFS Messenger failed to connect to socket: " << std::strerror(errno) << std::endl;
             return false;
         }
@@ -64,7 +72,7 @@ namespace ananas::WFS
     {
         while (!threadShouldExit()) {
             // for (int i = 0; i < 10 && !threadShouldExit(); ++i)
-                // wait(100);
+            // wait(100);
         }
     }
 } // ananas::WFS

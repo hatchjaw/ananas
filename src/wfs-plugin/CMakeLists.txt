@@ -46,15 +46,9 @@ target_sources(ananasWFS
         PluginEditor.cpp
         PluginProcessor.cpp
         WFSMessenger.cpp
-        UI/LookAndFeel.cpp
-        UI/wfs/WFSInterfaceComponent.cpp
-        UI/wfs/XYControllerComponent.cpp
-        UI/wfs/ModuleComponent.cpp
-)
-
-target_include_directories(ananasWFS
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/lib/ananas-utilities
+        UI/WFSInterfaceComponent.cpp
+        UI/XYControllerComponent.cpp
+        UI/ModuleComponent.cpp
 )
 
 target_link_libraries(ananasWFS
@@ -65,6 +59,7 @@ target_link_libraries(ananasWFS
         juce::juce_audio_utils
         clap_juce_extensions
         ananas_utilities
+        ananas_ui
         ananas_server
         ananas_network_overview
         PUBLIC

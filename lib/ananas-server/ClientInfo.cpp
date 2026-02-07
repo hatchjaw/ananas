@@ -12,7 +12,7 @@ namespace ananas
 
     bool ClientInfo::isConnected() const
     {
-        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocket.disconnectionThresholdMs;
+        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocketParams.disconnectionThresholdMs;
     }
 
     ClientAnnouncePacket ClientInfo::getInfo() const
@@ -46,7 +46,7 @@ namespace ananas
 
     bool ModuleInfo::isConnected() const
     {
-        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocket.disconnectionThresholdMs;
+        return juce::Time::getMillisecondCounter() - lastReceiveTime < Server::Sockets::ClientListenerSocketParams.disconnectionThresholdMs;
     }
 
     bool ModuleInfo::justDisconnected()

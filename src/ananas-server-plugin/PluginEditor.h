@@ -1,6 +1,8 @@
 #ifndef PLUGINEDITOR_H
 #define PLUGINEDITOR_H
 
+#include <LookAndFeel.h>
+
 #include "PluginProcessor.h"
 #include <NetworkOverviewComponent.h>
 
@@ -25,6 +27,7 @@ private:
 
     [[nodiscard]] const PluginProcessor &getProcessor() const;
 
+    ananas::UI::LookAndFeel lookAndFeel;
     juce::TooltipWindow tooltipWindow;
     ananas::UI::NetworkOverviewComponent networkOverview;
 };

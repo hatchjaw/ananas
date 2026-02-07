@@ -9,12 +9,12 @@ namespace ananas::Server
     Server::Server(const uint numChannelsToSend) : numChannels(numChannelsToSend),
                                                    fifo(numChannelsToSend)
     {
-        threads.add(new AudioSender(fifo));
-        threads.add(new TimestampListener());
-        threads.add(new ClientListener(clients, modules));
-        threads.add(new AuthorityListener(authority));
-        threads.add(new RebootSender(clients));
-        threads.add(new SwitchInspector(switches));
+        threads.add(new AudioSender(Sockets::AudioSenderSocketParams, fifo));
+        threads.add(new TimestampListener(Sockets::TimestampListenerSocketParams));
+        threads.add(new ClientListener(Sockets::ClientListenerSocketParams, clients, modules));
+        threads.add(new AuthorityListener(Sockets::AuthorityListenerSocketParams, authority));
+        threads.add(new RebootSender(Sockets::RebootSenderSocketParams, clients));
+        threads.add(new SwitchInspector(Threads::SwitchInspectorThreadParams, switches));
 
         for (const auto &t: threads) {
             t->addChangeListener(this);
@@ -91,7 +91,7 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::AnanasThread::AnanasThread(const ThreadParams &p)
+    Server::AnanasThread::AnanasThread(const Utils::ThreadParams &p)
         : Thread(p.name), timeoutMs(p.timeoutMs)
     {
     }
@@ -121,10 +121,10 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::UDPMulticastThread::UDPMulticastThread(const ThreadSocket &s)
-        : AnanasThread(s),
-          ip(s.ip),
-          localPort(s.localPort)
+    Server::UDPMulticastThread::UDPMulticastThread(const Utils::ThreadSocketParams &p)
+        : AnanasThread(p),
+          ip(p.ip),
+          localPort(p.localPort)
     {
     }
 
@@ -144,7 +144,7 @@ namespace ananas::Server
                 return false;
             }
 
-            if (!socket.bindToPort(localPort, Constants::LocalInterfaceIP)) {
+            if (!socket.bindToPort(localPort, Utils::Strings::LocalInterfaceIP)) {
                 std::cerr << getThreadName() << " failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
                 sendChangeMessage();
@@ -168,8 +168,16 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::AudioSender::AudioSender(Fifo &fifo)
-        : UDPMulticastThread(Sockets::AudioSenderSocket),
+    Server::SenderThread::SenderThread(const Utils::SenderThreadSocketParams &p)
+        : UDPMulticastThread(p),
+          remotePort(p.remotePort)
+    {
+    }
+
+    //==========================================================================
+
+    Server::AudioSender::AudioSender(const Utils::SenderThreadSocketParams &p, Fifo &fifo)
+        : SenderThread(p),
           fifo(fifo)
     {
     }
@@ -219,12 +227,7 @@ namespace ananas::Server
             // Write the header to the packet.
             packet.writeHeader();
             // Write the packet to the socket.
-            socket.write(
-                ip,
-                Sockets::AudioSenderSocket.remotePort,
-                packet.getData(),
-                static_cast<int>(packet.getSize())
-            );
+            socket.write(ip, remotePort, packet.getData(), static_cast<int>(packet.getSize()));
 
             const timespec t{0, packet.getSleepInterval()};
             nanosleep(&t, nullptr);
@@ -235,9 +238,9 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::AnnouncementListenerThread::AnnouncementListenerThread(const ListenerThreadSocket &s)
-        : UDPMulticastThread(s),
-          port(s.localPort)
+    Server::AnnouncementListenerThread::AnnouncementListenerThread(
+        const Utils::ListenerThreadSocketParams &p
+    ) : UDPMulticastThread(p)
     {
     }
 
@@ -258,7 +261,7 @@ namespace ananas::Server
 
             // ...bind the relevant port to ALL interfaces (INADDR_ANY) by not
             // specifying a local interface here...
-            if (!socket.bindToPort(port)) {
+            if (!socket.bindToPort(localPort)) {
                 std::cerr << getThreadName() << " failed to bind socket to port: " << strerror(errno) << std::endl;
                 socket.shutdown();
                 sendChangeMessage();
@@ -269,7 +272,7 @@ namespace ananas::Server
             // interface (i.e. a manually-configured ethernet connection).
             ip_mreq mreq{};
             mreq.imr_multiaddr.s_addr = inet_addr(ip.toRawUTF8());
-            mreq.imr_interface.s_addr = inet_addr(Constants::LocalInterfaceIP.text);
+            mreq.imr_interface.s_addr = inet_addr(Utils::Strings::LocalInterfaceIP.text);
 
             if (setsockopt(
                     socket.getRawSocketHandle(),
@@ -312,8 +315,9 @@ namespace ananas::Server
 
     //==============================================================================
 
-    Server::TimestampListener::TimestampListener()
-        : AnnouncementListenerThread(Sockets::TimestampListenerSocket)
+    Server::TimestampListener::TimestampListener(
+        const Utils::ListenerThreadSocketParams &p
+    ) : AnnouncementListenerThread(p)
     {
     }
 
@@ -358,10 +362,13 @@ namespace ananas::Server
 
     //==============================================================================
 
-    Server::ClientListener::ClientListener(ClientList &clients, ModuleList &modules)
-        : AnnouncementListenerThread(Sockets::ClientListenerSocket),
-          clients(clients),
-          modules(modules)
+    Server::ClientListener::ClientListener(
+        const Utils::ListenerThreadSocketParams &p,
+        ClientList &clients,
+        ModuleList &modules
+    ) : AnnouncementListenerThread(p),
+        clients(clients),
+        modules(modules)
     {
     }
 
@@ -373,9 +380,11 @@ namespace ananas::Server
 
     //==============================================================================
 
-    Server::AuthorityListener::AuthorityListener(AuthorityInfo &authority)
-        : AnnouncementListenerThread(Sockets::AuthorityListenerSocket),
-          authority(authority)
+    Server::AuthorityListener::AuthorityListener(
+        const Utils::ListenerThreadSocketParams &p,
+        AuthorityInfo &authority
+    ) : AnnouncementListenerThread(p),
+        authority(authority)
     {
     }
 
@@ -386,9 +395,11 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::RebootSender::RebootSender(ClientList &clients)
-        : UDPMulticastThread(Sockets::RebootSenderSocket),
-          clients(clients)
+    Server::RebootSender::RebootSender(
+        const Utils::SenderThreadSocketParams &p,
+        ClientList &clients
+    ): SenderThread(p),
+       clients(clients)
     {
     }
 
@@ -397,12 +408,7 @@ namespace ananas::Server
         while (!threadShouldExit()) {
             if (clients.getShouldReboot()) {
                 clients.setShouldReboot(false);
-                socket.write(
-                    ip,
-                    Sockets::RebootSenderSocket.remotePort,
-                    nullptr,
-                    0
-                );
+                socket.write(ip, remotePort, nullptr, 0);
             }
 
             // Wait 1 second, but check for thread exit every 100ms
@@ -413,9 +419,11 @@ namespace ananas::Server
 
     //==========================================================================
 
-    Server::SwitchInspector::SwitchInspector(SwitchList &switches)
-        : AnanasThread(Threads::SwitchInspectorParams),
-          switches(switches)
+    Server::SwitchInspector::SwitchInspector(
+        const Utils::ThreadParams &p,
+        SwitchList &switches
+    ) : AnanasThread(p),
+        switches(switches)
     {
     }
 

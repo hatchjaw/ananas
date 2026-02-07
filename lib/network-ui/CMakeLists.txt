@@ -14,8 +14,6 @@ set_target_properties(ananas_network_overview PROPERTIES
 )
 
 target_include_directories(ananas_network_overview
-        PRIVATE
-        ${CMAKE_SOURCE_DIR}/lib/ananas-utilities
         PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -29,5 +27,6 @@ target_link_libraries(ananas_network_overview
         PRIVATE
         juce::juce_core
         ananas_utilities
+        ananas_ui
         ananas_server
 )

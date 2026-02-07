@@ -3,7 +3,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-namespace ananas
+namespace ananas::UI
 {
     class LookAndFeel final : public juce::LookAndFeel_V4
     {
@@ -17,10 +17,9 @@ namespace ananas
         void setNumberOfTabs(int numTabs);
 
     private:
-        int totalWidth;
-        int totalNumTabs;
+        int totalWidth{};
+        int totalNumTabs{};
     };
 }
-
 
 #endif //LOOKANDFEEL_H

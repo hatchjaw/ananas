@@ -14,6 +14,9 @@ namespace ananas::Utils
     class Strings
     {
     public:
+        // TODO: make the local interface IP an option?
+        inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
+
         static juce::String getInputLabel(const size_t channel)
         {
             return InputLabel + juce::String{channel};
@@ -80,6 +83,28 @@ namespace ananas::Utils
 
         inline const static juce::Identifier ModuleIDPropertyID{"ModuleID"};
         inline const static juce::Identifier ModuleIsConnectedPropertyID{"ModuleIsConnected"};
+    };
+
+    struct ThreadParams
+    {
+        juce::StringRef name;
+        int timeoutMs{};
+    };
+
+    struct ThreadSocketParams : ThreadParams
+    {
+        juce::StringRef ip;
+        juce::uint16 localPort{};
+    };
+
+    struct SenderThreadSocketParams : ThreadSocketParams
+    {
+        juce::uint16 remotePort{};
+    };
+
+    struct ListenerThreadSocketParams : ThreadSocketParams
+    {
+        int disconnectionThresholdMs{};
     };
 }
 

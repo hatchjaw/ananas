@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <juce_core/juce_core.h>
 #include <juce_graphics/juce_graphics.h>
+#include <AnanasUtils.h>
 
 #ifndef NUM_MODULES
 #define NUM_MODULES 8
@@ -28,11 +29,7 @@ namespace ananas::WFS
         constexpr static int MaxYMetres{10};
         constexpr static int MinYMetres{-3};
 
-        inline const static juce::StringRef LocalInterfaceIP{"192.168.10.10"};
-        constexpr static int WFSMessengerSocketLocalPort{49160};
-        constexpr static int WFSMessengerSocketRemotePort{49160};
         constexpr static int WFSMessengerThreadTimeout{1000};
-        inline const static juce::StringRef WFSControlMulticastIP{"224.4.224.10"};
     };
 
     enum class SourcePositionAxis : char
@@ -119,8 +116,6 @@ namespace ananas::WFS
 
         inline static const juce::StringRef HideSourceText{"Hide this source"};
         inline static const juce::StringRef HideAllOtherSourcesText{"Hide all except this source"};
-
-        inline static const juce::StringRef WFSMessengerThreadName{"WFS Messenger"};
     };
 
     class Identifiers
@@ -160,6 +155,18 @@ namespace ananas::WFS
                    juce::String{p.y < 0 ? -p.y * min.y : p.y * max.y, 3} +
                    " m)";
         }
+    };
+
+    class Sockets
+    {
+    public:
+        inline static const ananas::Utils::SenderThreadSocketParams WfsMessengerSocketParams {
+            "WFS Messenger",
+            500,
+            "224.4.224.10",
+            49160,
+            49160
+        };
     };
 
     namespace UI

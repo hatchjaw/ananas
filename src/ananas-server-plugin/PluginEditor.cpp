@@ -10,6 +10,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
           getProcessor().getPersistentTree()
       )
 {
+    setLookAndFeel(&lookAndFeel);
+
     addAndMakeVisible(networkOverview);
 
     setSize(ananas::UI::Dimensions::UiWidth, ananas::UI::Dimensions::UiHeight);
@@ -24,6 +26,8 @@ PluginEditor::PluginEditor(PluginProcessor &p)
 
 PluginEditor::~PluginEditor()
 {
+    setLookAndFeel(nullptr);
+
     getProcessor().getPersistentTree().removeListener(this);
     getProcessor().getDynamicTree().removeListener(this);
 
